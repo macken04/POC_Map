@@ -29,3 +29,23 @@ logs
 
 # Shopify CLI files
 .shopify
+
+# Backend specific
+backend/generated-maps/*
+!backend/generated-maps/.gitkeep
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# nyc test coverage
+.nyc_output
+
+# Temporary files
+tmp/
+temp/
