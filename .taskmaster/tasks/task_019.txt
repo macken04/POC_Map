@@ -1,0 +1,157 @@
+# Task ID: 19
+# Title: Create Local Map Serving Endpoint for Shopify Integration
+# Status: pending
+# Dependencies: 10, 13
+# Priority: medium
+# Description: Develop an endpoint to serve generated map images to the Shopify store from the local development environment.
+# Details:
+1. Create a secure endpoint to serve map images
+2. Implement caching for improved performance
+3. Set up CORS for Shopify domain access
+4. Create URL signing for secure access
+
+```javascript
+const express = require('express');
+const path = require('path');
+const crypto = require('crypto');
+const fs = require('fs');
+const { promisify } = require('util');
+
+const stat = promisify(fs.stat);
+const exists = promisify(fs.exists);
+
+// Map serving middleware
+function createMapServingMiddleware(options = {}) {
+  const {
+    baseDir = 'public/maps',
+    maxAge = 3600,
+    signatureSecret = process.env.URL_SIGNATURE_SECRET
+  } = options;
+  
+  return async (req, res, next) => {
+    try {
+      const { filename, signature, timestamp } = req.query;
+      
+      // Validate required parameters
+      if (!filename) {
+        return res.status(400).send('Missing filename parameter');
+      }
+      
+      // Validate signature if enabled
+      if (signatureSecret) {
+        if (!signature || !timestamp) {
+          return res.status(400).send('Missing signature or timestamp');
+        }
+        
+        // Check if URL is expired (1 hour validity)
+        const now = Math.floor(Date.now() / 1000);
+        const requestTime = parseInt(timestamp, 10);
+        
+        if (isNaN(requestTime) || now - requestTime > 3600) {
+          return res.status(401).send('URL expired');
+        }
+        
+        // Verify signature
+        const message = `${filename}:${timestamp}`;
+        const expectedSignature = crypto
+          .createHmac('sha256', signatureSecret)
+          .update(message)
+          .digest('hex');
+        
+        if (signature !== expectedSignature) {
+          return res.status(401).send('Invalid signature');
+        }
+      }
+      
+      // Sanitize filename to prevent path traversal
+      const sanitizedFilename = path.basename(filename);
+      const filePath = path.join(baseDir, sanitizedFilename);
+      
+      // Check if file exists
+      if (!(await exists(filePath))) {
+        return res.status(404).send('Map not found');
+      }
+      
+      // Get file info
+      const fileStat = await stat(filePath);
+      
+      // Set cache headers
+      res.setHeader('Cache-Control', `public, max-age=${maxAge}`);
+      res.setHeader('Last-Modified', fileStat.mtime.toUTCString());
+      
+      // Send file
+      res.sendFile(filePath, {
+        headers: {
+          'Content-Type': 'image/png',
+          'Content-Length': fileStat.size
+        }
+      });
+    } catch (error) {
+      console.error('Error serving map:', error);
+      next(error);
+    }
+  };
+}
+
+// Generate signed URL for map access
+function generateSignedMapUrl(filename) {
+  const timestamp = Math.floor(Date.now() / 1000);
+  const message = `${filename}:${timestamp}`;
+  
+  const signature = crypto
+    .createHmac('sha256', process.env.URL_SIGNATURE_SECRET)
+    .update(message)
+    .digest('hex');
+  
+  return `/maps/serve?filename=${encodeURIComponent(filename)}&timestamp=${timestamp}&signature=${signature}`;
+}
+
+// Set up map serving endpoint
+app.get('/maps/serve', createMapServingMiddleware());
+
+// Helper function to generate map URLs
+app.locals.getMapUrl = generateSignedMapUrl;
+
+module.exports = { generateSignedMapUrl };
+```
+
+# Test Strategy:
+Test map serving with valid and invalid signatures. Verify caching headers are set correctly. Test URL expiration functionality. Verify CORS configuration allows access from Shopify domain.
+
+# Subtasks:
+## 1. Implement basic map serving endpoint [pending]
+### Dependencies: None
+### Description: Create the core Express.js endpoint that will serve map images from the local file system to the Shopify store
+### Details:
+Create an Express route handler that serves map images from a designated directory. Implement basic file access functionality with proper MIME type detection. Set up the route pattern (e.g., /maps/:mapId) and implement file retrieval logic using fs module. Include basic error handling for missing files.
+
+## 2. Implement URL signing and authentication [pending]
+### Dependencies: 19.1
+### Description: Create a secure URL signing mechanism to prevent unauthorized access to map images
+### Details:
+Implement HMAC-based URL signing using crypto module. Create functions to generate and validate signed URLs with expiration timestamps. Add middleware to verify signatures before serving images. Include key rotation capability and implement token blacklisting for revoked access.
+
+## 3. Configure CORS for Shopify domain access [pending]
+### Dependencies: 19.1
+### Description: Set up Cross-Origin Resource Sharing to allow the Shopify store to access map images
+### Details:
+Implement CORS middleware to allow requests from the Shopify domain. Configure appropriate headers (Access-Control-Allow-Origin, Access-Control-Allow-Methods, etc.). Test with different request types. Create a whitelist of allowed domains including development, staging, and production Shopify URLs.
+
+## 4. Implement caching and performance optimization [pending]
+### Dependencies: 19.1, 19.2
+### Description: Configure caching headers and optimize the endpoint for fast map image delivery
+### Details:
+Set appropriate Cache-Control, ETag, and Last-Modified headers. Implement conditional GET support with If-Modified-Since and If-None-Match. Configure compression for image responses when appropriate. Implement memory caching for frequently accessed maps to reduce disk I/O.
+
+## 5. Implement comprehensive error handling [pending]
+### Dependencies: 19.1, 19.2, 19.3
+### Description: Create robust error handling for the map serving endpoint
+### Details:
+Implement specific error responses for different failure scenarios (404 for missing maps, 403 for invalid signatures, 401 for expired URLs). Create structured error response format. Add logging for all errors with appropriate detail levels. Implement rate limiting to prevent abuse.
+
+## 6. Create monitoring and analytics for map serving [pending]
+### Dependencies: 19.1, 19.4, 19.5
+### Description: Implement monitoring and usage analytics for the map serving endpoint
+### Details:
+Add request logging middleware to track usage patterns. Implement basic analytics to track which maps are being accessed most frequently. Create health check endpoint for monitoring. Set up performance metrics collection (response time, error rates). Implement automated alerts for unusual traffic patterns or error rates.
+

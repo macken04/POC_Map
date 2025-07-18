@@ -1,0 +1,184 @@
+# Task ID: 11
+# Title: Configure Mapbox GL JS for High-Resolution Export
+# Status: pending
+# Dependencies: 5, 8
+# Priority: high
+# Description: Set up Mapbox GL JS with the necessary configurations to support high-resolution map exports for print-quality output.
+# Details:
+1. Configure Mapbox GL JS with preserveDrawingBuffer option
+2. Implement device pixel ratio manipulation for 300 DPI rendering
+3. Create canvas export utility functions
+4. Set up proper sizing for A3/A4 formats at 300 DPI
+
+```javascript
+class HighResMapExporter {
+  constructor(map) {
+    this.map = map;
+    this.printSizes = {
+      A4: { width: 2480, height: 3508 }, // A4 at 300 DPI
+      A3: { width: 3508, height: 4961 }  // A3 at 300 DPI
+    };
+  }
+  
+  // Prepare map for high-resolution export
+  prepareForExport(size = 'A4', orientation = 'portrait') {
+    // Get dimensions based on size and orientation
+    let dimensions = { ...this.printSizes[size] };
+    if (orientation === 'landscape') {
+      dimensions = { width: dimensions.height, height: dimensions.width };
+    }
+    
+    // Calculate scale factor for 300 DPI
+    const scaleFactor = 300 / 96; // 300 DPI / 96 DPI (standard screen)
+    
+    // Resize map container temporarily
+    const container = this.map.getContainer();
+    const originalStyle = {
+      width: container.style.width,
+      height: container.style.height
+    };
+    
+    container.style.width = `${dimensions.width / scaleFactor}px`;
+    container.style.height = `${dimensions.height / scaleFactor}px`;
+    
+    // Force map to resize
+    this.map.resize();
+    
+    return {
+      dimensions,
+      scaleFactor,
+      restore: () => {
+        // Restore original container size
+        container.style.width = originalStyle.width;
+        container.style.height = originalStyle.height;
+        this.map.resize();
+      }
+    };
+  }
+  
+  // Export map to canvas
+  async exportToCanvas(size = 'A4', orientation = 'portrait') {
+    return new Promise((resolve, reject) => {
+      try {
+        const { dimensions, scaleFactor, restore } = this.prepareForExport(size, orientation);
+        
+        // Wait for map to render at new size
+        this.map.once('render', () => {
+          // Create high-resolution canvas
+          const canvas = document.createElement('canvas');
+          canvas.width = dimensions.width;
+          canvas.height = dimensions.height;
+          const ctx = canvas.getContext('2d');
+          
+          // Scale context for high DPI
+          ctx.scale(scaleFactor, scaleFactor);
+          
+          // Get map canvas and draw to our high-res canvas
+          const mapCanvas = this.map.getCanvas();
+          ctx.drawImage(mapCanvas, 0, 0, mapCanvas.width, mapCanvas.height);
+          
+          // Restore original map size
+          restore();
+          
+          resolve(canvas);
+        });
+        
+        // Trigger a render
+        this.map.triggerRepaint();
+      } catch (error) {
+        restore(); // Make sure we restore even on error
+        reject(error);
+      }
+    });
+  }
+  
+  // Export map to PNG data URL
+  async exportToPNG(size = 'A4', orientation = 'portrait') {
+    const canvas = await this.exportToCanvas(size, orientation);
+    return canvas.toDataURL('image/png');
+  }
+  
+  // Export map to PNG blob
+  async exportToPNGBlob(size = 'A4', orientation = 'portrait') {
+    const canvas = await this.exportToCanvas(size, orientation);
+    return new Promise(resolve => {
+      canvas.toBlob(blob => resolve(blob), 'image/png');
+    });
+  }
+}
+
+export default HighResMapExporter;
+```
+
+# Test Strategy:
+Test export functionality with different map styles and route complexities. Verify output dimensions match A3/A4 at 300 DPI. Check image quality and resolution. Test with different orientations (portrait/landscape).
+
+# Subtasks:
+## 1. Configure Mapbox GL JS with preserveDrawingBuffer [pending]
+### Dependencies: None
+### Description: Set up Mapbox GL JS with the preserveDrawingBuffer option enabled to allow for canvas capture and export of the map.
+### Details:
+Modify the Mapbox GL JS initialization to include the preserveDrawingBuffer: true option. Document the performance implications of this setting. Ensure this configuration works with the current map implementation and doesn't interfere with other map functionality.
+<info added on 2025-07-18T10:44:35.308Z>
+## Test Strategy for preserveDrawingBuffer Configuration
+
+1. **preserveDrawingBuffer Verification**: Test that Mapbox GL JS initializes with preserveDrawingBuffer: true
+2. **Canvas Access Testing**: Verify map canvas is accessible for image capture using getCanvas() method
+3. **Browser-based Canvas Testing**: Use browser dev tools to inspect canvas element and verify it's drawable
+4. **Canvas Export Testing**: Test basic canvas.toDataURL() functionality and verify image output
+5. **Cross-Browser Canvas Testing**: Test canvas export in Chrome, Firefox, Safari, and Edge
+6. **Canvas Size Verification**: Verify canvas dimensions match expected resolution requirements
+7. **Visual Regression Testing**: Compare exported images to expected baseline images
+8. **Memory Usage Testing**: Monitor memory usage during canvas operations to prevent leaks
+9. **Pass/Fail Criteria**: Canvas accessible, export works, images match expected output, no memory leaks
+</info added on 2025-07-18T10:44:35.308Z>
+
+## 2. Implement device pixel ratio handling [pending]
+### Dependencies: 11.1
+### Description: Create a system to manipulate the device pixel ratio for rendering maps at 300 DPI regardless of the display's native resolution.
+### Details:
+Develop functions to temporarily modify the device pixel ratio during export. Implement a mechanism to restore the original pixel ratio after export. Test with various device pixel ratios to ensure consistent output quality. Handle browser-specific implementations and limitations.
+<info added on 2025-07-18T10:44:48.235Z>
+## Test Strategy for Device Pixel Ratio Handling
+
+1. **Device Pixel Ratio Override Testing**: Test setting window.devicePixelRatio = 3.0 and verify map renders at higher resolution
+2. **Resolution Calculation Testing**: Verify pixel calculations for 300 DPI output (A4: 2,480 x 3,508 pixels)
+3. **Browser-based DPI Testing**: Use browser dev tools to inspect actual pixel density and verify override works
+4. **Visual Quality Testing**: Compare high-DPI renders to standard resolution and verify quality improvement
+5. **Cross-Browser DPI Testing**: Test DPI manipulation in Chrome, Firefox, Safari, and Edge
+6. **Performance Impact Testing**: Measure rendering performance with high DPI settings
+7. **Memory Usage Testing**: Monitor memory consumption during high-DPI rendering
+8. **Canvas Size Verification**: Verify canvas dimensions match expected high-resolution output
+9. **Pass/Fail Criteria**: DPI override works, resolution calculations correct, quality improved, performance acceptable
+</info added on 2025-07-18T10:44:48.235Z>
+
+## 3. Develop canvas export utility functions [pending]
+### Dependencies: 11.1, 11.2
+### Description: Create utility functions to export the Mapbox GL JS canvas to high-resolution image formats.
+### Details:
+Implement functions to capture the canvas content and convert it to PNG/JPEG formats. Add support for different quality settings. Create helper methods for canvas manipulation and scaling. Include error handling for canvas access restrictions in different browsers.
+
+## 4. Configure print size dimensions [pending]
+### Dependencies: 11.2
+### Description: Define and implement exact pixel dimensions for standard print sizes (A3/A4) at 300 DPI resolution.
+### Details:
+Create a configuration object with precise dimensions for A3 and A4 in both portrait and landscape orientations. Calculate exact pixel dimensions based on the 300 DPI requirement. Implement functions to resize the map container based on the selected print size.
+
+## 5. Implement resolution management system [pending]
+### Dependencies: 11.2, 11.4
+### Description: Develop a system to manage different resolution requirements and handle scaling between screen and print resolutions.
+### Details:
+Create functions to calculate appropriate scaling factors based on target DPI. Implement resolution presets (72, 150, 300 DPI) with corresponding quality settings. Develop a mechanism to preview the export at different resolutions. Handle memory limitations for very high-resolution exports.
+
+## 6. Optimize image quality and file size [pending]
+### Dependencies: 11.3, 11.5
+### Description: Implement techniques to optimize the exported image quality while managing file size.
+### Details:
+Develop compression options for different export formats. Implement quality presets (low, medium, high) with appropriate compression settings. Add options for anti-aliasing and text sharpening. Test different export settings to find optimal quality/size balance.
+
+## 7. Create cross-browser testing procedures [pending]
+### Dependencies: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6
+### Description: Develop and document testing procedures to ensure consistent export quality across different browsers and devices.
+### Details:
+Create a test matrix covering major browsers (Chrome, Firefox, Safari, Edge). Document browser-specific limitations and workarounds. Implement automated tests where possible. Create visual comparison tools to verify output consistency. Test on different operating systems and device types.
+

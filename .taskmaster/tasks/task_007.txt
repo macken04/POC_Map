@@ -1,0 +1,118 @@
+# Task ID: 7
+# Title: Implement Strava API Integration for Activity Fetching
+# Status: pending
+# Dependencies: 4
+# Priority: high
+# Description: Create endpoints to fetch and display a user's Strava activities for selection in the map generation process.
+# Details:
+1. Implement API endpoints to fetch user activities
+2. Handle pagination for users with many activities
+3. Filter activities by type (cycling)
+4. Extract relevant activity data (route, distance, elevation, etc.)
+5. Create a caching mechanism to avoid repeated API calls
+
+```javascript
+const axios = require('axios');
+
+// Middleware to check if Strava token is valid and refresh if needed
+const checkStravaToken = async (req, res, next) => {
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated with Strava' });
+  
+  const now = new Date().getTime();
+  if (now >= req.user.expiresAt) {
+    try {
+      const response = await axios.post('https://www.strava.com/oauth/token', {
+        client_id: process.env.STRAVA_CLIENT_ID,
+        client_secret: process.env.STRAVA_CLIENT_SECRET,
+        grant_type: 'refresh_token',
+        refresh_token: req.user.refreshToken
+      });
+      
+      req.user.accessToken = response.data.access_token;
+      req.user.refreshToken = response.data.refresh_token;
+      req.user.expiresAt = new Date().getTime() + (response.data.expires_in * 1000);
+    } catch (error) {
+      return res.status(401).json({ error: 'Failed to refresh Strava token' });
+    }
+  }
+  
+  next();
+};
+
+// Get user's activities
+app.get('/api/activities', checkStravaToken, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const perPage = parseInt(req.query.per_page) || 10;
+    
+    const response = await axios.get('https://www.strava.com/api/v3/athlete/activities', {
+      headers: { Authorization: `Bearer ${req.user.accessToken}` },
+      params: { page, per_page: perPage }
+    });
+    
+    // Filter for cycling activities and extract relevant data
+    const activities = response.data
+      .filter(activity => activity.type === 'Ride')
+      .map(activity => ({
+        id: activity.id,
+        name: activity.name,
+        distance: activity.distance,
+        elevation: activity.total_elevation_gain,
+        date: activity.start_date,
+        mapPolyline: activity.map.summary_polyline
+      }));
+    
+    res.json(activities);
+  } catch (error) {
+    console.error('Error fetching activities:', error);
+    res.status(500).json({ error: 'Failed to fetch activities' });
+  }
+});
+```
+
+# Test Strategy:
+Test API endpoints with authenticated user session. Verify pagination works correctly. Check that activity filtering returns only cycling activities. Test token refresh mechanism with expired tokens.
+
+# Subtasks:
+## 1. Implement Strava token validation and refresh mechanism [pending]
+### Dependencies: None
+### Description: Create middleware to validate Strava access tokens and automatically refresh them when expired
+### Details:
+Develop a middleware function that checks token validity before each API request. Implement token refresh logic using the refresh_token when the access_token expires. Store updated tokens in the user session. Include proper error handling for failed refresh attempts.
+
+## 2. Create activity fetching endpoint with pagination [pending]
+### Dependencies: 7.1
+### Description: Implement API endpoint to fetch user activities from Strava with pagination support
+### Details:
+Build a GET endpoint that retrieves activities from Strava's API. Implement pagination parameters (page, per_page) to handle users with many activities. Return properly formatted activity summaries with essential metadata. Include proper documentation for frontend integration.
+
+## 3. Implement activity filtering and sorting [pending]
+### Dependencies: 7.2
+### Description: Add functionality to filter activities by type, date range, and other relevant criteria
+### Details:
+Extend the activity fetching endpoint to support filtering by activity type (cycling, running, etc.). Add date range filtering options (before, after). Implement sorting options (by date, distance, elevation). Ensure query parameters are properly validated and sanitized.
+
+## 4. Develop data transformation layer [pending]
+### Dependencies: 7.2
+### Description: Create utilities to transform Strava API responses into application-specific data structures
+### Details:
+Build transformation functions to convert Strava activity data into the application's required format. Extract relevant fields (route, distance, elevation, date, name, etc.). Normalize units if necessary. Create utility functions for polyline decoding and coordinate transformation.
+
+## 5. Implement caching mechanism [pending]
+### Dependencies: 7.2, 7.4
+### Description: Create a caching system to reduce API calls and improve performance
+### Details:
+Implement in-memory caching for activity lists and individual activity details. Set appropriate cache expiration times based on data volatility. Add cache invalidation triggers for relevant user actions. Include cache hit/miss logging for performance monitoring.
+
+## 6. Implement rate limiting protection [pending]
+### Dependencies: 7.2, 7.5
+### Description: Add safeguards to prevent exceeding Strava API rate limits
+### Details:
+Research and document Strava API rate limits. Implement request throttling to stay within limits. Add retry logic with exponential backoff for rate limit errors. Create monitoring for rate limit usage and remaining quota. Optimize API usage patterns to minimize unnecessary calls.
+
+## 7. Create comprehensive testing suite [pending]
+### Dependencies: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6
+### Description: Develop tests for all Strava integration components
+### Details:
+Write unit tests for token validation, refresh logic, and data transformation. Create integration tests for API endpoints with mock Strava responses. Implement edge case testing for rate limiting, pagination, and error scenarios. Set up CI pipeline for automated testing.
+

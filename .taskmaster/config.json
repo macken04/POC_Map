@@ -33,30 +33,5 @@
     "azureOpenaiBaseURL": "https://your-endpoint.openai.azure.com/",
     "userId": "1234567890"
   },
-  "claudeCode": {},
-  "rules": {
-    "testingEnforcement": {
-      "enabled": true,
-      "description": "Ensures testing is completed before marking tasks as done",
-      "conditions": {
-        "beforeStatusChange": {
-          "from": ["pending", "in-progress"],
-          "to": ["done"],
-          "requirements": [
-            "testStrategy must be defined and non-empty",
-            "All tests in testStrategy must be executed",
-            "Test results must be documented in task details",
-            "All subtasks must have completed their testing requirements"
-          ]
-        }
-      },
-      "validationSteps": [
-        "Verify testStrategy field exists and contains specific test cases",
-        "Check that test execution is documented in task details",
-        "Ensure all subtasks have completed testing before parent task completion",
-        "Confirm test results are satisfactory (no failing tests)"
-      ],
-      "errorMessage": "Task cannot be marked as complete until all testing requirements are fulfilled. Please ensure: 1) testStrategy is defined, 2) tests are executed, 3) results are documented, 4) all subtasks tested."
-    }
-  }
+  "claudeCode": {}
 }

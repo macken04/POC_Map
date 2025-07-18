@@ -1,0 +1,98 @@
+# Task ID: 2
+# Title: Set Up Node.js Backend Server
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Create a Node.js/Express server with session-based authentication to handle map generation and Strava API integration, following the architecture and implementation patterns documented in the project documentation.
+# Details:
+1. Initialize a new Node.js project
+2. Install Express.js and required dependencies
+3. Set up server structure with routes, controllers, and middleware
+4. Implement session management using express-session
+5. Configure CORS for Shopify integration
+6. Set up error handling middleware
+7. Create environment configuration for development/production
+8. Reference the technical documentation (README.md, DEVELOPMENT.md, SETUP.md) for implementation details
+
+```javascript
+// Basic Express server setup
+const express = require('express');
+const session = require('express-session');
+const cors = require('cors');
+require('dotenv').config();
+
+const app = express();
+
+app.use(cors({
+  origin: process.env.SHOPIFY_STORE_URL,
+  credentials: true
+}));
+
+app.use(express.json());
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: process.env.NODE_ENV === 'production' }
+}));
+
+// Routes will be added here
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+```
+
+# Test Strategy:
+Test server startup, session management, and basic route functionality. Verify CORS configuration works with Shopify store URL. Use Postman or similar tools to test API endpoints. Ensure implementation follows the specifications in the project documentation.
+
+# Subtasks:
+## 1. Initialize Node.js project and install dependencies [pending]
+### Dependencies: None
+### Description: Set up a new Node.js project with package.json and install required dependencies for Express server development
+### Details:
+1. Create a new directory for the backend server\n2. Initialize a new Node.js project with npm init\n3. Install Express.js and core dependencies\n4. Set up basic project structure with directories for routes, middleware, and utilities\n5. Create a basic server.js file with Express setup
+
+## 2. Configure Express server with middleware [pending]
+### Dependencies: 2.1
+### Description: Set up the Express server with necessary middleware for CORS, JSON parsing, and security
+### Details:
+1. Configure CORS middleware for Shopify integration\n2. Set up JSON and URL-encoded body parsing\n3. Add security middleware (helmet)\n4. Configure logging middleware\n5. Set up static file serving if needed
+
+## 3. Set up routing structure [pending]
+### Dependencies: 2.2
+### Description: Create the routing structure for the backend API with organized route files
+### Details:
+1. Create routes directory and organize route files\n2. Set up authentication routes (auth.js)\n3. Create Strava API integration routes (strava.js)\n4. Set up map generation routes (maps.js)\n5. Configure route middleware and error handling
+
+## 4. Implement environment configuration [pending]
+### Dependencies: 2.1
+### Description: Set up environment variable configuration and create configuration files for development and production
+### Details:
+1. Install and configure dotenv for environment variables\n2. Create .env.example file with required variables\n3. Set up configuration for different environments\n4. Configure port, API keys, and other environment-specific settings\n5. Add environment validation and defaults
+
+## 5. Configure Express Session Management [pending]
+### Dependencies: 2.4
+### Description: Set up secure session management with express-session middleware and configure session storage
+### Details:
+1. Configure express-session with secure settings\n2. Set up session store (memory for development, Redis/MongoDB for production)\n3. Implement session middleware with security configurations\n4. Configure session cookies with secure flags (httpOnly, secure, sameSite)\n5. Set up session cleanup and expiration handling
+
+## 6. Implement Authentication System [pending]
+### Dependencies: 2.5
+### Description: Create authentication routes and middleware for user authentication
+### Details:
+1. Implement authentication routes (login, logout, register)\n2. Create authentication middleware for protected routes\n3. Set up password hashing with bcrypt\n4. Implement user session handling\n5. Add authentication validation and error handling
+
+## 7. Implement JWT Token System [pending]
+### Dependencies: 2.6
+### Description: Set up JWT token generation, validation, and refresh mechanisms
+### Details:
+1. Implement JWT token generation and validation\n2. Create refresh token rotation mechanism\n3. Handle token expiration and renewal\n4. Set up token storage and cleanup\n5. Implement token-based authentication middleware
+
+## 8. Implement Authentication Security Features [pending]
+### Dependencies: 2.7
+### Description: Add security measures and rate limiting for authentication endpoints
+### Details:
+1. Implement rate limiting for authentication endpoints\n2. Add comprehensive security best practices\n3. Set up authentication error handling and logging\n4. Implement account lockout mechanisms\n5. Add security monitoring and alerts
+

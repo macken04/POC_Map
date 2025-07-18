@@ -1,0 +1,140 @@
+# Task ID: 12
+# Title: Implement Device Pixel Ratio Manipulation for 300 DPI Rendering
+# Status: pending
+# Dependencies: 11
+# Priority: high
+# Description: Create functionality to manipulate the device pixel ratio to achieve 300 DPI rendering for print-quality maps.
+# Details:
+1. Implement device pixel ratio override for high-resolution rendering
+2. Create utility functions to calculate proper dimensions
+3. Set up canvas scaling for 300 DPI output
+4. Implement resolution testing and verification
+
+```javascript
+class DPIManager {
+  constructor() {
+    this.originalDevicePixelRatio = window.devicePixelRatio;
+  }
+  
+  // Set custom DPI for rendering
+  setDPI(dpi) {
+    // Store original value to restore later
+    if (!this.originalDevicePixelRatio) {
+      this.originalDevicePixelRatio = window.devicePixelRatio;
+    }
+    
+    // Calculate ratio (300 DPI / standard 96 DPI = 3.125)
+    const targetRatio = dpi / 96;
+    
+    // Override devicePixelRatio
+    Object.defineProperty(window, 'devicePixelRatio', {
+      get: function() { return targetRatio; }
+    });
+    
+    // Trigger resize event to make Mapbox GL JS aware of the change
+    window.dispatchEvent(new Event('resize'));
+    
+    return targetRatio;
+  }
+  
+  // Restore original device pixel ratio
+  restoreOriginalDPI() {
+    if (this.originalDevicePixelRatio) {
+      Object.defineProperty(window, 'devicePixelRatio', {
+        get: function() { return this.originalDevicePixelRatio; }
+      });
+      
+      window.dispatchEvent(new Event('resize'));
+    }
+  }
+  
+  // Calculate dimensions for print sizes at target DPI
+  calculatePrintDimensions(size, dpi = 300) {
+    const mmToPx = dpi / 25.4; // Convert mm to pixels at specified DPI
+    
+    const sizes = {
+      A4: { width: 210, height: 297 }, // mm
+      A3: { width: 297, height: 420 }  // mm
+    };
+    
+    const dimensions = sizes[size];
+    if (!dimensions) throw new Error(`Unknown size: ${size}`);
+    
+    return {
+      width: Math.round(dimensions.width * mmToPx),
+      height: Math.round(dimensions.height * mmToPx),
+      mmWidth: dimensions.width,
+      mmHeight: dimensions.height,
+      dpi
+    };
+  }
+  
+  // Test if high DPI rendering is supported
+  testHighDPISupport() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const originalRatio = window.devicePixelRatio;
+    
+    // Try to set a high pixel ratio
+    const testRatio = 3;
+    Object.defineProperty(window, 'devicePixelRatio', {
+      get: function() { return testRatio; }
+    });
+    
+    // Check if canvas backing store is updated
+    canvas.width = 100;
+    canvas.height = 100;
+    const actualRatio = canvas.width / canvas.offsetWidth;
+    
+    // Restore original ratio
+    Object.defineProperty(window, 'devicePixelRatio', {
+      get: function() { return originalRatio; }
+    });
+    
+    return actualRatio >= testRatio;
+  }
+}
+
+export default new DPIManager();
+```
+
+# Test Strategy:
+Test DPI manipulation with different values. Verify canvas dimensions and scaling. Test with Mapbox GL JS to ensure proper rendering. Verify print dimensions calculation for A3/A4 formats.
+
+# Subtasks:
+## 1. Implement Device Pixel Ratio Override [pending]
+### Dependencies: None
+### Description: Create a core mechanism to override the browser's devicePixelRatio property for high-resolution rendering at 300 DPI.
+### Details:
+Develop a JavaScript class that safely overrides window.devicePixelRatio with proper getters/setters. Include methods to temporarily modify the ratio and restore it when needed. Implement safeguards to prevent side effects in other parts of the application. Create a configuration system to specify target DPI values.
+
+## 2. Develop Dimension Calculation Utilities [pending]
+### Dependencies: 12.1
+### Description: Create utility functions to calculate proper dimensions for high-resolution rendering based on physical print sizes.
+### Details:
+Implement functions to convert between physical dimensions (inches/mm) and pixel dimensions at various DPI settings. Create helpers for standard paper sizes (A4, A3, Letter) that calculate the required canvas dimensions. Include orientation handling (portrait/landscape) and margin calculations for print-ready output.
+
+## 3. Implement Canvas Scaling System [pending]
+### Dependencies: 12.1, 12.2
+### Description: Build a system to properly scale canvas elements for high-resolution output while maintaining visual consistency.
+### Details:
+Create methods to adjust canvas width/height attributes and corresponding CSS properties to achieve proper scaling. Implement handling for both 2D canvas context and WebGL contexts. Add support for scaling all child elements and text within the canvas. Ensure proper handling of mouse/touch interactions on scaled canvases.
+
+## 4. Create Resolution Testing Framework [pending]
+### Dependencies: 12.1, 12.2, 12.3
+### Description: Develop a testing framework to verify the actual resolution of rendered content and ensure 300 DPI quality.
+### Details:
+Implement visual verification tools to confirm pixel density. Create automated tests that measure the actual rendered resolution against expected values. Build debugging utilities to visualize the pixel grid and effective resolution. Include methods to export test results and comparison metrics.
+
+## 5. Implement Browser Compatibility Layer [pending]
+### Dependencies: 12.1, 12.3
+### Description: Create a compatibility layer to handle different browser implementations and limitations regarding devicePixelRatio.
+### Details:
+Research and document devicePixelRatio behavior across major browsers (Chrome, Firefox, Safari, Edge). Implement browser detection and version-specific handling. Create fallback strategies for browsers with limited or no support for devicePixelRatio manipulation. Build polyfills for consistent behavior across platforms including mobile devices.
+
+## 6. Optimize Performance for High-DPI Rendering [pending]
+### Dependencies: 12.1, 12.3, 12.5
+### Description: Implement performance optimizations to handle the increased memory and processing requirements of high-resolution rendering.
+### Details:
+Create progressive rendering techniques to handle large canvas sizes. Implement memory management strategies to prevent crashes with very high resolutions. Add monitoring for performance metrics during high-DPI rendering. Develop throttling and debouncing mechanisms for render-intensive operations. Create fallback to lower resolutions when performance thresholds are exceeded.
+

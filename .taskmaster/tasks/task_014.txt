@@ -1,0 +1,155 @@
+# Task ID: 14
+# Title: Implement A3/A4 Print Sizing at 300 DPI
+# Status: pending
+# Dependencies: 11, 12, 13
+# Priority: high
+# Description: Configure the map export system to support A3 and A4 print sizes at 300 DPI resolution.
+# Details:
+1. Define exact pixel dimensions for A3 and A4 at 300 DPI
+2. Implement size selection in the UI
+3. Configure canvas sizing for different print formats
+4. Set up proper aspect ratio handling
+
+```javascript
+// Print size configuration
+const PRINT_SIZES = {
+  A4: {
+    name: 'A4',
+    dimensions: { width: 210, height: 297 }, // mm
+    pixelDimensions: { width: 2480, height: 3508 }, // at 300 DPI
+    description: '210mm × 297mm (8.27" × 11.69")',
+    price: 29.99
+  },
+  A3: {
+    name: 'A3',
+    dimensions: { width: 297, height: 420 }, // mm
+    pixelDimensions: { width: 3508, height: 4961 }, // at 300 DPI
+    description: '297mm × 420mm (11.69" × 16.54")',
+    price: 39.99
+  }
+};
+
+// Size selection component
+class PrintSizeSelector {
+  constructor(containerId, onChange) {
+    this.container = document.getElementById(containerId);
+    this.onChange = onChange;
+    this.selectedSize = 'A4';
+    this.selectedOrientation = 'portrait';
+    this.render();
+  }
+  
+  render() {
+    this.container.innerHTML = `
+      <div class="print-size-selector">
+        <h3>Select Print Size</h3>
+        <div class="size-options">
+          ${Object.values(PRINT_SIZES).map(size => `
+            <div class="size-option ${this.selectedSize === size.name ? 'selected' : ''}" 
+                 data-size="${size.name}">
+              <div class="size-preview ${this.selectedOrientation}">
+                <div class="size-ratio" style="padding-bottom: ${(size.dimensions.height / size.dimensions.width) * 100}%"></div>
+              </div>
+              <div class="size-info">
+                <h4>${size.name}</h4>
+                <p>${size.description}</p>
+                <p class="price">$${size.price.toFixed(2)}</p>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        
+        <h3>Orientation</h3>
+        <div class="orientation-options">
+          <label>
+            <input type="radio" name="orientation" value="portrait" 
+                   ${this.selectedOrientation === 'portrait' ? 'checked' : ''}>
+            Portrait
+          </label>
+          <label>
+            <input type="radio" name="orientation" value="landscape" 
+                   ${this.selectedOrientation === 'landscape' ? 'checked' : ''}>
+            Landscape
+          </label>
+        </div>
+      </div>
+    `;
+    
+    // Add event listeners
+    this.container.querySelectorAll('.size-option').forEach(option => {
+      option.addEventListener('click', () => {
+        this.selectedSize = option.dataset.size;
+        this.render();
+        this.notifyChange();
+      });
+    });
+    
+    this.container.querySelectorAll('input[name="orientation"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        this.selectedOrientation = radio.value;
+        this.render();
+        this.notifyChange();
+      });
+    });
+  }
+  
+  notifyChange() {
+    if (this.onChange) {
+      this.onChange({
+        size: this.selectedSize,
+        orientation: this.selectedOrientation,
+        ...PRINT_SIZES[this.selectedSize]
+      });
+    }
+  }
+  
+  getSelectedOptions() {
+    return {
+      size: this.selectedSize,
+      orientation: this.selectedOrientation,
+      ...PRINT_SIZES[this.selectedSize]
+    };
+  }
+}
+
+// Usage
+const sizeSelector = new PrintSizeSelector('size-selector-container', (options) => {
+  console.log('Size changed:', options);
+  // Update preview or export settings
+});
+```
+
+# Test Strategy:
+Test size selection UI with different options. Verify pixel dimensions are correct for each size. Test orientation switching. Verify aspect ratio is maintained during export.
+
+# Subtasks:
+## 1. Define Print Dimension Specifications [pending]
+### Dependencies: None
+### Description: Create comprehensive specifications for print dimensions, including pixel calculations for A3/A4 at 300 DPI in both portrait and landscape orientations.
+### Details:
+Implement exact pixel dimensions for standard print sizes (A3, A4) at 300 DPI. Include calculations for both mm and inch measurements. Document the relationship between physical dimensions and pixel dimensions. Consider international print standards and variations. Create a configuration object that stores all dimension data.
+
+## 2. Develop Print Size Selection UI [pending]
+### Dependencies: 14.1
+### Description: Design and implement the user interface components for selecting print sizes, orientations, and previewing the final output dimensions.
+### Details:
+Create UI controls for size selection (dropdown/radio buttons). Implement orientation toggle (portrait/landscape). Add visual preview of selected print size. Display physical dimensions and pixel resolution information. Ensure the UI is responsive and accessible.
+
+## 3. Implement Canvas Sizing Configuration [pending]
+### Dependencies: 14.1, 14.2
+### Description: Develop the technical implementation to dynamically resize the canvas based on selected print dimensions while maintaining quality.
+### Details:
+Create a canvas sizing service that handles dimension calculations. Implement methods to resize the canvas based on selected print size. Ensure proper scaling of map elements when size changes. Handle memory management for large canvas sizes. Implement progress indicators for large canvas operations.
+
+## 4. Develop Aspect Ratio Management System [pending]
+### Dependencies: 14.1, 14.3
+### Description: Create a system to handle aspect ratio constraints when switching between different print sizes and orientations.
+### Details:
+Implement aspect ratio calculation utilities. Create handlers for maintaining or adjusting content when aspect ratio changes. Develop preview functionality showing how content will fit in different formats. Add warnings for potential cropping issues. Implement content repositioning options when aspect ratio changes.
+
+## 5. Implement Testing and Quality Assurance [pending]
+### Dependencies: 14.1, 14.2, 14.3, 14.4
+### Description: Develop comprehensive testing procedures to verify accurate sizing, proper rendering, and correct export functionality across all supported print formats.
+### Details:
+Create automated tests for dimension calculations. Develop visual regression tests for different print sizes. Test export functionality with all size/orientation combinations. Verify DPI settings are correctly applied in exported files. Test with actual printing services to confirm physical output matches specifications. Document edge cases and resolution strategies.
+

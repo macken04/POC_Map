@@ -542,6 +542,45 @@ shopify theme push --theme=183192945024  # Development theme ID
 4. **Verify the solution fits** the defined architecture
 5. **Log implementation approach** with `task-master update-subtask`
 
+## Testing Enforcement Rule
+
+**MANDATORY: Tasks cannot be marked as complete without proper testing**
+
+Before marking any task or subtask as `done`, the following requirements MUST be fulfilled:
+
+### Required Testing Steps:
+1. **Test Strategy Defined**: Each task must have a `testStrategy` field that specifies:
+   - Unit tests to be written/executed
+   - Integration tests required
+   - Manual testing procedures
+   - Expected test outcomes
+
+2. **Test Execution**: All tests specified in the `testStrategy` must be executed and results documented
+
+3. **Test Documentation**: Use `task-master update-subtask --id=<id> --prompt="test results"` to log:
+   - Which tests were run
+   - Test results (pass/fail)
+   - Any issues discovered and resolved
+   - Performance metrics if applicable
+
+4. **Subtask Testing**: All subtasks must complete their testing requirements before parent task completion
+
+### Validation Checklist:
+- [ ] `testStrategy` field exists and contains specific test cases
+- [ ] All specified tests have been executed
+- [ ] Test results are documented in task details
+- [ ] All failing tests have been addressed
+- [ ] All subtasks have completed their testing requirements
+
+### Common Test Categories for This Project:
+- **Backend API Tests**: Express route testing, Strava API integration tests
+- **Map Generation Tests**: Mapbox GL JS rendering tests, 300 DPI export validation
+- **Shopify Integration Tests**: Theme functionality, checkout flow testing
+- **Authentication Tests**: Session management, OAuth flow validation
+- **File System Tests**: Map storage, cleanup verification
+
+**Enforcement**: This rule applies to ALL tasks and subtasks. No exceptions.
+
 ---
 
 _This guide ensures Claude Code has immediate access to Task Master's essential functionality and maintains strict adherence to the project's tech stack for the Shopify Custom Map Printing Platform._

@@ -1,0 +1,200 @@
+# Task ID: 17
+# Title: Create Product Pages in Shopify
+# Status: pending
+# Dependencies: 1, 16
+# Priority: medium
+# Description: Design and implement custom product pages in Shopify for the map printing service, following the established documentation and implementation patterns.
+# Details:
+1. Create a custom product template in the Dawn theme
+2. Design the product page layout with map customization UI
+3. Implement JavaScript for interactive map preview
+4. Set up product variants for different map sizes
+
+```liquid
+{% comment %}
+  /templates/product.map-print.liquid
+  Custom template for map printing products
+{% endcomment %}
+
+<div class="page-width">
+  <div class="product product--map-print">
+    <div class="product__info-wrapper grid__item">
+      <div class="product__info-container">
+        <h1 class="product__title">{{ product.title }}</h1>
+        <div class="product__description rte">
+          {{ product.description }}
+        </div>
+        
+        <div id="map-app-container" data-product-id="{{ product.id }}">
+          <div class="map-app-loading">
+            <p>Loading map customization tool...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Map Print Product",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_quantity_selector",
+      "label": "Show quantity selector",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "show_variant_labels",
+      "label": "Show variant labels",
+      "default": true
+    }
+  ]
+}
+{% endschema %}
+
+<script src="{{ 'map-product.js' | asset_url }}" defer></script>
+<link rel="stylesheet" href="{{ 'map-product.css' | asset_url }}">
+```
+
+```javascript
+// assets/map-product.js
+document.addEventListener('DOMContentLoaded', function() {
+  const container = document.getElementById('map-app-container');
+  if (!container) return;
+  
+  const productId = container.dataset.productId;
+  
+  // Load the map app in an iframe
+  const iframe = document.createElement('iframe');
+  iframe.src = `${window.mapAppBaseUrl}/embed?shop=${Shopify.shop}&product_id=${productId}`;
+  iframe.id = 'map-app-iframe';
+  iframe.style.width = '100%';
+  iframe.style.height = '800px';
+  iframe.style.border = 'none';
+  iframe.style.overflow = 'hidden';
+  
+  // Replace loading message with iframe
+  container.innerHTML = '';
+  container.appendChild(iframe);
+  
+  // Handle messages from iframe
+  window.addEventListener('message', function(event) {
+    // Verify origin
+    if (event.origin !== window.mapAppBaseUrl) return;
+    
+    const { type, data } = event.data;
+    
+    if (type === 'ADD_TO_CART') {
+      // Redirect to cart URL from app
+      window.location.href = data.cartUrl;
+    } else if (type === 'RESIZE_IFRAME') {
+      // Resize iframe based on content
+      iframe.style.height = `${data.height}px`;
+    }
+  });
+});
+```
+
+Refer to the completed documentation (README.md, DEVELOPMENT.md, SETUP.md, and shopify.env.example) for proper theme structure, configuration, and implementation patterns.
+
+# Test Strategy:
+Test product page rendering with the custom template. Verify iframe communication works correctly. Test add to cart functionality from the embedded app. Verify responsive design on different devices. Follow testing procedures outlined in the documentation.
+
+# Subtasks:
+## 1. Set up Shopify product template structure [pending]
+### Dependencies: None
+### Description: Create a custom product template file for map prints in the Dawn theme and configure it in the theme settings
+### Details:
+1. Create a new template file `product.map-print.liquid` in the templates directory
+2. Set up the basic structure with product information sections
+3. Add template selection option in theme settings
+4. Configure template to be selectable for specific products
+5. Include necessary theme section references
+6. Follow the theme structure guidelines in the DEVELOPMENT.md documentation
+
+## 2. Design product page layout with map customization UI [pending]
+### Dependencies: 17.1
+### Description: Create the HTML/Liquid structure for the product page layout including map preview and customization controls
+### Details:
+1. Create a two-column layout with map preview on left and customization controls on right
+2. Design the product information display area
+3. Create placeholder for the map iframe
+4. Design the variant selection interface
+5. Add customization controls container
+6. Implement breadcrumbs and navigation elements
+7. Reference the Shopify integration patterns from the documentation
+
+## 3. Implement JavaScript for map preview and interaction [pending]
+### Dependencies: 17.2
+### Description: Develop the JavaScript code to handle map preview rendering and user interactions with the customization interface
+### Details:
+1. Create a MapPreview class to handle the iframe communication
+2. Implement event listeners for customization controls
+3. Set up message passing between the product page and iframe
+4. Create methods to update the map preview based on user selections
+5. Implement state management for tracking customization options
+6. Follow the JavaScript implementation patterns documented in DEVELOPMENT.md
+
+## 4. Set up product variants and options configuration [pending]
+### Dependencies: 17.2
+### Description: Configure the product variant structure and implement the JavaScript to handle variant selection and price updates
+### Details:
+1. Set up product variant structure in Shopify admin
+2. Create JavaScript to handle variant selection
+3. Implement price calculation based on selected options
+4. Update the Add to Cart functionality to include customization data
+5. Create validation for required customization options
+6. Implement inventory tracking integration
+7. Reference the Shopify configuration guidelines in SETUP.md
+
+## 5. Develop responsive design for all device sizes [pending]
+### Dependencies: 17.2, 17.3
+### Description: Ensure the product page layout and functionality works correctly across desktop, tablet, and mobile devices
+### Details:
+1. Implement responsive CSS using the Dawn theme's grid system
+2. Create mobile-specific layouts for the customization interface
+3. Optimize map preview size for different screen sizes
+4. Test and adjust touch interactions for mobile devices
+5. Implement collapsible sections for mobile view
+6. Ensure proper spacing and readability on all devices
+7. Follow responsive design patterns outlined in the documentation
+
+## 6. Implement iframe communication protocol [pending]
+### Dependencies: 17.3
+### Description: Create a secure communication system between the Shopify product page and the embedded map customization iframe
+### Details:
+1. Develop postMessage protocol for secure communication
+2. Implement message validation and security checks
+3. Create handlers for different message types
+4. Set up error handling for communication failures
+5. Implement state synchronization between iframe and product page
+6. Create documentation for the communication protocol
+7. Follow the integration patterns specified in the documentation
+
+## 7. Create testing and quality assurance procedures [pending]
+### Dependencies: 17.1, 17.2, 17.3, 17.4, 17.5, 17.6
+### Description: Develop comprehensive testing procedures for the product page functionality across browsers and devices
+### Details:
+1. Create test cases for all customization features
+2. Test variant selection and price updates
+3. Verify responsive design on multiple devices
+4. Test iframe communication with various network conditions
+5. Perform cross-browser testing
+6. Create automated tests for critical functionality
+7. Document testing procedures for future updates
+8. Reference testing methodologies from the documentation
+
+## 8. Review and incorporate documentation references [pending]
+### Dependencies: 17.1
+### Description: Review the completed setup documentation and incorporate relevant implementation patterns and guidelines into the product page development
+### Details:
+1. Review README.md for overall project structure and guidelines
+2. Study DEVELOPMENT.md for theme development patterns and best practices
+3. Reference SETUP.md for Shopify configuration requirements
+4. Examine shopify.env.example for environment configuration
+5. Update implementation approach based on documented patterns
+6. Ensure consistency with established development workflows
+

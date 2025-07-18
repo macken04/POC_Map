@@ -1,0 +1,136 @@
+# Task ID: 13
+# Title: Implement Canvas Export System
+# Status: pending
+# Dependencies: 10, 11, 12
+# Priority: high
+# Description: Create a system to export the map canvas to high-resolution images suitable for printing.
+# Details:
+1. Implement client-side canvas export functionality
+2. Create server-side endpoint to receive and process canvas data
+3. Set up image processing for final output
+4. Implement error handling and progress tracking
+
+```javascript
+// Client-side export function
+async function exportMapToServer(map, options = {}) {
+  try {
+    const exporter = new HighResMapExporter(map);
+    const pngBlob = await exporter.exportToPNGBlob(options.size || 'A4', options.orientation || 'portrait');
+    
+    // Create form data for upload
+    const formData = new FormData();
+    formData.append('map', pngBlob, 'map.png');
+    formData.append('activityId', options.activityId);
+    formData.append('size', options.size || 'A4');
+    formData.append('style', options.style || 'default');
+    
+    // Upload to server
+    const response = await fetch('/api/export-map', {
+      method: 'POST',
+      body: formData
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to export map');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error exporting map:', error);
+    throw error;
+  }
+}
+
+// Server-side endpoint
+const multer = require('multer');
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+app.post('/api/export-map', upload.single('map'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No map image provided' });
+  }
+  
+  try {
+    const { activityId, size, style } = req.body;
+    
+    // Save the map image
+    const mapInfo = await mapFileStorage.saveMapImage(
+      req.file.buffer,
+      activityId,
+      { size, style }
+    );
+    
+    // Generate a unique ID for this map in the session
+    const mapId = `map_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+    
+    // Store map info in session for later retrieval during checkout
+    if (!req.session.maps) req.session.maps = {};
+    req.session.maps[mapId] = {
+      ...mapInfo,
+      activityId,
+      size,
+      style,
+      createdAt: new Date().toISOString()
+    };
+    
+    res.json({
+      mapId,
+      url: mapInfo.url,
+      size,
+      style
+    });
+  } catch (error) {
+    console.error('Error processing map export:', error);
+    res.status(500).json({ error: 'Failed to process map export' });
+  }
+});
+```
+
+# Test Strategy:
+Test canvas export with different map styles and sizes. Verify server-side processing and storage. Test error handling with invalid inputs. Verify session storage of map information.
+
+# Subtasks:
+## 1. Design client-side canvas export architecture [pending]
+### Dependencies: None
+### Description: Create the architecture for client-side canvas export functionality including resolution handling and data preparation
+### Details:
+Implement a CanvasExporter class that handles canvas data extraction at various resolutions. Include methods for scaling, chunking large canvases, and converting to appropriate formats (PNG/JPEG/PDF). Define clear interfaces for progress reporting and error handling. Consider memory usage optimization techniques like progressive rendering for large canvases.
+
+## 2. Implement server-side export processing endpoint [pending]
+### Dependencies: 13.1
+### Description: Create a secure server endpoint to receive canvas data and process it into final image formats
+### Details:
+Develop a RESTful API endpoint that accepts chunked canvas data uploads. Implement authentication and validation for incoming requests. Set up temporary storage for processing large files. Create processing queue system to handle multiple export requests concurrently without overwhelming server resources.
+
+## 3. Develop multi-format image processing pipeline [pending]
+### Dependencies: 13.2
+### Description: Create processing pipeline for converting canvas data into various image formats with appropriate compression and quality settings
+### Details:
+Implement image processing utilities using libraries like Sharp or ImageMagick. Support multiple output formats (PNG, JPEG, PDF, SVG) with configurable quality/compression settings. Add metadata embedding capabilities for attribution and tracking. Implement color profile management for print-ready outputs.
+
+## 4. Implement robust error handling and recovery system [pending]
+### Dependencies: 13.1, 13.2
+### Description: Create comprehensive error handling for both client and server components with appropriate user feedback
+### Details:
+Implement error classification system to distinguish between recoverable and non-recoverable errors. Create retry mechanisms for transient failures like network interruptions. Develop detailed logging system for debugging. Design user-friendly error messages and recovery suggestions. Implement graceful degradation for partial successes.
+
+## 5. Create progress tracking and reporting system [pending]
+### Dependencies: 13.1, 13.2
+### Description: Implement real-time progress tracking for export operations with user feedback
+### Details:
+Develop a progress tracking system using WebSockets or Server-Sent Events for real-time updates. Create a client-side progress UI component with cancel capability. Implement accurate progress estimation based on file size and processing stages. Add detailed status reporting for multi-stage operations.
+
+## 6. Optimize performance for large canvas exports [pending]
+### Dependencies: 13.1, 13.2, 13.3
+### Description: Implement optimization techniques for handling large high-resolution canvas exports efficiently
+### Details:
+Implement canvas tiling/chunking to process sections independently. Create memory usage monitoring and garbage collection triggers. Develop progressive loading and processing techniques. Implement worker threads/processes for parallel processing. Add configurable quality/size tradeoffs for very large exports.
+
+## 7. Develop comprehensive testing suite [pending]
+### Dependencies: 13.1, 13.2, 13.3, 13.4, 13.5, 13.6
+### Description: Create automated and manual testing procedures for the export system across various scenarios
+### Details:
+Develop unit tests for individual components. Create integration tests for client-server interactions. Implement performance benchmarking for various canvas sizes and export formats. Design stress tests for concurrent export operations. Create visual regression tests to verify output quality. Develop memory leak detection tests for long-running operations.
+

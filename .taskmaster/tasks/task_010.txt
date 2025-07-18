@@ -1,0 +1,128 @@
+# Task ID: 10
+# Title: Set Up Local File System for Map Storage
+# Status: pending
+# Dependencies: 2
+# Priority: medium
+# Description: Implement a file storage system to save generated high-resolution maps locally for serving to the Shopify store.
+# Details:
+1. Create a directory structure for storing generated maps
+2. Implement file naming convention based on activity ID and timestamp
+3. Set up file cleanup mechanism for temporary files
+4. Create endpoints to serve stored map images
+5. Implement error handling for file operations
+
+```javascript
+const fs = require('fs');
+const path = require('path');
+const { promisify } = require('util');
+
+const mkdir = promisify(fs.mkdir);
+const writeFile = promisify(fs.writeFile);
+const unlink = promisify(fs.unlink);
+
+class MapFileStorage {
+  constructor(baseDir = 'public/maps') {
+    this.baseDir = baseDir;
+    this.ensureDirectoryExists();
+  }
+  
+  async ensureDirectoryExists() {
+    try {
+      await mkdir(this.baseDir, { recursive: true });
+      console.log(`Storage directory created at ${this.baseDir}`);
+    } catch (error) {
+      if (error.code !== 'EEXIST') {
+        console.error('Error creating storage directory:', error);
+        throw error;
+      }
+    }
+  }
+  
+  generateFilename(activityId, options = {}) {
+    const timestamp = Date.now();
+    const size = options.size || 'A4';
+    const style = options.style || 'default';
+    return `map_${activityId}_${size}_${style}_${timestamp}.png`;
+  }
+  
+  async saveMapImage(buffer, activityId, options = {}) {
+    const filename = this.generateFilename(activityId, options);
+    const filePath = path.join(this.baseDir, filename);
+    
+    try {
+      await writeFile(filePath, buffer);
+      console.log(`Map saved to ${filePath}`);
+      return {
+        filename,
+        path: filePath,
+        url: `/maps/${filename}`
+      };
+    } catch (error) {
+      console.error('Error saving map image:', error);
+      throw error;
+    }
+  }
+  
+  async deleteMapImage(filename) {
+    const filePath = path.join(this.baseDir, filename);
+    try {
+      await unlink(filePath);
+      console.log(`Deleted map file: ${filePath}`);
+      return true;
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        console.warn(`File not found: ${filePath}`);
+        return false;
+      }
+      console.error('Error deleting map file:', error);
+      throw error;
+    }
+  }
+}
+
+module.exports = new MapFileStorage();
+
+// Express endpoint to serve map images
+app.use('/maps', express.static(path.join(__dirname, 'public/maps')));
+```
+
+# Test Strategy:
+Test file creation, retrieval, and deletion. Verify directory structure is created correctly. Test concurrent file operations. Verify cleanup mechanism works for temporary files. Test file serving endpoint.
+
+# Subtasks:
+## 1. Design Directory Structure [pending]
+### Dependencies: None
+### Description: Create a hierarchical directory structure for storing map files with considerations for scalability and organization
+### Details:
+Implement a directory structure with separate folders for permanent maps, temporary files, and processing queue. Include subdirectories organized by user ID, activity type, and date. Create utility functions for path resolution and directory creation. Ensure proper permissions are set on all directories.
+
+## 2. Implement File Naming Convention System [pending]
+### Dependencies: 10.1
+### Description: Develop a consistent and collision-free file naming strategy for all stored maps
+### Details:
+Create a naming scheme that includes activity ID, timestamp, user ID, and version information. Implement functions to generate and parse filenames. Add validation to prevent invalid characters in filenames. Create a registry system to track file metadata separately from the actual files.
+
+## 3. Develop File Cleanup Mechanism [pending]
+### Dependencies: 10.1, 10.2
+### Description: Create automated processes to manage temporary files and implement retention policies
+### Details:
+Implement a scheduled job to scan for and remove temporary files older than a configurable threshold. Create logging for cleanup operations. Add manual cleanup triggers for administrative use. Implement safeguards to prevent accidental deletion of important files.
+
+## 4. Create File Serving Endpoints [pending]
+### Dependencies: 10.1, 10.2
+### Description: Develop secure API endpoints to serve stored map images to the frontend
+### Details:
+Implement RESTful endpoints for retrieving maps by ID. Add content-type detection and appropriate headers. Implement caching mechanisms for frequently accessed files. Create streaming capabilities for large files. Add rate limiting to prevent abuse.
+
+## 5. Implement Error Handling for File Operations [pending]
+### Dependencies: 10.1, 10.2, 10.3, 10.4
+### Description: Develop robust error handling for all file system operations
+### Details:
+Create custom error classes for different file operation failures. Implement retry mechanisms for transient errors. Add detailed logging for all file operations. Create user-friendly error messages. Implement fallback mechanisms when primary storage fails.
+
+## 6. Implement Security and Performance Optimizations [pending]
+### Dependencies: 10.1, 10.2, 10.3, 10.4, 10.5
+### Description: Add security measures and performance enhancements to the file storage system
+### Details:
+Implement file access permissions based on user roles. Add file integrity checks using checksums. Create a caching layer for frequently accessed files. Implement compression for stored files. Add monitoring for storage usage and performance metrics. Create backup and recovery procedures.
+

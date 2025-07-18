@@ -1,0 +1,162 @@
+# Task ID: 18
+# Title: Implement Cart Integration and Checkout Flow
+# Status: pending
+# Dependencies: 16, 17
+# Priority: medium
+# Description: Create the integration between the map generation service and Shopify's cart and checkout system.
+# Details:
+1. Implement add to cart functionality from the map customizer
+2. Create line item properties to store map details
+3. Set up order processing webhook
+4. Implement order fulfillment tracking
+
+```javascript
+// Client-side cart integration
+class ShopifyCartIntegration {
+  constructor(mapId, mapInfo) {
+    this.mapId = mapId;
+    this.mapInfo = mapInfo;
+    this.shopDomain = window.Shopify ? window.Shopify.shop : document.location.host;
+  }
+  
+  async addToCart() {
+    try {
+      const response = await fetch('/api/add-to-cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          mapId: this.mapId,
+          shopDomain: this.shopDomain
+        }),
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to add to cart');
+      }
+      
+      const { cartUrl, uniqueId } = await response.json();
+      
+      // If in iframe, send message to parent
+      if (window.parent !== window) {
+        window.parent.postMessage({
+          type: 'ADD_TO_CART',
+          data: { cartUrl, uniqueId }
+        }, '*');
+        return { success: true, message: 'Added to cart' };
+      }
+      
+      // Otherwise redirect directly
+      window.location.href = cartUrl;
+      return { success: true, message: 'Added to cart' };
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      return { success: false, error: error.message };
+    }
+  }
+}
+
+// Server-side order webhook handling
+const crypto = require('crypto');
+
+// Verify Shopify webhook
+function verifyShopifyWebhook(req) {
+  const hmac = req.headers['x-shopify-hmac-sha256'];
+  const body = req.rawBody; // Need to use raw body parser
+  
+  const generatedHash = crypto
+    .createHmac('sha256', process.env.SHOPIFY_API_SECRET)
+    .update(body, 'utf8')
+    .digest('base64');
+  
+  return hmac === generatedHash;
+}
+
+// Order created webhook
+app.post('/webhooks/orders/create', express.raw({ type: 'application/json' }), (req, res) => {
+  // Verify webhook
+  if (!verifyShopifyWebhook(req)) {
+    return res.status(401).send('Unauthorized');
+  }
+  
+  try {
+    const order = JSON.parse(req.body.toString());
+    
+    // Process each line item
+    order.line_items.forEach(item => {
+      if (item.properties && item.properties.find(p => p.name === 'Map ID')) {
+        const mapIdProp = item.properties.find(p => p.name === 'Map ID');
+        const mapId = mapIdProp.value;
+        
+        // Process map order (e.g., prepare for printing)
+        processMapOrder(order.id, item.id, mapId);
+      }
+    });
+    
+    res.status(200).send('OK');
+  } catch (error) {
+    console.error('Error processing order webhook:', error);
+    res.status(500).send('Error processing webhook');
+  }
+});
+
+// Process map order
+async function processMapOrder(orderId, lineItemId, mapId) {
+  // Retrieve map info from database or session store
+  // Prepare map for printing
+  // Update order with fulfillment information
+  console.log(`Processing map order: ${orderId}, line item: ${lineItemId}, map: ${mapId}`);
+  
+  // Implementation depends on fulfillment process
+}
+```
+
+# Test Strategy:
+Test add to cart functionality with different map configurations. Verify line item properties are correctly stored. Test order webhook with sample order data. Verify order processing and fulfillment tracking.
+
+# Subtasks:
+## 1. Implement Add-to-Cart Functionality [pending]
+### Dependencies: None
+### Description: Create the client-side functionality to add customized maps to the Shopify cart with proper metadata.
+### Details:
+Develop a JavaScript module that handles the add-to-cart process, including: capturing map configuration data, formatting it for cart submission, making AJAX requests to Shopify's Cart API, and providing user feedback. Implement proper error handling and loading states during the cart addition process.
+
+## 2. Develop Line Item Property Management [pending]
+### Dependencies: 18.1
+### Description: Create a system to store and manage map customization details as line item properties in the Shopify cart.
+### Details:
+Implement functions to serialize map configuration data (coordinates, style, size, etc.) into a format suitable for Shopify line item properties. Ensure data is properly encoded/compressed if needed to fit within Shopify's limits. Create validation to ensure all required properties are included before cart submission.
+
+## 3. Set Up Order Webhook Endpoint [pending]
+### Dependencies: 18.2
+### Description: Create a secure server endpoint to receive and process Shopify order webhooks.
+### Details:
+Implement a webhook endpoint that validates incoming Shopify webhook requests using HMAC verification. Set up proper request parsing for order data, implement logging for debugging, and ensure the endpoint responds appropriately to Shopify within the required timeframe.
+
+## 4. Implement Order Processing Logic [pending]
+### Dependencies: 18.3
+### Description: Develop the backend logic to process incoming orders and initiate map generation.
+### Details:
+Create a service that extracts map configuration data from order line item properties, validates the data, and queues the map for generation. Implement database storage for order details and processing status. Set up error handling for invalid or incomplete order data.
+
+## 5. Develop Fulfillment Tracking System [pending]
+### Dependencies: 18.4
+### Description: Create a system to track the status of map generation and update order fulfillment in Shopify.
+### Details:
+Implement a state machine for tracking map generation progress (queued, processing, rendered, fulfilled). Create integration with Shopify's Fulfillment API to mark orders as fulfilled when maps are complete. Develop notification system for any manual intervention needed.
+
+## 6. Implement Error Handling and Recovery [pending]
+### Dependencies: 18.1, 18.3, 18.4, 18.5
+### Description: Create robust error handling for the entire cart and checkout flow with recovery mechanisms.
+### Details:
+Implement comprehensive error handling for all API interactions with Shopify. Create a system for retrying failed operations with exponential backoff. Develop an admin dashboard for monitoring and manually resolving failed orders. Implement logging for all critical operations.
+
+## 7. Create Testing Suite for Cart Integration [pending]
+### Dependencies: 18.1, 18.2, 18.3, 18.4, 18.5, 18.6
+### Description: Develop comprehensive tests for the entire cart integration flow from add-to-cart to fulfillment.
+### Details:
+Create unit tests for individual components of the cart system. Develop integration tests that verify the complete flow from cart addition to order fulfillment. Implement security tests to verify webhook validation and data integrity. Create a test harness for simulating Shopify orders and webhooks.
+

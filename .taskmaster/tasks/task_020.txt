@@ -1,0 +1,386 @@
+# Task ID: 20
+# Title: Implement End-to-End User Journey and Testing
+# Status: pending
+# Dependencies: 4, 7, 9, 13, 15, 18
+# Priority: high
+# Description: Create a complete end-to-end user journey from Strava authentication to map generation and checkout, with comprehensive testing.
+# Details:
+1. Implement the complete user flow from start to finish
+2. Create step-by-step navigation between components
+3. Add progress indicators and error handling
+4. Implement comprehensive logging for debugging
+
+```javascript
+class UserJourney {
+  constructor() {
+    this.currentStep = 'start';
+    this.steps = [
+      'start',
+      'strava-auth',
+      'activity-selection',
+      'map-customization',
+      'preview',
+      'generate',
+      'checkout'
+    ];
+    this.data = {};
+    this.stepComponents = {};
+  }
+  
+  initialize() {
+    // Initialize step components
+    this.stepComponents = {
+      'start': new StartStep(this.goToStep.bind(this)),
+      'strava-auth': new StravaAuthStep(this.goToStep.bind(this)),
+      'activity-selection': new ActivitySelectionStep(this.goToStep.bind(this), this.updateData.bind(this)),
+      'map-customization': new MapCustomizationStep(this.goToStep.bind(this), this.updateData.bind(this)),
+      'preview': new PreviewStep(this.goToStep.bind(this), this.updateData.bind(this)),
+      'generate': new GenerateStep(this.goToStep.bind(this), this.updateData.bind(this)),
+      'checkout': new CheckoutStep(this.updateData.bind(this))
+    };
+    
+    // Check for existing session state
+    this.checkSessionState();
+    
+    // Render progress indicator
+    this.renderProgressIndicator();
+    
+    // Show initial step
+    this.showCurrentStep();
+    
+    // Set up analytics tracking
+    this.setupAnalytics();
+  }
+  
+  async checkSessionState() {
+    try {
+      const response = await fetch('/api/session-state');
+      if (response.ok) {
+        const state = await response.json();
+        
+        // Restore session state if available
+        if (state.authenticated) {
+          this.data.user = state.user;
+          this.currentStep = state.lastStep || 'activity-selection';
+        }
+        
+        if (state.selectedActivity) {
+          this.data.selectedActivity = state.selectedActivity;
+        }
+        
+        if (state.mapCustomization) {
+          this.data.mapCustomization = state.mapCustomization;
+        }
+        
+        if (state.generatedMap) {
+          this.data.generatedMap = state.generatedMap;
+        }
+      }
+    } catch (error) {
+      console.error('Error checking session state:', error);
+    }
+  }
+  
+  goToStep(step) {
+    if (!this.steps.includes(step)) {
+      console.error(`Invalid step: ${step}`);
+      return false;
+    }
+    
+    // Check if we can navigate to this step
+    if (!this.canNavigateToStep(step)) {
+      console.error(`Cannot navigate to step ${step} - prerequisites not met`);
+      return false;
+    }
+    
+    // Hide current step
+    if (this.stepComponents[this.currentStep]) {
+      this.stepComponents[this.currentStep].hide();
+    }
+    
+    // Update current step
+    this.currentStep = step;
+    
+    // Save current step to session
+    fetch('/api/save-step', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ step }),
+      credentials: 'include'
+    }).catch(error => console.error('Error saving step:', error));
+    
+    // Show new step
+    this.showCurrentStep();
+    
+    // Update progress indicator
+    this.updateProgressIndicator();
+    
+    // Track step change in analytics
+    this.trackStepChange(step);
+    
+    return true;
+  }
+  
+  canNavigateToStep(step) {
+    // Define prerequisites for each step
+    switch (step) {
+      case 'start':
+        return true; // Always can go to start
+      
+      case 'strava-auth':
+        return true; // Always can go to auth
+      
+      case 'activity-selection':
+        return !!this.data.user; // Need authenticated user
+      
+      case 'map-customization':
+        return !!this.data.selectedActivity; // Need selected activity
+      
+      case 'preview':
+        return !!this.data.mapCustomization; // Need customization options
+      
+      case 'generate':
+        return !!this.data.mapCustomization; // Need customization options
+      
+      case 'checkout':
+        return !!this.data.generatedMap; // Need generated map
+      
+      default:
+        return false;
+    }
+  }
+  
+  showCurrentStep() {
+    const stepComponent = this.stepComponents[this.currentStep];
+    if (stepComponent) {
+      stepComponent.show(this.data);
+    } else {
+      console.error(`No component found for step: ${this.currentStep}`);
+    }
+  }
+  
+  updateData(key, value) {
+    this.data[key] = value;
+    
+    // Save data to session
+    fetch('/api/save-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [key]: value }),
+      credentials: 'include'
+    }).catch(error => console.error('Error saving data:', error));
+  }
+  
+  renderProgressIndicator() {
+    const container = document.getElementById('progress-indicator');
+    if (!container) return;
+    
+    container.innerHTML = `
+      <div class="progress-steps">
+        ${this.steps.map((step, index) => `
+          <div class="progress-step ${step === this.currentStep ? 'active' : ''}" data-step="${step}">
+            <div class="step-number">${index + 1}</div>
+            <div class="step-label">${this.getStepLabel(step)}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+  
+  updateProgressIndicator() {
+    const container = document.getElementById('progress-indicator');
+    if (!container) return;
+    
+    container.querySelectorAll('.progress-step').forEach(el => {
+      el.classList.toggle('active', el.dataset.step === this.currentStep);
+      el.classList.toggle('completed', this.isStepCompleted(el.dataset.step));
+    });
+  }
+  
+  isStepCompleted(step) {
+    const currentIndex = this.steps.indexOf(this.currentStep);
+    const stepIndex = this.steps.indexOf(step);
+    return stepIndex < currentIndex;
+  }
+  
+  getStepLabel(step) {
+    const labels = {
+      'start': 'Start',
+      'strava-auth': 'Connect Strava',
+      'activity-selection': 'Select Activity',
+      'map-customization': 'Customize Map',
+      'preview': 'Preview',
+      'generate': 'Generate Map',
+      'checkout': 'Checkout'
+    };
+    
+    return labels[step] || step;
+  }
+  
+  setupAnalytics() {
+    // Track page view
+    if (window.gtag) {
+      gtag('event', 'page_view', {
+        page_title: 'Custom Map Generator',
+        page_location: window.location.href,
+        page_path: window.location.pathname
+      });
+    }
+  }
+  
+  trackStepChange(step) {
+    if (window.gtag) {
+      gtag('event', 'step_change', {
+        step: step,
+        step_label: this.getStepLabel(step)
+      });
+    }
+  }
+}
+
+// Initialize user journey when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  const journey = new UserJourney();
+  journey.initialize();
+  
+  // Make journey available globally for debugging
+  window.userJourney = journey;
+});
+```
+
+# Test Strategy:
+Test the complete user journey from start to finish. Verify each step transitions correctly. Test error handling and recovery. Verify session state is preserved between page reloads. Test analytics tracking for user journey steps.
+
+# Subtasks:
+## 1. Implement Step-by-Step Navigation Flow [pending]
+### Dependencies: None
+### Description: Create a robust navigation system that guides users through each step of the journey from Strava authentication to checkout.
+### Details:
+Develop a StepNavigator component that handles transitions between steps, validates completion criteria for each step, and prevents users from skipping required steps. Implement 'next' and 'back' functionality with proper state preservation. Include clear visual indicators of the current step and total journey progress.
+<info added on 2025-07-18T10:45:04.172Z>
+## Test Strategy for Step-by-Step Navigation Flow
+
+1. **Multi-Step Navigation Testing**: Test complete user journey from Strava login to checkout in browser, ensuring all steps connect properly and maintain state.
+
+2. **Browser-based Flow Testing**: Test navigation flow in Chrome, Firefox, Safari, and Edge to ensure cross-browser compatibility.
+
+3. **Progress Indicator Testing**: Verify progress indicators show correct step completion visually and accurately reflect user's position in the journey.
+
+4. **Step Validation Testing**: Test each step has proper validation before allowing progression, confirming required fields and actions are completed.
+
+5. **Back/Forward Navigation Testing**: Test users can navigate back and forward through steps without losing data or breaking the flow.
+
+6. **Session Persistence Testing**: Test flow continues correctly after page refresh or tab close/reopen, maintaining user progress appropriately.
+
+7. **Mobile Navigation Testing**: Test complete flow on mobile devices using responsive testing to ensure mobile usability.
+
+8. **Error Recovery Testing**: Test flow handles errors gracefully and provides recovery options without forcing users to restart the process.
+
+9. **User Journey Analytics**: Test that each step is properly tracked for analytics and conversion analysis to identify potential drop-off points.
+
+10. **Pass/Fail Criteria**: All steps must be accessible, navigation must work bidirectionally, progress must be accurately tracked, mobile compatibility must be maintained, and errors must be handled gracefully with recovery options.
+</info added on 2025-07-18T10:45:04.172Z>
+
+## 2. Develop Progress Tracking System [pending]
+### Dependencies: 20.1
+### Description: Create a visual progress indicator that shows users where they are in the overall journey.
+### Details:
+Implement a ProgressBar component that visually represents completed steps, current step, and remaining steps. Add animations for transitions between steps. Ensure the progress indicator is accessible and provides clear feedback on user's current position in the flow.
+
+## 3. Implement Global State Management [pending]
+### Dependencies: 20.1
+### Description: Create a centralized state management system to maintain user journey data across all steps.
+### Details:
+Implement a JourneyStateManager class that maintains all user selections, preferences, and progress. Use React Context or Redux to make state accessible throughout the application. Include methods for updating, validating, and persisting state data. Ensure proper state isolation between different journey instances.
+
+## 4. Create Error Handling and Recovery System [pending]
+### Dependencies: 20.3
+### Description: Implement comprehensive error handling throughout the user journey with graceful recovery options.
+### Details:
+Develop an ErrorBoundary component that catches and handles errors at each step. Implement specific error handlers for API failures, data validation issues, and UI rendering problems. Create recovery paths that allow users to retry failed operations or return to previous steps without losing data. Add clear error messaging that guides users on how to resolve issues.
+
+## 5. Implement Session Persistence [pending]
+### Dependencies: 20.3
+### Description: Create functionality to save and restore the user's journey progress across page reloads or browser sessions.
+### Details:
+Implement session storage mechanisms to persist journey state. Create automatic save points at key steps in the journey. Develop a recovery system that can restore a user's progress when they return to the application. Include session timeout handling and expired session recovery.
+
+## 6. Integrate Analytics Tracking [pending]
+### Dependencies: 20.1, 20.3
+### Description: Add comprehensive analytics tracking throughout the user journey to monitor conversion and identify friction points.
+### Details:
+Implement event tracking for step transitions, user interactions, error occurrences, and completion rates. Create custom funnels to analyze drop-off points in the journey. Set up performance monitoring to track load times and interaction delays. Develop a dashboard for visualizing journey analytics.
+
+## 7. Implement Responsive Design Adaptations [pending]
+### Dependencies: 20.1, 20.2
+### Description: Ensure the entire user journey works seamlessly across different devices and screen sizes.
+### Details:
+Create responsive layouts for each step of the journey. Implement device-specific interaction patterns (touch vs. mouse). Develop alternative UI components for small screens. Test and optimize performance on mobile devices. Ensure consistent experience across desktop, tablet, and mobile.
+
+## 8. Develop Edge Case Handling [pending]
+### Dependencies: 20.3, 20.4
+### Description: Identify and implement solutions for all potential edge cases throughout the user journey.
+### Details:
+Handle scenarios like: users with no Strava activities, very large activity datasets, interrupted connections during map generation, payment processing failures, and browser compatibility issues. Create fallback options and alternative paths for each edge case. Implement comprehensive logging for debugging edge case occurrences.
+
+## 9. Implement Comprehensive Testing Suite [pending]
+### Dependencies: 20.1, 20.2, 20.3, 20.4, 20.5, 20.6, 20.7, 20.8
+### Description: Create an extensive testing framework covering all aspects of the end-to-end user journey.
+### Details:
+Develop unit tests for individual components. Create integration tests for step transitions and data flow. Implement end-to-end tests simulating complete user journeys. Add performance tests for critical operations. Create accessibility tests to ensure WCAG compliance. Develop cross-browser compatibility tests.
+<info added on 2025-07-18T10:45:21.709Z>
+## Test Strategy for End-to-End User Journey Testing
+
+1. **End-to-End User Journey Testing**: 
+   - Test complete user flow from Strava login to final checkout in browser
+   - Verify all steps function correctly in sequence without interruption
+
+2. **Cross-Browser Journey Testing**: 
+   - Test full journey in Chrome, Firefox, Safari, and Edge
+   - Document any rendering or functionality differences between browsers
+
+3. **Mobile Journey Testing**: 
+   - Test complete flow on mobile devices using responsive testing
+   - Verify touch interactions and mobile-specific UI elements function properly
+
+4. **Performance Journey Testing**: 
+   - Measure load times and performance at each step of the journey
+   - Identify and optimize bottlenecks in the user flow
+
+5. **Error Scenario Testing**: 
+   - Test various error scenarios and recovery paths throughout the journey
+   - Verify appropriate error messages and recovery options are presented
+
+6. **Accessibility Testing**: 
+   - Test complete journey with screen readers and keyboard navigation
+   - Ensure WCAG compliance throughout the entire user flow
+
+7. **User Experience Testing**: 
+   - Conduct user testing sessions and gather feedback on journey flow
+   - Implement improvements based on user feedback
+
+8. **Conversion Funnel Testing**: 
+   - Test and measure conversion rates at each step to identify drop-off points
+   - Optimize steps with high abandonment rates
+
+9. **Load Testing**: 
+   - Test journey under various load conditions to ensure stability
+   - Verify system performance under expected peak traffic
+
+10. **Integration Testing**: 
+    - Test all system integrations (Strava API, Mapbox, Shopify) work together seamlessly
+    - Verify data consistency across all integrated systems
+
+11. **Pass/Fail Criteria**: 
+    - Complete journey works flawlessly
+    - All integrations function as expected
+    - Performance meets acceptable thresholds
+    - Accessibility standards are met
+</info added on 2025-07-18T10:45:21.709Z>
+
+## 10. Create Documentation and User Guides [pending]
+### Dependencies: 20.1, 20.2, 20.3, 20.4, 20.5, 20.6, 20.7, 20.8, 20.9
+### Description: Develop comprehensive documentation for both developers and end-users.
+### Details:
+Create technical documentation describing the architecture and implementation details. Develop user guides with step-by-step instructions. Create troubleshooting guides for common issues. Implement in-app help and tooltips. Develop onboarding tutorials for first-time users. Create API documentation for future extensions.
+

@@ -1,0 +1,216 @@
+# Task ID: 16
+# Title: Implement Shopify App Integration
+# Status: pending
+# Dependencies: 1, 2, 3
+# Priority: medium
+# Description: Integrate the map generation service with Shopify as a custom app to enable seamless e-commerce functionality.
+# Details:
+1. Create a custom Shopify app for the map service
+2. Set up app proxy for secure communication
+3. Implement session handling between the app and Shopify
+4. Configure app permissions and scopes
+
+Refer to the completed documentation in Task 1.7 for proper configuration of environment variables, API endpoints, and integration patterns.
+
+```javascript
+// Server-side Shopify app configuration
+const crypto = require('crypto');
+const { Shopify } = require('@shopify/shopify-api');
+
+// Initialize Shopify API
+Shopify.Context.initialize({
+  API_KEY: process.env.SHOPIFY_API_KEY,
+  API_SECRET_KEY: process.env.SHOPIFY_API_SECRET,
+  SCOPES: ['read_products', 'write_products'],
+  HOST_NAME: process.env.HOST.replace(/https?:\/\//, ''),
+  API_VERSION: '2023-07', // Use current version
+  IS_EMBEDDED_APP: false
+});
+
+// Verify Shopify app proxy requests
+function verifyAppProxyHmac(query) {
+  const { signature, ...params } = query;
+  const message = Object.keys(params)
+    .sort()
+    .map(key => `${key}=${params[key]}`)
+    .join('');
+  
+  const generatedHash = crypto
+    .createHmac('sha256', process.env.SHOPIFY_API_SECRET)
+    .update(message)
+    .digest('hex');
+  
+  return signature === generatedHash;
+}
+
+// App proxy endpoint
+app.get('/app-proxy', (req, res) => {
+  // Verify the request is from Shopify
+  if (!verifyAppProxyHmac(req.query)) {
+    return res.status(401).send('Unauthorized');
+  }
+  
+  // Handle the proxy request
+  const { shop, timestamp, logged_in } = req.query;
+  
+  // Render the app content
+  res.render('app-proxy', {
+    shop,
+    isLoggedIn: logged_in === 'true',
+    apiKey: process.env.SHOPIFY_API_KEY,
+    timestamp
+  });
+});
+
+// Endpoint to add map to cart
+app.post('/api/add-to-cart', async (req, res) => {
+  try {
+    const { mapId, shopDomain } = req.body;
+    
+    // Get map info from session
+    if (!req.session.maps || !req.session.maps[mapId]) {
+      return res.status(404).json({ error: 'Map not found' });
+    }
+    
+    const mapInfo = req.session.maps[mapId];
+    
+    // Generate a unique line item property to identify this map
+    const uniqueId = `map_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+    
+    // Create cart URL with line item properties
+    const cartUrl = `https://${shopDomain}/cart/add?id=${process.env.PRODUCT_VARIANT_ID}&quantity=1&properties[Map ID]=${uniqueId}&properties[Size]=${mapInfo.size}&properties[Style]=${mapInfo.style}&properties[Activity ID]=${mapInfo.activityId}`;
+    
+    // Store map info with unique ID for order processing
+    if (!req.session.orderMaps) req.session.orderMaps = {};
+    req.session.orderMaps[uniqueId] = mapInfo;
+    
+    res.json({ cartUrl, uniqueId });
+  } catch (error) {
+    console.error('Error adding to cart:', error);
+    res.status(500).json({ error: 'Failed to add map to cart' });
+  }
+});
+```
+
+# Test Strategy:
+Test app proxy verification with valid and invalid signatures. Verify session handling between app and Shopify. Test cart integration with different map configurations. Verify app permissions are correctly set. Ensure implementation follows the configuration guidelines in the documentation from Task 1.7.
+
+# Subtasks:
+## 1. Create and Register Shopify App [pending]
+### Dependencies: None
+### Description: Set up a new Shopify app in the Partner Dashboard and configure the basic app settings
+### Details:
+1. Create a Partner account if not already available
+2. Create a new app in the Shopify Partner Dashboard
+3. Configure app name, URLs (including redirect URLs)
+4. Generate API credentials (API key and secret)
+5. Store credentials securely in environment variables
+6. Set up the initial app structure using Shopify CLI or custom framework
+7. Reference the shopify.env.example file from Task 1.7 documentation for required environment variables
+
+## 2. Implement OAuth Authentication Flow [pending]
+### Dependencies: 16.1
+### Description: Create the OAuth flow to authenticate the app with Shopify stores
+### Details:
+1. Implement the OAuth authorization endpoint
+2. Create callback handler for OAuth redirect
+3. Validate HMAC signatures for security
+4. Exchange temporary code for permanent access token
+5. Implement token storage mechanism (database)
+6. Add token refresh logic for offline access tokens
+7. Implement session creation after successful authentication
+8. Follow the OAuth implementation patterns specified in the DEVELOPMENT.md documentation from Task 1.7
+
+## 3. Configure App Proxy and Secure Communication [pending]
+### Dependencies: 16.1, 16.2
+### Description: Set up app proxy for secure communication between Shopify and the app
+### Details:
+1. Configure app proxy settings in the Shopify Partner Dashboard
+2. Implement signature verification middleware for proxy requests
+3. Set up CORS policies for secure cross-domain communication
+4. Create proxy endpoint handlers in the backend
+5. Implement request/response logging for debugging
+6. Add rate limiting to prevent abuse
+7. Ensure configuration aligns with the API endpoints documented in SETUP.md from Task 1.7
+
+## 4. Implement Session Handling and Management [pending]
+### Dependencies: 16.2, 16.3
+### Description: Create robust session handling between the app and Shopify
+### Details:
+1. Implement session storage using Shopify API libraries
+2. Create session validation middleware
+3. Handle session expiration and renewal
+4. Implement secure cookie handling
+5. Create session persistence across page reloads
+6. Add session debugging tools
+7. Implement session cleanup for inactive sessions
+8. Follow the session management patterns outlined in the technical documentation from Task 1.7
+
+## 5. Configure App Permissions and Scopes [pending]
+### Dependencies: 16.2
+### Description: Set up proper permission scopes and manage access control
+### Details:
+1. Identify minimum required API scopes for the application
+2. Configure scopes in app settings and OAuth flow
+3. Implement permission verification before API calls
+4. Create user-friendly permission request screens
+5. Add documentation about required permissions
+6. Implement scope escalation flow for additional permissions
+7. Test permission boundaries with various API endpoints
+8. Ensure scopes match those specified in the README.md and SETUP.md documentation from Task 1.7
+
+## 6. Implement Data Synchronization [pending]
+### Dependencies: 16.3, 16.4, 16.5
+### Description: Create bidirectional data sync between the map service and Shopify
+### Details:
+1. Implement webhook registration for relevant Shopify events
+2. Create webhook handlers for order creation/updates
+3. Implement product data synchronization
+4. Create customer data synchronization (with proper consent)
+5. Implement conflict resolution strategies
+6. Add data validation before synchronization
+7. Create sync status monitoring and reporting
+8. Follow the integration patterns for data synchronization as specified in the technical documentation from Task 1.7
+
+## 7. Implement Error Handling and Monitoring [pending]
+### Dependencies: 16.2, 16.3, 16.4, 16.6
+### Description: Create comprehensive error handling and monitoring for the Shopify integration
+### Details:
+1. Implement structured error logging
+2. Create user-friendly error messages
+3. Set up monitoring for API rate limits
+4. Implement automatic retry mechanisms with backoff
+5. Create alerting for critical failures
+6. Add detailed error reporting for debugging
+7. Implement graceful degradation for partial system failures
+8. Create a status dashboard for integration health
+9. Utilize error handling patterns documented in DEVELOPMENT.md from Task 1.7
+
+## 8. Conduct Integration Testing and Security Review [pending]
+### Dependencies: 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7
+### Description: Perform comprehensive testing and security review of the Shopify integration
+### Details:
+1. Create test cases for all integration points
+2. Test OAuth flow with various scenarios
+3. Verify webhook functionality
+4. Conduct security review of authentication mechanisms
+5. Test data synchronization with edge cases
+6. Perform load testing on critical endpoints
+7. Verify GDPR compliance for customer data
+8. Conduct penetration testing on public endpoints
+9. Create documentation for testing procedures
+10. Verify implementation against the technical specifications in the documentation from Task 1.7
+
+## 9. Review and Apply Documentation from Task 1.7 [pending]
+### Dependencies: 16.1
+### Description: Review the completed documentation from Task 1.7 and ensure all Shopify integration components align with the documented specifications
+### Details:
+1. Review README.md for overall integration architecture
+2. Study DEVELOPMENT.md for development patterns and best practices
+3. Analyze SETUP.md for environment and configuration requirements
+4. Examine shopify.env.example for required environment variables
+5. Ensure all API endpoints match the documented specifications
+6. Verify OAuth flow implementation follows the documented patterns
+7. Confirm that error handling follows the documented approach
+8. Create a compliance checklist to verify implementation against documentation
+

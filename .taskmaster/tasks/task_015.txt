@@ -1,0 +1,309 @@
+# Task ID: 15
+# Title: Create Map Customization Interface
+# Status: pending
+# Dependencies: 8, 9
+# Priority: medium
+# Description: Develop a user interface for customizing map appearance, including style selection, route color, and annotations.
+# Details:
+1. Create UI components for style selection
+2. Implement color picker for route customization
+3. Add annotation and labeling tools
+4. Create preview functionality for customization changes
+
+```javascript
+class MapCustomizer {
+  constructor(mapVisualizer) {
+    this.mapVisualizer = mapVisualizer;
+    this.map = mapVisualizer.map;
+    this.styles = [
+      { id: 'outdoors', name: 'Outdoors', url: 'mapbox://styles/mapbox/outdoors-v11' },
+      { id: 'streets', name: 'Streets', url: 'mapbox://styles/mapbox/streets-v11' },
+      { id: 'satellite', name: 'Satellite', url: 'mapbox://styles/mapbox/satellite-streets-v11' },
+      { id: 'light', name: 'Light', url: 'mapbox://styles/mapbox/light-v10' },
+      { id: 'dark', name: 'Dark', url: 'mapbox://styles/mapbox/dark-v10' }
+    ];
+    this.currentStyle = 'outdoors';
+    this.routeColor = '#fc5200';
+    this.annotations = [];
+  }
+  
+  renderStyleSelector(containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = `
+      <div class="style-selector">
+        <h3>Map Style</h3>
+        <div class="style-options">
+          ${this.styles.map(style => `
+            <div class="style-option ${this.currentStyle === style.id ? 'selected' : ''}" 
+                 data-style-id="${style.id}">
+              <img src="/images/style-previews/${style.id}.jpg" alt="${style.name}">
+              <span>${style.name}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    
+    container.querySelectorAll('.style-option').forEach(option => {
+      option.addEventListener('click', () => {
+        const styleId = option.dataset.styleId;
+        this.setMapStyle(styleId);
+        
+        // Update UI
+        container.querySelectorAll('.style-option').forEach(el => {
+          el.classList.toggle('selected', el.dataset.styleId === styleId);
+        });
+      });
+    });
+  }
+  
+  renderColorPicker(containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = `
+      <div class="color-picker">
+        <h3>Route Color</h3>
+        <input type="color" value="${this.routeColor}" id="route-color-picker">
+        <div class="preset-colors">
+          ${['#fc5200', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffffff', '#000000']
+            .map(color => `<div class="color-preset" style="background-color: ${color}" data-color="${color}"></div>`)
+            .join('')}
+        </div>
+      </div>
+    `;
+    
+    const colorPicker = document.getElementById('route-color-picker');
+    colorPicker.addEventListener('change', () => {
+      this.setRouteColor(colorPicker.value);
+    });
+    
+    container.querySelectorAll('.color-preset').forEach(preset => {
+      preset.addEventListener('click', () => {
+        const color = preset.dataset.color;
+        colorPicker.value = color;
+        this.setRouteColor(color);
+      });
+    });
+  }
+  
+  renderAnnotationTools(containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = `
+      <div class="annotation-tools">
+        <h3>Annotations</h3>
+        <button id="add-marker">Add Marker</button>
+        <button id="add-label">Add Text Label</button>
+        <button id="clear-annotations">Clear All</button>
+        <div id="annotation-list"></div>
+      </div>
+    `;
+    
+    document.getElementById('add-marker').addEventListener('click', () => {
+      this.enableMarkerPlacement();
+    });
+    
+    document.getElementById('add-label').addEventListener('click', () => {
+      this.enableLabelPlacement();
+    });
+    
+    document.getElementById('clear-annotations').addEventListener('click', () => {
+      this.clearAnnotations();
+    });
+  }
+  
+  setMapStyle(styleId) {
+    const style = this.styles.find(s => s.id === styleId);
+    if (style) {
+      this.currentStyle = styleId;
+      this.map.setStyle(style.url);
+      
+      // Re-add route layer after style change
+      this.map.once('style.load', () => {
+        this.mapVisualizer.reinitializeRouteLayers();
+        this.mapVisualizer.updateRouteColor(this.routeColor);
+        this.reapplyAnnotations();
+      });
+    }
+  }
+  
+  setRouteColor(color) {
+    this.routeColor = color;
+    this.mapVisualizer.updateRouteColor(color);
+  }
+  
+  enableMarkerPlacement() {
+    const map = this.map;
+    map.getCanvas().style.cursor = 'crosshair';
+    
+    const clickHandler = (e) => {
+      const marker = new mapboxgl.Marker()
+        .setLngLat(e.lngLat)
+        .addTo(map);
+      
+      this.annotations.push({
+        type: 'marker',
+        lngLat: e.lngLat,
+        marker
+      });
+      
+      this.updateAnnotationList();
+      map.getCanvas().style.cursor = '';
+      map.off('click', clickHandler);
+    };
+    
+    map.once('click', clickHandler);
+  }
+  
+  enableLabelPlacement() {
+    const map = this.map;
+    map.getCanvas().style.cursor = 'crosshair';
+    
+    const clickHandler = (e) => {
+      const text = prompt('Enter label text:');
+      if (text) {
+        const el = document.createElement('div');
+        el.className = 'custom-label';
+        el.textContent = text;
+        
+        const marker = new mapboxgl.Marker(el)
+          .setLngLat(e.lngLat)
+          .addTo(map);
+        
+        this.annotations.push({
+          type: 'label',
+          lngLat: e.lngLat,
+          text,
+          marker
+        });
+        
+        this.updateAnnotationList();
+      }
+      
+      map.getCanvas().style.cursor = '';
+      map.off('click', clickHandler);
+    };
+    
+    map.once('click', clickHandler);
+  }
+  
+  clearAnnotations() {
+    this.annotations.forEach(annotation => {
+      annotation.marker.remove();
+    });
+    this.annotations = [];
+    this.updateAnnotationList();
+  }
+  
+  updateAnnotationList() {
+    const container = document.getElementById('annotation-list');
+    if (!container) return;
+    
+    container.innerHTML = this.annotations.length === 0 ? 
+      '<p>No annotations added</p>' : 
+      `<ul>${this.annotations.map((a, i) => `
+        <li>
+          ${a.type === 'marker' ? 'Marker' : `Label: "${a.text}"`}
+          <button class="remove-annotation" data-index="${i}">Remove</button>
+        </li>
+      `).join('')}</ul>`;
+    
+    container.querySelectorAll('.remove-annotation').forEach(button => {
+      button.addEventListener('click', () => {
+        const index = parseInt(button.dataset.index);
+        if (this.annotations[index]) {
+          this.annotations[index].marker.remove();
+          this.annotations.splice(index, 1);
+          this.updateAnnotationList();
+        }
+      });
+    });
+  }
+  
+  reapplyAnnotations() {
+    // Re-add all annotations after style change
+    this.annotations.forEach(annotation => {
+      annotation.marker.remove();
+      
+      if (annotation.type === 'marker') {
+        annotation.marker = new mapboxgl.Marker()
+          .setLngLat(annotation.lngLat)
+          .addTo(this.map);
+      } else if (annotation.type === 'label') {
+        const el = document.createElement('div');
+        el.className = 'custom-label';
+        el.textContent = annotation.text;
+        
+        annotation.marker = new mapboxgl.Marker(el)
+          .setLngLat(annotation.lngLat)
+          .addTo(this.map);
+      }
+    });
+  }
+  
+  getCustomizationOptions() {
+    return {
+      mapStyle: this.currentStyle,
+      routeColor: this.routeColor,
+      annotations: this.annotations.map(a => ({
+        type: a.type,
+        lngLat: [a.lngLat.lng, a.lngLat.lat],
+        text: a.text
+      }))
+    };
+  }
+}
+
+export default MapCustomizer;
+```
+
+# Test Strategy:
+Test style selection with all available options. Verify route color changes are applied correctly. Test annotation tools for adding markers and labels. Verify customization options are preserved during export.
+
+# Subtasks:
+## 1. Design Style Selection UI Component [pending]
+### Dependencies: None
+### Description: Create a visually appealing and intuitive UI component for map style selection with thumbnails and descriptions.
+### Details:
+Implement a grid or carousel of map style options with preview thumbnails. Include style names and brief descriptions. Create hover and selection states for better user feedback. Ensure keyboard navigation works properly. Use semantic HTML elements for better accessibility. Test with screen readers to verify accessibility compliance.
+
+## 2. Implement Color Picker for Route Customization [pending]
+### Dependencies: 15.1
+### Description: Develop a color picker component that allows users to customize route colors with hex, RGB, and preset options.
+### Details:
+Create a color picker with standard presets and custom color input. Support hex and RGB color formats. Implement color history to remember recently used colors. Add visual feedback when colors are selected. Ensure sufficient contrast between selected colors and map background. Include a reset option to return to default colors.
+
+## 3. Develop Annotation and Marker Tools [pending]
+### Dependencies: 15.1
+### Description: Create tools for adding, editing, and removing custom markers, pins, and annotations on the map.
+### Details:
+Implement drag-and-drop functionality for placing markers. Create a toolbar with different marker types and icons. Add right-click context menu for marker editing and deletion. Support custom icon uploads for markers. Implement marker clustering for maps with many annotations. Ensure touch support for mobile devices.
+
+## 4. Build Text Labeling System [pending]
+### Dependencies: 15.3
+### Description: Implement functionality for adding, styling, and positioning text labels on the map.
+### Details:
+Create text input component with formatting options (font, size, weight, color). Implement drag-to-position for text labels. Add rotation and scaling controls. Support multi-line text. Implement collision detection to prevent overlapping labels. Add text shadows or outlines for better visibility on various backgrounds.
+
+## 5. Create Real-time Preview System [pending]
+### Dependencies: 15.1, 15.2, 15.3, 15.4
+### Description: Develop a preview component that shows real-time updates as users make customization changes.
+### Details:
+Implement state synchronization between customization controls and preview. Create a responsive preview container that maintains aspect ratio. Add zoom and pan controls for preview inspection. Implement a toggle between edit and preview modes. Add loading states for preview updates. Ensure preview accurately represents final output.
+
+## 6. Implement State Management for Customization Options [pending]
+### Dependencies: 15.1, 15.2, 15.3, 15.4
+### Description: Design and implement a state management system to track and persist all user customization choices.
+### Details:
+Create a centralized state store for all customization options. Implement undo/redo functionality with state history. Add save/load capability for customization presets. Ensure state persistence across page refreshes using localStorage or similar. Implement state validation to prevent invalid configurations. Create a reset function to return to default state.
+
+## 7. Develop Responsive Design for Multiple Devices [pending]
+### Dependencies: 15.1, 15.2, 15.3, 15.4, 15.5
+### Description: Ensure the customization interface works well across desktop, tablet, and mobile devices with appropriate layout adjustments.
+### Details:
+Create breakpoint-specific layouts for different screen sizes. Implement collapsible panels for mobile view. Ensure touch targets are appropriately sized for mobile use. Test on various devices and browsers for compatibility. Optimize performance for lower-powered devices. Implement gesture controls for touch devices.
+
+## 8. Optimize User Experience and Accessibility [pending]
+### Dependencies: 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7
+### Description: Enhance the overall user experience with intuitive workflows, keyboard shortcuts, and comprehensive accessibility features.
+### Details:
+Implement keyboard shortcuts for common actions. Ensure all interactive elements have proper ARIA attributes. Add tooltips and contextual help for complex features. Create a guided tour or onboarding flow for new users. Implement high contrast mode for accessibility. Test with various assistive technologies. Add progress indicators for multi-step processes. Ensure color choices work for colorblind users.
+

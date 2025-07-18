@@ -1,0 +1,100 @@
+# Task ID: 5
+# Title: Set Up Mapbox Account and API Configuration
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Create a Mapbox account, obtain API keys, and configure the application to use Mapbox GL JS for map rendering.
+# Details:
+1. Sign up for a Mapbox account
+2. Create a new API token with appropriate permissions
+3. Set up environment variables for API keys
+4. Install Mapbox GL JS dependencies
+5. Create a basic map initialization module
+
+```javascript
+// Server-side environment setup
+// .env file
+MAPBOX_ACCESS_TOKEN=your_mapbox_token_here
+
+// Client-side map initialization
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+
+const initializeMap = (containerId, initialCenter = [-0.127, 51.507], initialZoom = 10) => {
+  mapboxgl.accessToken = process.env.MAPBOX_ACCESS_TOKEN;
+  
+  const map = new mapboxgl.Map({
+    container: containerId,
+    style: 'mapbox://styles/mapbox/outdoors-v11', // Default style for cycling maps
+    center: initialCenter,
+    zoom: initialZoom,
+    preserveDrawingBuffer: true // Required for high-res export
+  });
+  
+  map.addControl(new mapboxgl.NavigationControl());
+  
+  return map;
+};
+
+export { initializeMap };
+```
+
+# Test Strategy:
+Verify API key works by initializing a basic map. Test different map styles and confirm they load correctly. Check that the preserveDrawingBuffer option is properly set for later export functionality.
+
+# Subtasks:
+## 1. Create Mapbox Account and Generate API Key [pending]
+### Dependencies: None
+### Description: Sign up for a Mapbox account and generate an API key with appropriate permissions for the application
+### Details:
+1. Visit mapbox.com and create a new account
+2. Navigate to the Account > Access tokens section
+3. Create a new token with the following scopes: Styles:Read, Maps:Read, Vision:Read
+4. Set appropriate URL restrictions to limit token usage to your application domains
+5. Document the token creation date and expiration policy
+6. Save the token securely for the next steps
+
+## 2. Set Up Environment Variables for API Key Management [pending]
+### Dependencies: 5.1
+### Description: Implement secure environment variable configuration for storing and accessing the Mapbox API key
+### Details:
+1. Create a .env file in the project root (ensure it's in .gitignore)
+2. Add the Mapbox token as MAPBOX_ACCESS_TOKEN=your_token_here
+3. Install dotenv package if not already present
+4. Configure the server to load environment variables
+5. Implement a secure method to pass the token to the client-side application
+6. Create a config file that accesses the environment variable but doesn't expose it directly
+
+## 3. Install and Configure Mapbox GL JS Dependencies [pending]
+### Dependencies: 5.2
+### Description: Add Mapbox GL JS library to the project and set up the necessary configuration files
+### Details:
+1. Install Mapbox GL JS using npm: npm install mapbox-gl
+2. Install any additional required packages like @mapbox/mapbox-gl-geocoder
+3. Import the CSS files: import 'mapbox-gl/dist/mapbox-gl.css'
+4. Create a mapbox-config.js file that safely imports the token
+5. Configure webpack or other bundler to properly handle Mapbox assets
+6. Set up the preserveDrawingBuffer option for later export functionality
+
+## 4. Create Basic Map Initialization Module [pending]
+### Dependencies: 5.3
+### Description: Develop a reusable module for initializing and configuring Mapbox maps in the application
+### Details:
+1. Create a MapService class or module that handles map initialization
+2. Implement methods for setting the initial center, zoom level, and style
+3. Add error handling for API key validation and map loading failures
+4. Create a method to check if the browser supports WebGL
+5. Implement responsive sizing for the map container
+6. Add event listeners for map loading and interaction events
+
+## 5. Implement Map Testing and Validation Procedures [pending]
+### Dependencies: 5.4
+### Description: Create testing procedures to validate the Mapbox integration and ensure proper functionality
+### Details:
+1. Create a simple test page that initializes a map with the configured API key
+2. Test different map styles (streets, outdoors, satellite) to ensure they load correctly
+3. Verify that the preserveDrawingBuffer option works by testing canvas export
+4. Create automated tests for API key validation and error handling
+5. Test map initialization with invalid coordinates or configuration
+6. Document the testing process and results for future reference
+

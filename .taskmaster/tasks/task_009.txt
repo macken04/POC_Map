@@ -1,0 +1,119 @@
+# Task ID: 9
+# Title: Implement Route Rendering from Strava Data
+# Status: pending
+# Dependencies: 7, 8
+# Priority: high
+# Description: Create functionality to parse and render GPX/TCX route data from Strava activities on the interactive map.
+# Details:
+1. Implement endpoint to fetch detailed activity data including GPX/TCX
+2. Create parser for GPX/TCX data to extract coordinates
+3. Convert polyline data to GeoJSON format
+4. Implement route rendering on the map
+5. Add elevation profile visualization
+
+```javascript
+const polyline = require('@mapbox/polyline');
+const axios = require('axios');
+
+// Server-side endpoint to get activity details with route data
+app.get('/api/activities/:id', checkStravaToken, async (req, res) => {
+  try {
+    const activityId = req.params.id;
+    
+    const response = await axios.get(`https://www.strava.com/api/v3/activities/${activityId}`, {
+      headers: { Authorization: `Bearer ${req.user.accessToken}` },
+      params: { include_all_efforts: false }
+    });
+    
+    // Extract and decode polyline
+    const routePolyline = response.data.map.polyline;
+    const coordinates = polyline.decode(routePolyline).map(point => [point[1], point[0]]);
+    
+    const activityData = {
+      id: response.data.id,
+      name: response.data.name,
+      distance: response.data.distance,
+      elevation: response.data.total_elevation_gain,
+      startDate: response.data.start_date,
+      coordinates,
+      startPoint: coordinates[0],
+      endPoint: coordinates[coordinates.length - 1]
+    };
+    
+    res.json(activityData);
+  } catch (error) {
+    console.error('Error fetching activity details:', error);
+    res.status(500).json({ error: 'Failed to fetch activity details' });
+  }
+});
+
+// Client-side function to load and display route
+async function loadActivityRoute(activityId, mapVisualizer) {
+  try {
+    const response = await fetch(`/api/activities/${activityId}`);
+    if (!response.ok) throw new Error('Failed to fetch activity data');
+    
+    const activityData = await response.json();
+    mapVisualizer.displayRoute(activityData.coordinates);
+    
+    // Update activity info display
+    document.getElementById('activity-name').textContent = activityData.name;
+    document.getElementById('activity-distance').textContent = 
+      `${(activityData.distance / 1000).toFixed(1)} km`;
+    document.getElementById('activity-elevation').textContent = 
+      `${activityData.elevation.toFixed(0)} m`;
+    
+    return activityData;
+  } catch (error) {
+    console.error('Error loading activity route:', error);
+    alert('Failed to load activity route. Please try again.');
+  }
+}
+```
+
+# Test Strategy:
+Test with various GPX/TCX files of different complexities. Verify coordinate extraction and conversion accuracy. Test route rendering with different map styles. Verify elevation profile display.
+
+# Subtasks:
+## 1. Implement GPX/TCX Data Fetching [pending]
+### Dependencies: None
+### Description: Create endpoints to fetch route data from Strava API and handle file uploads for GPX/TCX files.
+### Details:
+Develop API endpoints for fetching activity data from Strava including GPX/TCX data. Implement file upload functionality for direct GPX/TCX file submission. Add authentication validation and error handling for API rate limits and network failures.
+
+## 2. Create GPX/TCX Parser [pending]
+### Dependencies: 9.1
+### Description: Develop a robust parser to extract coordinate data, timestamps, and elevation from GPX and TCX file formats.
+### Details:
+Implement XML parsing for both GPX and TCX formats. Extract trackpoints including latitude, longitude, elevation, and timestamps. Handle different versions of GPX/TCX formats. Implement validation to ensure data integrity and handle malformed files gracefully.
+
+## 3. Implement Polyline Decoding and Coordinate Transformation [pending]
+### Dependencies: 9.1
+### Description: Create utilities to decode encoded polylines from Strava and transform coordinates between different projection systems.
+### Details:
+Implement polyline decoding using the Google polyline algorithm. Create coordinate transformation utilities to convert between WGS84, Web Mercator, and other projection systems as needed. Handle edge cases like antimeridian crossing and polar coordinates.
+
+## 4. Develop GeoJSON Conversion Module [pending]
+### Dependencies: 9.2, 9.3
+### Description: Create a module to convert parsed route data into standardized GeoJSON format for map rendering.
+### Details:
+Implement conversion from parsed GPX/TCX data to GeoJSON LineString and Feature objects. Add metadata properties to GeoJSON including distance, elevation gain/loss, and activity type. Handle multi-segment routes and ensure proper GeoJSON structure.
+
+## 5. Implement Route Styling and Rendering [pending]
+### Dependencies: 9.4
+### Description: Develop the map rendering system to display routes with appropriate styling based on activity type and elevation.
+### Details:
+Create styling functions for routes based on activity type (running, cycling, etc.). Implement gradient coloring based on elevation or speed data. Add interactive hover effects to display segment information. Ensure proper z-index handling for overlapping routes.
+
+## 6. Create Elevation Profile Visualization [pending]
+### Dependencies: 9.4, 9.5
+### Description: Develop an interactive elevation profile chart that synchronizes with the map route display.
+### Details:
+Implement D3.js or Chart.js based elevation profile visualization. Create hover synchronization between map and elevation chart. Add distance markers and gradient indicators. Implement responsive design for different screen sizes.
+
+## 7. Implement Comprehensive Error Handling [pending]
+### Dependencies: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6
+### Description: Add robust error handling for all route rendering processes including data validation, parsing errors, and rendering failures.
+### Details:
+Implement validation for input data formats and provide meaningful error messages. Add fallback rendering options for incomplete or corrupted data. Create user-friendly error notifications. Implement logging for debugging purposes. Add performance monitoring for large route datasets.
+

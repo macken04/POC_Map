@@ -1,0 +1,141 @@
+# Task ID: 4
+# Title: Implement Strava OAuth Integration
+# Status: pending
+# Dependencies: 2, 3
+# Priority: high
+# Description: Develop the Strava OAuth authentication flow to allow users to connect their Strava accounts and access their activity data.
+# Details:
+1. Register the application with Strava API
+2. Implement OAuth 2.0 flow with Strava API v3
+3. Create authentication endpoints in the Express server
+4. Store authentication tokens in session (not persistent storage)
+5. Handle token refresh when expired
+
+```javascript
+const passport = require('passport');
+const StravaStrategy = require('passport-strava-oauth2').Strategy;
+
+passport.use(new StravaStrategy({
+  clientID: process.env.STRAVA_CLIENT_ID,
+  clientSecret: process.env.STRAVA_CLIENT_SECRET,
+  callbackURL: `${process.env.NGROK_URL}/auth/strava/callback`
+}, (accessToken, refreshToken, profile, done) => {
+  // Store tokens in session, not in database
+  return done(null, {
+    id: profile.id,
+    accessToken,
+    refreshToken,
+    expiresAt: new Date().getTime() + (3600 * 1000) // 1 hour from now
+  });
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.serializeUser((user, done) => done(null, user));
+passport.deserializeUser((user, done) => done(null, user));
+
+app.get('/auth/strava', passport.authenticate('strava', { scope: ['read_all,activity:read'] }));
+
+app.get('/auth/strava/callback', 
+  passport.authenticate('strava', { failureRedirect: '/login' }),
+  (req, res) => {
+    res.redirect('/select-activity');
+  }
+);
+```
+
+# Test Strategy:
+Test the complete OAuth flow from authorization to callback. Verify tokens are correctly stored in session. Test token refresh mechanism. Ensure proper error handling for failed authentication attempts.
+
+# Subtasks:
+## 1. Register Application with Strava API [pending]
+### Dependencies: None
+### Description: Create a developer account on Strava and register the application to obtain client ID and client secret
+### Details:
+1. Create a Strava developer account at developers.strava.com
+2. Register a new application providing required details (name, website, callback URL)
+3. Document the client ID and client secret securely
+4. Configure application settings including callback domain and requested scopes
+5. Set up proper redirect URI that matches your application's OAuth callback endpoint
+<info added on 2025-07-18T10:44:09.715Z>
+## Test Strategy
+1. **Strava App Registration Verification**: Navigate to developers.strava.com and verify app is registered correctly
+2. **Client ID/Secret Testing**: Verify client credentials are properly set in environment variables
+3. **Callback URL Testing**: Test that registered callback URLs match ngrok configuration
+4. **Browser-based Registration Testing**: Access Strava Developer Dashboard in browser to verify app details
+5. **API Rate Limits Testing**: Verify API rate limits and usage quotas are understood and documented
+6. **Webhook Configuration Testing**: Test webhook endpoint registration if applicable
+7. **App Permissions Testing**: Verify required OAuth scopes are correctly configured
+8. **Pass/Fail Criteria**: App registered successfully, credentials configured, callback URLs match, permissions set
+</info added on 2025-07-18T10:44:09.715Z>
+
+## 2. Implement OAuth Authorization Flow [pending]
+### Dependencies: 4.1
+### Description: Create the authorization endpoints and implement the OAuth 2.0 flow to obtain user authorization
+### Details:
+1. Create an authorization endpoint that redirects users to Strava's authorization page
+2. Implement the callback endpoint to receive the authorization code
+3. Use the authorization code to request access and refresh tokens
+4. Implement CSRF protection using state parameter
+5. Validate all incoming OAuth responses
+6. Implement proper error handling for authorization failures
+<info added on 2025-07-18T10:44:21.253Z>
+## Test Strategy
+1. **OAuth Authorization URL Testing**: Test authorization URL generation and verify it loads correctly in browser
+2. **Browser-based Authorization Flow**: Complete full OAuth flow in browser and verify redirect to Strava
+3. **Callback Endpoint Testing**: Test callback endpoint receives authorization code correctly
+4. **Token Exchange Testing**: Verify authorization code exchanges for access token successfully
+5. **Error Handling Testing**: Test various OAuth error scenarios (user denies, invalid state, etc.)
+6. **Cross-Browser OAuth Testing**: Test OAuth flow in Chrome, Firefox, Safari, and Edge
+7. **Mobile OAuth Testing**: Test OAuth flow on mobile devices using responsive testing
+8. **Security Testing**: Verify state parameter prevents CSRF attacks
+9. **Pass/Fail Criteria**: Authorization URL works, callback receives code, token exchange successful, errors handled
+</info added on 2025-07-18T10:44:21.253Z>
+
+## 3. Implement Secure Token Storage [pending]
+### Dependencies: 4.2
+### Description: Design and implement a secure mechanism to store OAuth tokens in the user session
+### Details:
+1. Implement encrypted session storage for tokens
+2. Ensure tokens are not exposed in client-side code
+3. Set appropriate cookie security flags (HttpOnly, Secure, SameSite)
+4. Implement session validation middleware
+5. Create a token manager service to abstract token storage and retrieval
+6. Document the token storage architecture and security measures
+
+## 4. Implement Token Refresh Mechanism [pending]
+### Dependencies: 4.3
+### Description: Create a system to detect expired tokens and automatically refresh them using the refresh token
+### Details:
+1. Implement token expiration checking before API calls
+2. Create a token refresh function using the refresh token
+3. Update stored tokens after successful refresh
+4. Handle refresh token expiration scenarios
+5. Implement retry logic for failed API calls due to token expiration
+6. Add logging for token refresh events for debugging purposes
+
+## 5. Implement Error Handling and Edge Cases [pending]
+### Dependencies: 4.2, 4.3, 4.4
+### Description: Develop comprehensive error handling for all OAuth-related operations and edge cases
+### Details:
+1. Handle user rejection of authorization
+2. Implement error handling for network failures during OAuth flow
+3. Create recovery mechanisms for interrupted authorization flows
+4. Handle revoked access scenarios
+5. Implement rate limiting protection
+6. Create user-friendly error messages for various failure scenarios
+7. Add detailed logging for troubleshooting OAuth issues
+
+## 6. Test OAuth Implementation [pending]
+### Dependencies: 4.1, 4.2, 4.3, 4.4, 4.5
+### Description: Create and execute comprehensive tests for the OAuth implementation
+### Details:
+1. Create unit tests for token management functions
+2. Implement integration tests for the complete OAuth flow
+3. Test token refresh mechanism with expired tokens
+4. Test error handling with simulated failures
+5. Perform security testing including CSRF protection verification
+6. Create documentation for the OAuth implementation including sequence diagrams
+7. Conduct end-to-end testing with real Strava accounts
+

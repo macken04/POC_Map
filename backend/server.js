@@ -2,48 +2,204 @@ const express = require('express');
 const path = require('path');
 const session = require('express-session');
 const cors = require('cors');
-require('dotenv').config();
+const helmet = require('helmet');
+const morgan = require('morgan');
+const compression = require('compression');
+const cookieParser = require('cookie-parser');
+const config = require('./config');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const appConfig = config.getConfig();
 
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Middleware order is important for proper functionality
+// 1. Security headers first
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://api.mapbox.com"],
+      scriptSrc: ["'self'", "https://api.mapbox.com"],
+      imgSrc: ["'self'", "data:", "https://api.mapbox.com", "https://**.tiles.mapbox.com"],
+      connectSrc: ["'self'", "https://api.mapbox.com", "https://events.mapbox.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"]
+    }
+  },
+  crossOriginEmbedderPolicy: false // Required for Mapbox GL JS
+}));
+
+// 2. Request logging
+app.use(morgan(appConfig.logging.format));
+
+// 3. Response compression
+app.use(compression());
+
+// 4. CORS configuration
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+  origin: appConfig.cors.allowedOrigins,
   credentials: true
 }));
 
-// Session configuration
+// 5. Body parsing middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// 6. Cookie parsing
+app.use(cookieParser());
+
+// 7. Session configuration
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-secret-key',
+  secret: appConfig.session.secret,
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: appConfig.session.secure,
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: appConfig.session.maxAge
   }
 }));
 
 // Static files
-app.use('/generated-maps', express.static(path.join(__dirname, 'generated-maps')));
+app.use('/generated-maps', express.static(appConfig.storage.generatedMapsDir));
 
-// Routes will be added here
+// Health check endpoint
+app.get('/health', (req, res) => {
+  const healthStatus = {
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: appConfig.env,
+    version: require('./package.json').version,
+    memory: process.memoryUsage(),
+    checks: {
+      server: 'ok',
+      config: 'ok',
+      storage: require('fs').existsSync(appConfig.storage.generatedMapsDir) ? 'ok' : 'error'
+    }
+  };
+  
+  const hasErrors = Object.values(healthStatus.checks).includes('error');
+  const statusCode = hasErrors ? 503 : 200;
+  
+  res.status(statusCode).json(healthStatus);
+});
+
+// Import route modules
+const authRoutes = require('./routes/auth');
+const stravaRoutes = require('./routes/strava');
+const mapRoutes = require('./routes/maps');
+
+// Mount routes
+app.use('/auth', authRoutes);
+app.use('/api/strava', stravaRoutes);
+app.use('/api/maps', mapRoutes);
+
+// Root endpoint
 app.get('/', (req, res) => {
-  res.json({ message: 'Map Printing Backend Server is running!' });
+  res.json({ 
+    message: 'Map Printing Backend Server is running!',
+    environment: appConfig.env,
+    port: appConfig.port,
+    endpoints: {
+      health: '/health',
+      config: '/config',
+      auth: '/auth',
+      strava: '/api/strava',
+      maps: '/api/maps'
+    }
+  });
+});
+
+// Configuration endpoint (non-sensitive values only)
+app.get('/config', (req, res) => {
+  res.json({
+    environment: appConfig.env,
+    port: appConfig.port,
+    corsOrigin: appConfig.cors.origin,
+    mapExportTimeout: appConfig.mapExport.timeout,
+    mapQuality: appConfig.mapExport.quality,
+    storageCleanupInterval: appConfig.storage.cleanupInterval,
+    loggingLevel: appConfig.logging.level
+  });
 });
 
 // Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+app.use((req, res, next) => {
+  res.status(404).json({ 
+    error: 'Route not found',
+    path: req.path,
+    method: req.method
+  });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.use((err, req, res, next) => {
+  console.error('Server error:', err.stack);
+  
+  // Don't leak error details in production
+  const errorResponse = {
+    error: appConfig.env === 'production' ? 'Internal server error' : err.message,
+    timestamp: new Date().toISOString(),
+    path: req.path,
+    method: req.method
+  };
+  
+  res.status(err.status || 500).json(errorResponse);
+});
+
+// Start server with graceful shutdown
+const server = app.listen(appConfig.port, () => {
+  console.log(`Server running on port ${appConfig.port} in ${appConfig.env} mode`);
+  console.log(`Configuration loaded successfully`);
+  console.log(`Health check available at: http://localhost:${appConfig.port}/health`);
+  
+  // Create storage directory if it doesn't exist
+  const fs = require('fs');
+  if (!fs.existsSync(appConfig.storage.generatedMapsDir)) {
+    fs.mkdirSync(appConfig.storage.generatedMapsDir, { recursive: true });
+    console.log(`Created storage directory: ${appConfig.storage.generatedMapsDir}`);
+  }
+});
+
+// Graceful shutdown handling
+const gracefulShutdown = (signal) => {
+  console.log(`\nReceived ${signal}. Starting graceful shutdown...`);
+  
+  server.close((err) => {
+    if (err) {
+      console.error('Error during server shutdown:', err);
+      process.exit(1);
+    }
+    
+    console.log('Server closed successfully');
+    
+    // Clean up any resources here
+    // Close database connections, clear timers, etc.
+    
+    console.log('Graceful shutdown completed');
+    process.exit(0);
+  });
+  
+  // Force close server after 10 seconds
+  setTimeout(() => {
+    console.error('Could not close connections in time, forcefully shutting down');
+    process.exit(1);
+  }, 10000);
+};
+
+// Handle shutdown signals
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled rejection at:', promise, 'reason:', reason);
+  process.exit(1);
 });
 
 module.exports = app;
