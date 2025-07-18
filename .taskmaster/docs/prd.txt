@@ -1,0 +1,143 @@
+# Shopify Custom Map Printing Platform - Product Requirements Document
+
+## Executive Summary
+A Shopify-based e-commerce platform that allows users to connect their Strava account, select cycling activities, and generate custom high-resolution maps for printing. The platform replicates the functionality of englishcyclist.com with local development capabilities.
+
+## Product Overview
+### Vision
+Enable cyclists to create personalized, high-quality printed maps of their favorite routes by connecting their Strava data to a custom map generation service integrated with Shopify.
+
+### Target Users
+- Cycling enthusiasts who track activities on Strava
+- Customers interested in custom map artwork and memorabilia
+- Users seeking high-quality printed maps for personal or gift purposes
+
+## Core Features
+
+### 1. Strava Integration
+**User Story**: As a cyclist, I want to connect my Strava account so that I can access my cycling activities for map generation.
+**Acceptance Criteria**:
+- OAuth login with Strava API v3
+- Session-based authentication (no data storage)
+- Activity selection from user's Strava profile
+- Route data import from GPX/TCX files
+
+### 2. Interactive Map Preview
+**User Story**: As a user, I want to preview my selected route on an interactive map so that I can see how it will look before ordering.
+**Acceptance Criteria**:
+- Real-time map visualization using Mapbox GL JS
+- Route rendering from Strava activity data
+- Interactive zoom and pan functionality
+- Style preview matching final print output
+
+### 3. High-Resolution Map Export
+**User Story**: As a customer, I want to generate print-ready maps at professional quality so that I can order physical prints.
+**Acceptance Criteria**:
+- A4 format: 2,480 x 3,508 pixels at 300 DPI
+- A3 format: 3,508 x 4,961 pixels at 300 DPI
+- Canvas export using Mapbox GL JS with preserveDrawingBuffer
+- Puppeteer integration for server-side generation
+
+### 4. Map Customization
+**User Story**: As a user, I want to customize my map's appearance so that it matches my personal preferences.
+**Acceptance Criteria**:
+- Multiple map style options
+- Route color customization
+- Annotation and labeling options
+- Size selection (A3/A4)
+
+### 5. Shopify E-commerce Integration
+**User Story**: As a customer, I want to seamlessly purchase my custom map through a familiar checkout process.
+**Acceptance Criteria**:
+- Native Shopify cart integration
+- Custom product pages for map services
+- Secure checkout process
+- Order processing and fulfillment tracking
+
+## Technical Requirements
+
+### Architecture
+- **Frontend**: Shopify Dawn theme with custom JavaScript components
+- **Backend**: Node.js/Express server with session-based authentication
+- **Maps**: Mapbox GL JS for interactive display and high-resolution export
+- **High-Resolution Export**: Canvas Export + Puppeteer for print-quality maps
+- **APIs**: Strava API v3 for authentication and activity data
+- **Storage**: Local file system for generated map images
+- **Development**: ngrok for external access to local server
+
+### Performance Requirements
+- Interactive map loading within 3 seconds
+- High-resolution export generation within 30 seconds
+- Support for routes up to 200km in length
+- Concurrent user support for up to 10 active sessions
+
+### Security Requirements
+- Session-based authentication only (no user data storage)
+- Secure API key management
+- HTTPS required for all OAuth interactions
+- Input validation for all user-submitted data
+
+## Implementation Phases
+
+### Phase 1: Foundation & External Access (High Priority)
+1. Shopify Dawn theme development environment setup
+2. Node.js backend server with session-based authentication
+3. ngrok configuration for external access
+4. Strava OAuth integration with session storage
+5. Mapbox account setup and API key configuration
+6. Puppeteer installation and configuration
+
+### Phase 2: Core Mapping & Export (High Priority)
+7. Strava API integration for activity fetching
+8. Map visualization component with Mapbox GL JS
+9. Route rendering from Strava GPX/TCX data
+10. Local file system for map storage
+11. Mapbox GL JS high-resolution export configuration
+12. Device pixel ratio manipulation for 300 DPI rendering
+13. Canvas export system implementation
+14. A3/A4 print sizing at 300 DPI
+
+### Phase 3: Customization & Integration (Medium Priority)
+15. Map customization interface
+16. Shopify app integration
+17. Product pages creation in Shopify
+18. Cart integration and checkout flow
+19. Local map serving endpoint for Shopify integration
+
+## User Journey
+1. User visits Shopify store → Custom map product page
+2. Connect to Strava → OAuth authentication (session-based)
+3. Select Activity → Choose from user's Strava activities
+4. Customize Map → Style, colors, annotations, size selection
+5. Preview Map → Interactive preview with Mapbox GL JS
+6. Generate Print → High-resolution export via canvas/Puppeteer
+7. Add to Cart → Shopify native checkout process
+8. Order Processing → Shopify handles customer data and fulfillment
+
+## Success Metrics
+- User conversion rate from preview to purchase
+- Average order value
+- Map generation success rate
+- Customer satisfaction scores
+- Print quality feedback
+
+## Constraints and Assumptions
+- Local development environment required
+- Session-based authentication only
+- Mapbox GL JS limitations for high-resolution export
+- Strava API rate limits and usage policies
+- Print quality requirements mandate 300 DPI output
+
+## Dependencies
+- Strava API access and OAuth approval
+- Mapbox API account and usage limits
+- Shopify store setup and app permissions
+- ngrok for development testing
+- Local server infrastructure for map generation
+
+## Risk Mitigation
+- Test OAuth integration early with ngrok
+- Validate high-resolution export quality before full implementation
+- Monitor API rate limits and usage costs
+- Implement error handling for map generation failures
+- Plan for scalability beyond local development setup
