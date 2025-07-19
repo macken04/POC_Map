@@ -6,6 +6,11 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "tunnel": "ngrok http --url=boss-hog-freely.ngrok-free.app 3000",
+    "capture-ngrok": "node scripts/capture-ngrok.js",
+    "tunnel:capture": "concurrently --kill-others-on-fail \"npm run tunnel\" \"wait-on http://localhost:4040 && npm run capture-ngrok\"",
+    "dev:full": "concurrently \"npm run dev\" \"npm run tunnel:capture\"",
+    "dev:complete": "concurrently --kill-others-on-fail \"npm run tunnel\" \"wait-on http://localhost:4040 && npm run capture-ngrok && npm run dev\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -31,6 +36,8 @@
     "puppeteer": "^21.0.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "concurrently": "^8.2.0",
+    "nodemon": "^3.0.1",
+    "wait-on": "^7.2.0"
   }
 }

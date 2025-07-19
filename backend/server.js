@@ -124,6 +124,36 @@ app.get('/config', (req, res) => {
   });
 });
 
+// Dynamic ngrok URL endpoint for frontend access
+app.get('/api/ngrok-url', (req, res) => {
+  try {
+    const ngrokUrl = process.env.NGROK_URL || appConfig.development?.ngrokUrl;
+    
+    if (!ngrokUrl || ngrokUrl.includes('test-ngrok-url')) {
+      return res.status(503).json({
+        error: 'ngrok URL not available',
+        message: 'No valid ngrok tunnel URL found. Make sure ngrok is running and URL has been captured.',
+        available: false
+      });
+    }
+    
+    res.json({
+      ngrokUrl: ngrokUrl,
+      available: true,
+      timestamp: new Date().toISOString(),
+      callbackUrl: `${ngrokUrl}/auth/strava/callback`
+    });
+    
+  } catch (error) {
+    console.error('Error retrieving ngrok URL:', error);
+    res.status(500).json({
+      error: 'Failed to retrieve ngrok URL',
+      message: 'An error occurred while fetching the current tunnel URL',
+      available: false
+    });
+  }
+});
+
 // Error handling middleware
 app.use((req, res, next) => {
   res.status(404).json({ 

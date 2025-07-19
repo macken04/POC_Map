@@ -43,7 +43,7 @@ function getConfig() {
     strava: {
       clientId: process.env.STRAVA_CLIENT_ID,
       clientSecret: process.env.STRAVA_CLIENT_SECRET,
-      redirectUri: process.env.STRAVA_REDIRECT_URI
+      redirectUri: process.env.STRAVA_REDIRECT_URI || `${process.env.NGROK_URL}/auth/strava/callback`
     },
     
     mapbox: {
@@ -166,9 +166,53 @@ function isEnvironment(env) {
   return process.env.NODE_ENV === env;
 }
 
+/**
+ * Refresh configuration by reloading environment variables
+ * Useful when ngrok URL or other dynamic values change
+ */
+function refreshConfig() {
+  // Re-load environment variables from .env file
+  require('dotenv').config();
+  
+  // Clear require cache for environment-specific configs
+  const env = process.env.NODE_ENV || 'development';
+  const envConfigPath = path.join(__dirname, `${env}.js`);
+  
+  if (require.cache[envConfigPath]) {
+    delete require.cache[envConfigPath];
+  }
+  
+  return getConfig();
+}
+
+/**
+ * Get current ngrok URL from environment
+ * Returns null if not available or if it's a test URL
+ */
+function getNgrokUrl() {
+  const ngrokUrl = process.env.NGROK_URL;
+  
+  if (!ngrokUrl || ngrokUrl.includes('test-ngrok-url')) {
+    return null;
+  }
+  
+  return ngrokUrl;
+}
+
+/**
+ * Check if ngrok is properly configured
+ */
+function isNgrokConfigured() {
+  const ngrokUrl = getNgrokUrl();
+  return ngrokUrl !== null && (ngrokUrl.includes('ngrok.io') || ngrokUrl.includes('ngrok-free.app'));
+}
+
 module.exports = {
   getConfig,
   getSanitizedConfig,
   get,
-  isEnvironment
+  isEnvironment,
+  refreshConfig,
+  getNgrokUrl,
+  isNgrokConfigured
 };

@@ -50,8 +50,8 @@ shopify theme dev --store=print-my-ride-version-5.myshopify.com
 # In another terminal - start backend (when implemented)
 npm run dev
 
-# In another terminal - start ngrok tunnel
-ngrok http 3000
+# In another terminal - start ngrok tunnel with persistent URL
+npm run tunnel
 ```
 
 ## 📝 Daily Development Workflow
@@ -64,7 +64,10 @@ git pull origin main
 # Start development servers
 shopify theme dev --store=print-my-ride-version-5.myshopify.com
 npm run dev
-ngrok http 3000
+npm run tunnel
+
+# Or start backend and tunnel together
+npm run dev:full
 ```
 
 ### Making Changes
@@ -133,7 +136,7 @@ git push origin feature/your-feature-name
 ### Strava API Setup
 1. Go to [Strava Developers](https://developers.strava.com/)
 2. Create new application
-3. Set redirect URI to your ngrok URL: `https://your-ngrok-url.ngrok.io/auth/strava/callback`
+3. Set redirect URI to persistent URL: `https://boss-hog-freely.ngrok-free.app/auth/strava/callback`
 4. Copy Client ID and Client Secret
 
 ### Mapbox API Setup
@@ -145,7 +148,9 @@ git push origin feature/your-feature-name
 1. Sign up at [ngrok](https://ngrok.com/)
 2. Install ngrok: `npm install -g ngrok`
 3. Authenticate: `ngrok authtoken your-token`
-4. Start tunnel: `ngrok http 3000`
+4. Start tunnel with persistent URL: `npm run tunnel`
+   - Uses persistent URL: `https://boss-hog-freely.ngrok-free.app`
+   - No more URL changes needed for Strava API configuration
 
 ## 📊 Store Information
 
@@ -213,8 +218,11 @@ shopify auth login
 # Check if tunnel is running
 ngrok status
 
-# Restart tunnel
-ngrok http 3000
+# Restart tunnel with persistent URL
+npm run tunnel
+
+# Or check ngrok configuration
+cat ngrok.yml
 ```
 
 #### Environment Variables Not Loading
@@ -257,7 +265,7 @@ map_site_vibe/
 ### Development URLs
 - **Theme Dev**: Provided by `shopify theme dev`
 - **Backend**: `http://localhost:3000`
-- **ngrok**: `https://your-unique-id.ngrok.io`
+- **ngrok**: `https://boss-hog-freely.ngrok-free.app` (persistent URL)
 
 ## 🎯 Next Steps
 

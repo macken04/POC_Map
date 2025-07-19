@@ -1,0 +1,12 @@
+version: "2"
+log_level: info
+log_format: logfmt
+
+tunnels:
+  map-printing-backend:
+    addr: 3000
+    proto: http
+    hostname: boss-hog-freely.ngrok-free.app
+    inspect: true
+
+web_addr: localhost:4040
