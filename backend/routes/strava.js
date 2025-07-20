@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { requireAuth } = require('./auth');
+const { refreshTokenIfNeeded } = require('../middleware/tokenRefresh');
+const rateLimitManager = require('../middleware/rateLimiting');
 
 /**
  * Strava API integration routes
@@ -10,12 +12,14 @@ const { requireAuth } = require('./auth');
 
 /**
  * Helper function to make authenticated requests to Strava API
+ * Enhanced with rate limit tracking
  */
 async function stravaApiRequest(url, accessToken) {
-  const response = await fetch(url, {
+  const response = await rateLimitManager.stravaApiRequest(url, {
     headers: {
       'Authorization': `Bearer ${accessToken}`,
-      'Accept': 'application/json'
+      'Accept': 'application/json',
+      'User-Agent': 'PrintMyRide/1.0'
     }
   });
 
@@ -32,11 +36,11 @@ async function stravaApiRequest(url, accessToken) {
 /**
  * Get authenticated athlete information
  */
-router.get('/athlete', requireAuth, async (req, res) => {
+router.get('/athlete', rateLimitManager.createClientRateLimit(), requireAuth, refreshTokenIfNeeded, rateLimitManager.checkStravaRateLimit(), async (req, res) => {
   try {
     const athlete = await stravaApiRequest(
       'https://www.strava.com/api/v3/athlete',
-      req.session.strava.accessToken
+      req.getAccessToken()
     );
 
     res.json({
@@ -81,7 +85,7 @@ router.get('/athlete', requireAuth, async (req, res) => {
  * - before: Unix timestamp for activities before this date
  * - after: Unix timestamp for activities after this date
  */
-router.get('/activities', requireAuth, async (req, res) => {
+router.get('/activities', rateLimitManager.createClientRateLimit(), requireAuth, refreshTokenIfNeeded, rateLimitManager.checkStravaRateLimit(), async (req, res) => {
   try {
     const {
       page = 1,
@@ -105,7 +109,7 @@ router.get('/activities', requireAuth, async (req, res) => {
 
     const activities = await stravaApiRequest(
       `https://www.strava.com/api/v3/athlete/activities?${params}`,
-      req.session.strava.accessToken
+      req.getAccessToken()
     );
 
     // Filter and format activity data for map generation
@@ -165,7 +169,7 @@ router.get('/activities', requireAuth, async (req, res) => {
  * Get detailed information for a specific activity
  * Includes full polyline data for map generation
  */
-router.get('/activities/:id', requireAuth, async (req, res) => {
+router.get('/activities/:id', rateLimitManager.createClientRateLimit(), requireAuth, refreshTokenIfNeeded, rateLimitManager.checkStravaRateLimit(), async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -178,7 +182,7 @@ router.get('/activities/:id', requireAuth, async (req, res) => {
 
     const activity = await stravaApiRequest(
       `https://www.strava.com/api/v3/activities/${id}`,
-      req.session.strava.accessToken
+      req.getAccessToken()
     );
 
     // Format detailed activity data
@@ -246,7 +250,7 @@ router.get('/activities/:id', requireAuth, async (req, res) => {
  * Get activity streams (detailed GPS and sensor data)
  * Used for high-resolution map generation
  */
-router.get('/activities/:id/streams', requireAuth, async (req, res) => {
+router.get('/activities/:id/streams', rateLimitManager.createClientRateLimit(), requireAuth, refreshTokenIfNeeded, rateLimitManager.checkStravaRateLimit(), async (req, res) => {
   try {
     const { id } = req.params;
     const { types = 'latlng,altitude,time' } = req.query;
@@ -260,7 +264,7 @@ router.get('/activities/:id/streams', requireAuth, async (req, res) => {
 
     const streams = await stravaApiRequest(
       `https://www.strava.com/api/v3/activities/${id}/streams/${types}?key_by_type=true`,
-      req.session.strava.accessToken
+      req.getAccessToken()
     );
 
     res.json({
@@ -301,7 +305,7 @@ router.get('/activities/:id/streams', requireAuth, async (req, res) => {
  * - start_date: Start date filter (YYYY-MM-DD)
  * - end_date: End date filter (YYYY-MM-DD)
  */
-router.get('/activities/search', requireAuth, async (req, res) => {
+router.get('/activities/search', rateLimitManager.createClientRateLimit(), requireAuth, refreshTokenIfNeeded, rateLimitManager.checkStravaRateLimit(), async (req, res) => {
   try {
     const { q, type, start_date, end_date, page = 1, per_page = 30 } = req.query;
 
@@ -324,7 +328,7 @@ router.get('/activities/search', requireAuth, async (req, res) => {
 
     const activities = await stravaApiRequest(
       `https://www.strava.com/api/v3/athlete/activities?${params}`,
-      req.session.strava.accessToken
+      req.getAccessToken()
     );
 
     // Filter activities based on search criteria

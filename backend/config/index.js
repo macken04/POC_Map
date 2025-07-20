@@ -29,7 +29,21 @@ function getConfig() {
     session: {
       secret: process.env.SESSION_SECRET,
       maxAge: parseInt(process.env.SESSION_MAX_AGE) || 86400000, // 24 hours
-      secure: env === 'production'
+      secure: env === 'production',
+      httpOnly: true,
+      sameSite: env === 'production' ? 'strict' : 'lax',
+      name: process.env.SESSION_NAME || 'connect.sid',
+      // Enhanced security settings
+      rolling: true, // Reset expiration on activity
+      saveUninitialized: false,
+      resave: false,
+      // Cookie settings for different environments
+      cookie: {
+        secure: env === 'production',
+        httpOnly: true,
+        maxAge: parseInt(process.env.SESSION_MAX_AGE) || 86400000,
+        sameSite: env === 'production' ? 'strict' : 'lax'
+      }
     },
     
     // Security configuration

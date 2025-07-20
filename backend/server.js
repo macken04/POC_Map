@@ -7,6 +7,7 @@ const morgan = require('morgan');
 const compression = require('compression');
 const cookieParser = require('cookie-parser');
 const config = require('./config');
+const sessionSecurity = require('./middleware/sessionSecurity');
 
 const app = express();
 const appConfig = config.getConfig();
@@ -48,17 +49,18 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // 6. Cookie parsing
 app.use(cookieParser());
 
-// 7. Session configuration
+// 7. Session configuration with enhanced security
 app.use(session({
   secret: appConfig.session.secret,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: appConfig.session.secure,
-    httpOnly: true,
-    maxAge: appConfig.session.maxAge
-  }
+  resave: appConfig.session.resave,
+  saveUninitialized: appConfig.session.saveUninitialized,
+  rolling: appConfig.session.rolling,
+  name: appConfig.session.name,
+  cookie: appConfig.session.cookie
 }));
+
+// 8. Session security middleware
+app.use(sessionSecurity.getAllMiddleware());
 
 // Static files
 app.use('/generated-maps', express.static(appConfig.storage.generatedMapsDir));
