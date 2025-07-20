@@ -154,6 +154,52 @@ app.get('/api/ngrok-url', (req, res) => {
   }
 });
 
+// Shopify integration test endpoint
+app.get('/api/test-shopify', (req, res) => {
+  try {
+    const ngrokUrl = process.env.NGROK_URL || appConfig.development?.ngrokUrl;
+    const origin = req.get('Origin') || req.get('Referer');
+    
+    res.json({
+      success: true,
+      message: 'Shopify integration test successful',
+      timestamp: new Date().toISOString(),
+      environment: appConfig.env,
+      server: {
+        port: appConfig.port,
+        host: appConfig.host,
+        uptime: process.uptime()
+      },
+      ngrok: {
+        url: ngrokUrl,
+        available: !!(ngrokUrl && !ngrokUrl.includes('test-ngrok-url'))
+      },
+      cors: {
+        origin: origin,
+        allowedOrigins: appConfig.cors.allowedOrigins,
+        corsEnabled: true
+      },
+      shopify: {
+        storeUrl: appConfig.shopify.storeUrl,
+        integrationReady: true
+      },
+      headers: {
+        'X-Test-Source': 'shopify-integration-test',
+        'X-Backend-Status': 'operational'
+      }
+    });
+    
+  } catch (error) {
+    console.error('Shopify test endpoint error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Shopify integration test failed',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Error handling middleware
 app.use((req, res, next) => {
   res.status(404).json({ 

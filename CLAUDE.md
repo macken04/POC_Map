@@ -27,27 +27,39 @@
 
 ### Project Structure
 ```
-shopify-map-printing/
+map_site_vibe/
+├── .env                          # SINGLE environment file (project root)
 ├── backend/
 │   ├── server.js                 # Express server
+│   ├── config/
+│   │   ├── index.js             # Config loader (reads from project root .env)
+│   │   ├── development.js       # Dev environment overrides
+│   │   ├── production.js        # Prod environment overrides
+│   │   └── test.js              # Test environment overrides
 │   ├── routes/
-│   │   ├── auth.js              # Strava OAuth routes
-│   │   ├── strava.js            # Strava API integration
+│   │   ├── auth.js              # Strava OAuth routes (CONFIGURED)
+│   │   ├── strava.js            # Strava API integration (READY)
 │   │   └── maps.js              # Map generation routes
 │   ├── services/
 │   │   ├── stravaService.js     # Strava API calls
 │   │   └── mapService.js        # Map generation logic
+│   ├── utils/
+│   │   └── envValidator.js      # Environment validation
+│   ├── tests/
+│   │   └── config-test.js       # Configuration testing
 │   ├── generated-maps/          # Local map storage
 │   └── package.json
 ├── shopify-theme/
-│   ├── assets/
-│   ├── sections/
-│   ├── templates/
-│   └── (Dawn theme files)
-├── shopify-app/
-│   └── (Store-level app configuration files)
-└── docs/
-    └── PROJECT_PLAN.md
+│   └── dawn/                    # Dawn theme files
+│       ├── assets/
+│       ├── sections/
+│       ├── templates/
+│       └── ...
+├── .taskmaster/                 # Task Master files
+│   ├── tasks/
+│   ├── docs/
+│   └── config.json
+└── CLAUDE.md                    # This file
 ```
 
 ## Essential Commands
@@ -462,6 +474,70 @@ These commands make AI calls and may take up to a minute:
 - Provides more informed task creation and updates
 - Recommended for complex technical tasks
 
+## Environment Configuration
+
+### CRITICAL: Single .env File Rule
+
+**ALWAYS use only the single `.env` file in the project root (`/Users/davedev/Desktop/dev/map_site_vibe/.env`)**
+
+- ❌ **NEVER create** backend/.env or any other .env files
+- ✅ **Backend config automatically reads** from project root .env via `path.join(__dirname, '..', '..', '.env')`
+- ✅ **All environment variables** are centralized in one location
+- ✅ **Configuration system** validates and loads properly
+
+### Current Environment Status
+
+#### ✅ Strava API - CONFIGURED & READY
+```bash
+STRAVA_CLIENT_ID=131652
+STRAVA_CLIENT_SECRET=2ab484b78d29eec7cfdfa2768dccf24e9ae391e2
+STRAVA_REDIRECT_URI=https://boss-hog-freely.ngrok-free.app/auth/strava/callback
+```
+- **OAuth Scopes**: `read,activity:read_all`
+- **Callback Domain**: `boss-hog-freely.ngrok-free.app`
+- **Status**: Registered and tested ✅
+
+#### ⚠️ Mapbox API - NEEDS TOKEN
+```bash
+MAPBOX_ACCESS_TOKEN=your_mapbox_access_token_here  # UPDATE REQUIRED
+```
+
+#### ⚠️ Shopify API - NEEDS CONFIGURATION
+```bash
+SHOPIFY_API_KEY=your_shopify_api_key_here          # UPDATE REQUIRED
+SHOPIFY_SECRET_KEY=your_shopify_secret_key_here    # UPDATE REQUIRED
+SHOPIFY_STORE_URL=https://print-my-ride-version-5.myshopify.com  # CORRECT
+```
+
+#### ✅ Development Configuration - READY
+```bash
+NODE_ENV=development
+PORT=3000
+SESSION_SECRET=development_session_secret_print_my_ride_2024_minimum_32_chars
+NGROK_URL=https://boss-hog-freely.ngrok-free.app
+ALLOWED_ORIGINS=http://localhost:3000,https://boss-hog-freely.ngrok-free.app,https://print-my-ride-version-5.myshopify.com,https://admin.shopify.com
+```
+
+### Environment Testing
+
+**Test configuration is working:**
+```bash
+cd backend && node tests/config-test.js
+```
+
+**Quick config verification:**
+```bash
+cd backend && node -e "const config = require('./config'); console.log('Strava Client ID:', config.getConfig().strava.clientId);"
+```
+
+### Configuration Loading Chain
+
+1. **Project Root .env** → `require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') })`
+2. **Environment Validation** → `utils/envValidator.js` checks required variables
+3. **Base Configuration** → `config/index.js` loads and merges settings
+4. **Environment Overrides** → `config/development.js`, `config/production.js`, etc.
+5. **Application Use** → All backend code uses `require('./config').getConfig()`
+
 ## Development Store Configuration
 
 ### Shopify Store Details
@@ -493,7 +569,13 @@ shopify theme push --theme=183192945024  # Development theme ID
 
 **ALWAYS follow these rules when working on this project:**
 
-1. **Use Project Tech Stack Only**: Never suggest or implement solutions outside the defined tech stack:
+1. **SINGLE .ENV FILE RULE**: CRITICAL - Always use only the project root `.env` file:
+   - ❌ NEVER create backend/.env, frontend/.env, or any other .env files
+   - ✅ ONLY edit `/Users/davedev/Desktop/dev/map_site_vibe/.env`
+   - ✅ Backend automatically reads from project root via config system
+   - ✅ Test configuration with `cd backend && node tests/config-test.js`
+
+2. **Use Project Tech Stack Only**: Never suggest or implement solutions outside the defined tech stack:
    - Frontend: Shopify Dawn theme + custom JavaScript (no React/Vue/Angular)
    - Backend: Node.js/Express only (no other frameworks)
    - Maps: Mapbox GL JS only (no Google Maps, Leaflet, etc.)
@@ -502,25 +584,25 @@ shopify theme push --theme=183192945024  # Development theme ID
    - Storage: Local file system only (no cloud storage, no databases)
    - Shopify: Store-Level App only (private app for single store, not Partner/Public app)
 
-2. **High-Resolution Export Requirements**: Always implement map export with:
+3. **High-Resolution Export Requirements**: Always implement map export with:
    - 300 DPI resolution for print quality
    - A4: 2,480 x 3,508 pixels, A3: 3,508 x 4,961 pixels
    - Device pixel ratio manipulation for Mapbox GL JS
    - Canvas export method (not Static API)
 
-3. **Development Environment**: Always use:
+4. **Development Environment**: Always use:
    - ngrok for local development tunneling
    - Session-based authentication (no persistent storage)
    - Local file system for generated maps
    - Express.js server structure as defined
 
-4. **API Integration**: Always use:
+5. **API Integration**: Always use:
    - Strava API v3 for OAuth and activity data
    - Mapbox GL JS for all map rendering
    - Puppeteer for headless browser operations
    - Shopify Store-Level App (private app) for e-commerce integration (NOT Partner/Public app)
 
-5. **Code Structure**: Follow the defined project structure:
+6. **Code Structure**: Follow the defined project structure:
    - Backend routes in `backend/routes/`
    - Services in `backend/services/`
    - Generated maps in `backend/generated-maps/`

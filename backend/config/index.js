@@ -7,8 +7,8 @@ const path = require('path');
 const fs = require('fs');
 const { validateAndThrow } = require('../utils/envValidator');
 
-// Load environment variables
-require('dotenv').config();
+// Load environment variables from project root
+require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
 
 /**
  * Get configuration for the current environment
@@ -171,8 +171,8 @@ function isEnvironment(env) {
  * Useful when ngrok URL or other dynamic values change
  */
 function refreshConfig() {
-  // Re-load environment variables from .env file
-  require('dotenv').config();
+  // Re-load environment variables from project root .env file
+  require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
   
   // Clear require cache for environment-specific configs
   const env = process.env.NODE_ENV || 'development';

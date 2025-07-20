@@ -1,4 +1,5 @@
 const express = require('express');
+const crypto = require('crypto');
 const router = express.Router();
 const config = require('../config');
 
@@ -15,12 +16,19 @@ const appConfig = config.getConfig();
  */
 router.get('/strava', (req, res) => {
   try {
+    // Generate CSRF protection state parameter
+    const state = crypto.randomBytes(32).toString('hex');
+    
+    // Store state in session for validation
+    req.session.oauthState = state;
+    
     const authUrl = `https://www.strava.com/oauth/authorize?` +
       `client_id=${appConfig.strava.clientId}&` +
       `response_type=code&` +
       `redirect_uri=${encodeURIComponent(appConfig.strava.redirectUri)}&` +
       `approval_prompt=force&` +
-      `scope=read,activity:read_all`;
+      `scope=read,activity:read_all&` +
+      `state=${state}`;
 
     res.redirect(authUrl);
   } catch (error) {
@@ -37,7 +45,7 @@ router.get('/strava', (req, res) => {
  * Exchanges authorization code for access token and stores in session
  */
 router.get('/strava/callback', async (req, res) => {
-  const { code, error } = req.query;
+  const { code, error, state } = req.query;
 
   if (error) {
     console.error('Strava OAuth error:', error);
@@ -53,6 +61,18 @@ router.get('/strava/callback', async (req, res) => {
       message: 'No authorization code received from Strava'
     });
   }
+
+  // Validate CSRF protection state parameter
+  if (!state || state !== req.session.oauthState) {
+    console.error('OAuth state mismatch:', { received: state, expected: req.session.oauthState });
+    return res.status(400).json({
+      error: 'Invalid request',
+      message: 'OAuth state parameter mismatch. Possible CSRF attack.'
+    });
+  }
+
+  // Clear the state from session after validation
+  delete req.session.oauthState;
 
   try {
     // Exchange authorization code for access token

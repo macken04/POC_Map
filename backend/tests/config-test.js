@@ -10,8 +10,8 @@ const fs = require('fs');
 function testEnvLoading() {
   console.log('🧪 Testing environment variable loading...');
   
-  // Test that .env file exists
-  const envPath = path.join(__dirname, '..', '.env');
+  // Test that .env file exists in project root
+  const envPath = path.join(__dirname, '..', '..', '.env');
   if (!fs.existsSync(envPath)) {
     console.log('❌ .env file not found');
     return false;
