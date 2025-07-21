@@ -142,8 +142,7 @@ router.post('/preview', requireAuth, async (req, res) => {
       markers: showStartEnd ? {
         start: routeCoordinates[0],
         end: routeCoordinates[routeCoordinates.length - 1]
-      } : null,
-      accessToken: appConfig.mapbox.accessToken
+      } : null
     };
 
     res.json({
@@ -262,8 +261,7 @@ router.post('/generate', requireAuth, async (req, res) => {
       title: title,
       showStartEnd: showStartEnd,
       customization: customization,
-      createdAt: new Date().toISOString(),
-      accessToken: appConfig.mapbox.accessToken
+      createdAt: new Date().toISOString()
     };
 
     // Store job metadata (in production, this would go to a database)

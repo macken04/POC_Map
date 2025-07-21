@@ -221,6 +221,75 @@ function isNgrokConfigured() {
   return ngrokUrl !== null && (ngrokUrl.includes('ngrok.io') || ngrokUrl.includes('ngrok-free.app'));
 }
 
+/**
+ * Validate Mapbox access token by making a test API call
+ * @returns {Promise<Object>} - Validation result with success flag and details
+ */
+async function validateMapboxToken() {
+  const token = process.env.MAPBOX_ACCESS_TOKEN;
+  
+  if (!token) {
+    return {
+      success: false,
+      error: 'No Mapbox access token provided'
+    };
+  }
+
+  if (!token.startsWith('pk.')) {
+    return {
+      success: false,
+      error: 'Invalid Mapbox token format. Public tokens should start with "pk."'
+    };
+  }
+
+  try {
+    // Test token by making a simple API call to Mapbox Geocoding API
+    const https = require('https');
+    const testUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/test.json?access_token=${token}&limit=1`;
+    
+    return new Promise((resolve) => {
+      const req = https.get(testUrl, (res) => {
+        if (res.statusCode === 200) {
+          resolve({
+            success: true,
+            message: 'Mapbox token is valid and working'
+          });
+        } else if (res.statusCode === 401) {
+          resolve({
+            success: false,
+            error: 'Mapbox token is invalid or expired'
+          });
+        } else {
+          resolve({
+            success: false,
+            error: `Mapbox API returned status ${res.statusCode}`
+          });
+        }
+      });
+      
+      req.on('error', (error) => {
+        resolve({
+          success: false,
+          error: `Failed to validate Mapbox token: ${error.message}`
+        });
+      });
+      
+      req.setTimeout(5000, () => {
+        req.destroy();
+        resolve({
+          success: false,
+          error: 'Mapbox token validation timeout'
+        });
+      });
+    });
+  } catch (error) {
+    return {
+      success: false,
+      error: `Token validation error: ${error.message}`
+    };
+  }
+}
+
 module.exports = {
   getConfig,
   getSanitizedConfig,
@@ -228,5 +297,6 @@ module.exports = {
   isEnvironment,
   refreshConfig,
   getNgrokUrl,
-  isNgrokConfigured
+  isNgrokConfigured,
+  validateMapboxToken
 };

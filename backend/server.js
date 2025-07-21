@@ -128,6 +128,30 @@ app.get('/config', (req, res) => {
   });
 });
 
+// Secure client configuration endpoint (requires authentication)
+const { requireAuth } = require('./routes/auth');
+app.get('/api/client-config', requireAuth, (req, res) => {
+  try {
+    // Only provide necessary client-side configuration to authenticated users
+    res.json({
+      mapbox: {
+        accessToken: appConfig.mapbox.accessToken
+      },
+      mapExport: {
+        timeout: appConfig.mapExport.timeout,
+        quality: appConfig.mapExport.quality,
+        format: appConfig.mapExport.format
+      }
+    });
+  } catch (error) {
+    console.error('Error providing client config:', error);
+    res.status(500).json({
+      error: 'Configuration unavailable',
+      message: 'Unable to provide client configuration'
+    });
+  }
+});
+
 // Dynamic ngrok URL endpoint for frontend access
 app.get('/api/ngrok-url', (req, res) => {
   try {

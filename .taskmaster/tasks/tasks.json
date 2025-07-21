@@ -404,11 +404,11 @@
             "id": 2,
             "title": "Set Up Environment Variables for API Key Management",
             "description": "Implement secure environment variable configuration for storing and accessing the Mapbox API key",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               1
             ],
-            "details": "1. Create a .env file in the project root (ensure it's in .gitignore)\n2. Add the Mapbox token as MAPBOX_ACCESS_TOKEN=your_token_here\n3. Install dotenv package if not already present\n4. Configure the server to load environment variables\n5. Implement a secure method to pass the token to the client-side application\n6. Create a config file that accesses the environment variable but doesn't expose it directly\n7. Add Shopify store domain to ALLOWED_ORIGINS in .env file\n8. Include https://print-my-ride-version-5.myshopify.com and https://admin.shopify.com",
+            "details": "1. Create a .env file in the project root (ensure it's in .gitignore)\n2. Add the Mapbox token as MAPBOX_ACCESS_TOKEN=your_token_here\n3. Install dotenv package if not already present\n4. Configure the server to load environment variables\n5. Implement a secure method to pass the token to the client-side application\n6. Create a config file that accesses the environment variable but doesn't expose it directly\n7. Add Shopify store domain to ALLOWED_ORIGINS in .env file\n8. Include https://print-my-ride-version-5.myshopify.com and https://admin.shopify.com\n<info added on 2025-07-21T10:41:14.371Z>\nTASK COMPLETED - All security improvements implemented and tested:\n\n✅ **Secure Client Config Endpoint**: \n   - Added `/api/client-config` endpoint that requires authentication\n   - Provides Mapbox access token only to authenticated users\n   - Includes map export configuration securely\n\n✅ **Removed Token Exposure**: \n   - Removed `accessToken` from `/maps/preview` response (line 146 in maps.js)\n   - Removed `accessToken` from `/maps/generate` response (line 266 in maps.js)\n   - Client must now fetch token separately via secure endpoint\n\n✅ **Mapbox Token Validation**: \n   - Implemented `validateMapboxToken()` utility in config/index.js\n   - Tests token validity by calling Mapbox Geocoding API\n   - Provides detailed error messages for debugging\n\n✅ **Enhanced Environment Validation**: \n   - Added `MAPBOX_ACCESS_TOKEN` to development requirements\n   - Added token format validation (must start with 'pk.')\n   - Enhanced error messages for token validation\n\n✅ **Comprehensive Testing**: \n   - Created security-improvements-test.js\n   - All 6 security tests passing\n   - Environment validation working correctly\n   - Token validation confirmed working\n\n**Security Status**: Environment variables are now properly secured with authentication-protected access to sensitive tokens. No tokens are exposed in public API responses.\n</info added on 2025-07-21T10:41:14.371Z>",
             "testStrategy": "1. **Environment Variable Testing**: Verify Mapbox API key is loaded from environment variables correctly\n2. **Configuration Loading**: Test API key configuration loads in development, staging, and production\n3. **Browser-based Config Testing**: Test configuration is accessible to frontend without exposing sensitive values\n4. **Environment Switching**: Test different API keys for different environments\n5. **Security Testing**: Verify API key is not exposed in logs or error messages\n6. **Configuration Validation**: Test missing API key causes appropriate error messages\n7. **Key Rotation Testing**: Test ability to rotate API keys without breaking functionality\n8. **Pass/Fail Criteria**: Environment variables work, keys secure, rotation possible, validation effective"
           },
           {
@@ -1967,7 +1967,7 @@
     ],
     "metadata": {
       "created": "2025-07-18T09:49:17.060Z",
-      "updated": "2025-07-21T09:39:35.765Z",
+      "updated": "2025-07-21T10:41:42.727Z",
       "description": "Tasks for master context"
     }
   }

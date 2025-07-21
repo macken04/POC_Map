@@ -20,6 +20,13 @@ const validationRules = {
     'SHOPIFY_API_KEY',
     'SHOPIFY_SECRET_KEY'
   ],
+
+  // Variables that should be present in development for full functionality
+  development: [
+    'STRAVA_CLIENT_ID',
+    'STRAVA_CLIENT_SECRET',
+    'MAPBOX_ACCESS_TOKEN'
+  ],
   
   // URL validation
   urls: [
@@ -49,6 +56,11 @@ const validationRules = {
     'MAP_FORMAT': ['png', 'jpg', 'jpeg', 'webp'],
     'LOG_LEVEL': ['error', 'warn', 'info', 'debug'],
     'PUPPETEER_HEADLESS': ['true', 'false']
+  },
+
+  // Token format validation patterns
+  tokenFormats: {
+    'MAPBOX_ACCESS_TOKEN': /^pk\./
   }
 };
 
@@ -73,6 +85,15 @@ function validateEnvironment(environment = process.env.NODE_ENV) {
     validationRules.production.forEach(varName => {
       if (!process.env[varName]) {
         errors.push(`Missing required production environment variable: ${varName}`);
+      }
+    });
+  }
+
+  // Check development-specific variables
+  if (environment === 'development') {
+    validationRules.development.forEach(varName => {
+      if (!process.env[varName]) {
+        warnings.push(`Missing recommended development environment variable: ${varName}`);
       }
     });
   }
@@ -106,6 +127,14 @@ function validateEnvironment(environment = process.env.NODE_ENV) {
     const value = process.env[varName];
     if (value && !allowedValues.includes(value)) {
       errors.push(`Invalid value for ${varName}: ${value}. Allowed values: ${allowedValues.join(', ')}`);
+    }
+  });
+
+  // Validate token formats
+  Object.entries(validationRules.tokenFormats).forEach(([varName, pattern]) => {
+    const value = process.env[varName];
+    if (value && !pattern.test(value)) {
+      errors.push(`Invalid format for ${varName}. Expected format: ${pattern}`);
     }
   });
   
