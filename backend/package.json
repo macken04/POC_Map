@@ -11,7 +11,14 @@
     "tunnel:capture": "concurrently --kill-others-on-fail \"npm run tunnel\" \"wait-on http://localhost:4040 && npm run capture-ngrok\"",
     "dev:full": "concurrently \"npm run dev\" \"npm run tunnel:capture\"",
     "dev:complete": "concurrently --kill-others-on-fail \"npm run tunnel\" \"wait-on http://localhost:4040 && npm run capture-ngrok && npm run dev\"",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node tests/oauth-test-runner.js",
+    "test:unit": "node tests/oauth-unit-tests.js",
+    "test:integration": "node tests/oauth-integration-tests.js",
+    "test:token-refresh": "node tests/oauth-token-refresh-enhanced.js",
+    "test:csrf": "node tests/oauth-csrf-protection-test.js",
+    "test:error-handling": "node tests/oauth-error-handling-test.js",
+    "test:config": "node tests/config-test.js",
+    "test:tokens": "node tests/token-test.js"
   },
   "keywords": [
     "shopify",

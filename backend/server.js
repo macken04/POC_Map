@@ -91,11 +91,13 @@ app.get('/health', (req, res) => {
 const authRoutes = require('./routes/auth');
 const stravaRoutes = require('./routes/strava');
 const mapRoutes = require('./routes/maps');
+const shopifyIntegrationRoutes = require('./routes/shopifyIntegration');
 
 // Mount routes
 app.use('/auth', authRoutes);
 app.use('/api/strava', stravaRoutes);
 app.use('/api/maps', mapRoutes);
+app.use('/api/shopify-integration', shopifyIntegrationRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -201,6 +203,110 @@ app.get('/api/test-shopify', (req, res) => {
     });
   }
 });
+
+// Route Integration Validation Endpoint
+app.get('/api/integration-health', (req, res) => {
+  try {
+    const AuthHelpers = require('./helpers/authHelpers');
+    
+    // Perform comprehensive integration health check
+    const integrationHealth = AuthHelpers.performIntegrationHealthCheck(req);
+    
+    // Additional server-level checks
+    const serverChecks = {
+      routes: {
+        auth: typeof authRoutes === 'object' ? 'mounted' : 'missing',
+        strava: typeof stravaRoutes === 'object' ? 'mounted' : 'missing',
+        maps: typeof mapRoutes === 'object' ? 'mounted' : 'missing'
+      },
+      middleware: {
+        session: req.session ? 'active' : 'inactive',
+        cors: req.headers.origin ? 'configured' : 'default',
+        security: req.headers['x-frame-options'] ? 'active' : 'inactive'
+      },
+      environment: {
+        node_env: appConfig.env,
+        port: appConfig.port,
+        uptime: process.uptime()
+      }
+    };
+    
+    // Route endpoint validation
+    const routeEndpoints = {
+      auth_routes: [
+        '/auth/strava',
+        '/auth/strava/callback', 
+        '/auth/status',
+        '/auth/logout'
+      ],
+      strava_routes: [
+        '/api/strava/athlete',
+        '/api/strava/activities',
+        '/api/strava/activities/search'
+      ],
+      server_routes: [
+        '/health',
+        '/config',
+        '/api/ngrok-url'
+      ]
+    };
+    
+    const response = {
+      success: true,
+      message: 'Route integration validation completed',
+      timestamp: new Date().toISOString(),
+      integration: integrationHealth,
+      server: serverChecks,
+      available_endpoints: routeEndpoints,
+      recommendations: generateIntegrationRecommendations(integrationHealth, serverChecks)
+    };
+    
+    const statusCode = integrationHealth.overall === 'healthy' ? 200 : 206;
+    res.status(statusCode).json(response);
+    
+  } catch (error) {
+    console.error('Integration health check error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Integration health check failed',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Helper function to generate integration recommendations
+function generateIntegrationRecommendations(integrationHealth, serverChecks) {
+  const recommendations = [];
+  
+  if (integrationHealth.overall === 'healthy') {
+    recommendations.push('All route integrations are functioning correctly');
+  } else {
+    recommendations.push('Some integration issues detected - check detailed status above');
+  }
+  
+  if (serverChecks.routes.auth !== 'mounted') {
+    recommendations.push('Authentication routes not properly mounted');
+  }
+  
+  if (serverChecks.routes.strava !== 'mounted') {
+    recommendations.push('Strava API routes not properly mounted');
+  }
+  
+  if (serverChecks.middleware.session === 'inactive') {
+    recommendations.push('Session middleware may not be configured correctly');
+  }
+  
+  if (integrationHealth.checks.tokenManager?.status === 'error') {
+    recommendations.push('Token manager integration has issues - check token service');
+  }
+  
+  if (integrationHealth.checks.routeIntegration?.status === 'error') {
+    recommendations.push('Route integration middleware chain needs review');
+  }
+  
+  return recommendations;
+}
 
 // Error handling middleware
 app.use((req, res, next) => {

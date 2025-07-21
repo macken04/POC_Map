@@ -14,6 +14,47 @@ const appConfig = config.getConfig();
 /**
  * Authentication routes for Strava OAuth integration
  * Handles the complete OAuth flow for Strava API access
+ * 
+ * ROUTE INTEGRATION ARCHITECTURE:
+ * ================================
+ * This module provides the core OAuth authentication system that integrates with:
+ * 
+ * 1. STRAVA API ROUTES (/api/strava/*):
+ *    - All Strava routes import requireAuth middleware from this module
+ *    - Routes use req.getAccessToken() method provided by requireAuth middleware
+ *    - Token refresh handled automatically via refreshTokenIfNeeded middleware
+ *    - Consistent error handling across all authenticated endpoints
+ * 
+ * 2. TOKEN MANAGEMENT INTEGRATION:
+ *    - Uses tokenManager service for all token operations
+ *    - Encrypted token storage in session with automatic cleanup
+ *    - Token refresh capabilities with fallback to re-authentication
+ *    - Session validation and security measures
+ * 
+ * 3. MIDDLEWARE CHAIN INTEGRATION:
+ *    - sessionSecurity: Session validation and security headers
+ *    - rateLimitManager: OAuth-specific rate limiting protection
+ *    - errorHandler: Consistent error responses and logging
+ *    - tokenRefresh: Automatic token refresh before API calls
+ * 
+ * 4. ERROR HANDLING INTEGRATION:
+ *    - Standardized OAuth error responses
+ *    - Browser-friendly error pages for OAuth flows
+ *    - API-friendly JSON responses for programmatic access
+ *    - Comprehensive logging for debugging and monitoring
+ * 
+ * EXPORTED MIDDLEWARE FOR OTHER ROUTES:
+ * ====================================
+ * - requireAuth: Basic authentication check middleware
+ * - requireAuthWithSession: Enhanced auth check with session validation
+ * 
+ * INTEGRATION USAGE EXAMPLE:
+ * =========================
+ * const { requireAuth } = require('./auth');
+ * router.get('/protected-endpoint', requireAuth, (req, res) => {
+ *   const token = req.getAccessToken(); // Provided by requireAuth
+ *   // Use token for API calls
+ * });
  */
 
 /**
@@ -169,6 +210,15 @@ router.get('/strava/callback', rateLimitManager.createOAuthRateLimit(), oauthErr
     tokenStorageError.code = 'token_storage_failed';
     tokenStorageError.status = 500;
     throw tokenStorageError;
+  }
+
+  // Initialize Shopify integration session after successful token storage
+  try {
+    const ShopifyIntegrationService = require('../services/shopifyIntegration');
+    ShopifyIntegrationService.initializeShopifySession(req, tokenData);
+  } catch (shopifyInitError) {
+    // Log error but don't fail the authentication - Shopify integration is optional
+    console.warn('Failed to initialize Shopify integration:', shopifyInitError.message);
   }
 
   // Successful authentication response
@@ -344,5 +394,8 @@ router.post('/logout', sessionSecurity.validateSession(), oauthErrorHandler.wrap
 
 // Export the router and enhanced authentication middleware
 module.exports = router;
-module.exports.requireAuth = tokenManager.requireAuth();
-module.exports.requireAuthWithSession = sessionSecurity.requireAuthWithSession();
+
+// INTEGRATION EXPORTS: These middleware functions are used by other route modules
+// for consistent authentication and session management across the entire application
+module.exports.requireAuth = tokenManager.requireAuth();  // Basic auth check for API routes
+module.exports.requireAuthWithSession = sessionSecurity.requireAuthWithSession();  // Enhanced session validation

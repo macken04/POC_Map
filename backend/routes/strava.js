@@ -8,6 +8,46 @@ const rateLimitManager = require('../middleware/rateLimiting');
  * Strava API integration routes
  * Handles fetching user activities and data from Strava API
  * All routes require authentication
+ * 
+ * AUTHENTICATION INTEGRATION:
+ * ===========================
+ * This module integrates with the OAuth authentication system from auth.js:
+ * 
+ * 1. MIDDLEWARE CHAIN:
+ *    - requireAuth: Imported from auth.js, validates session and token
+ *    - refreshTokenIfNeeded: Automatically refreshes expired tokens
+ *    - rateLimitManager: Protects against rate limiting from Strava API
+ *    - All routes use this chain: [rateLimitManager, requireAuth, refreshTokenIfNeeded]
+ * 
+ * 2. TOKEN ACCESS PATTERN:
+ *    - All routes use req.getAccessToken() method (provided by requireAuth)
+ *    - No direct session access to tokens (security best practice)
+ *    - Automatic token validation and refresh handling
+ * 
+ * 3. ERROR HANDLING INTEGRATION:
+ *    - 401 errors automatically trigger re-authentication flow
+ *    - Consistent error response format across all endpoints
+ *    - Strava API errors properly propagated to client
+ * 
+ * 4. STRAVA API INTEGRATION PATTERNS:
+ *    - All API calls use stravaApiRequest() helper function
+ *    - Automatic rate limit tracking and protection
+ *    - Consistent request headers and error handling
+ *    - Response data formatting for map generation compatibility
+ * 
+ * ROUTE STRUCTURE:
+ * ================
+ * - GET /api/strava/athlete - Get authenticated user info
+ * - GET /api/strava/activities - List user activities with pagination
+ * - GET /api/strava/activities/:id - Get detailed activity data
+ * - GET /api/strava/activities/:id/streams - Get GPS/sensor data for maps
+ * - GET /api/strava/activities/search - Search activities by criteria
+ * 
+ * INTEGRATION WITH MAP GENERATION:
+ * ===============================
+ * - Activity data formatted for Mapbox GL JS compatibility
+ * - Polyline data extracted for high-resolution map rendering
+ * - GPS streams provided for detailed route visualization
  */
 
 /**
@@ -35,9 +75,11 @@ async function stravaApiRequest(url, accessToken) {
 
 /**
  * Get authenticated athlete information
+ * INTEGRATION: Uses full middleware chain - rate limiting + auth + token refresh + Strava rate limit protection
  */
 router.get('/athlete', rateLimitManager.createClientRateLimit(), requireAuth, refreshTokenIfNeeded, rateLimitManager.checkStravaRateLimit(), async (req, res) => {
   try {
+    // INTEGRATION: req.getAccessToken() method provided by requireAuth middleware from auth.js
     const athlete = await stravaApiRequest(
       'https://www.strava.com/api/v3/athlete',
       req.getAccessToken()
