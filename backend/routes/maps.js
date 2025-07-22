@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs').promises;
 const { requireAuth } = require('./auth');
 const config = require('../config');
+const mapEventService = require('../services/mapEventService');
 
 const appConfig = config.getConfig();
 
@@ -526,6 +527,124 @@ router.delete('/:mapId', requireAuth, async (req, res) => {
     res.status(500).json({
       error: 'Failed to delete map',
       message: 'Unable to delete map'
+    });
+  }
+});
+
+/**
+ * Log map interaction events for analytics
+ */
+router.post('/events', requireAuth, async (req, res) => {
+  try {
+    const {
+      eventType,
+      eventData,
+      userAgent,
+      timestamp
+    } = req.body;
+
+    if (!eventType) {
+      return res.status(400).json({
+        error: 'Missing event type',
+        message: 'eventType is required'
+      });
+    }
+
+    // Get user and session information
+    const userId = req.session.strava?.athlete?.id;
+    const sessionId = req.sessionID;
+    
+    // Add request metadata
+    const enhancedEventData = {
+      ...eventData,
+      userAgent: userAgent || req.get('User-Agent'),
+      ip: req.ip || req.connection.remoteAddress,
+      timestamp: timestamp || new Date().toISOString(),
+      path: req.path,
+      referer: req.get('Referer')
+    };
+
+    // Log the event
+    await mapEventService.logEvent(eventType, enhancedEventData, userId, sessionId);
+
+    res.json({
+      success: true,
+      message: 'Event logged successfully'
+    });
+
+  } catch (error) {
+    console.error('Error logging map event:', error);
+    res.status(500).json({
+      error: 'Failed to log event',
+      message: 'Unable to log map interaction event'
+    });
+  }
+});
+
+/**
+ * Get map analytics summary (admin only)
+ */
+router.get('/analytics', requireAuth, async (req, res) => {
+  try {
+    // In a real application, you'd check for admin permissions here
+    // For now, we'll allow any authenticated user to see analytics
+    
+    const summary = mapEventService.getAnalyticsSummary();
+    
+    res.json({
+      success: true,
+      analytics: summary
+    });
+
+  } catch (error) {
+    console.error('Error retrieving map analytics:', error);
+    res.status(500).json({
+      error: 'Failed to retrieve analytics',
+      message: 'Unable to retrieve map analytics'
+    });
+  }
+});
+
+/**
+ * Get detailed usage report (admin only)
+ */
+router.get('/analytics/report', requireAuth, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    const report = mapEventService.generateUsageReport(startDate, endDate);
+    
+    res.json({
+      success: true,
+      report: report
+    });
+
+  } catch (error) {
+    console.error('Error generating usage report:', error);
+    res.status(500).json({
+      error: 'Failed to generate report',
+      message: 'Unable to generate usage report'
+    });
+  }
+});
+
+/**
+ * Get map event service status
+ */
+router.get('/events/status', requireAuth, async (req, res) => {
+  try {
+    const status = mapEventService.getStatus();
+    
+    res.json({
+      success: true,
+      status: status
+    });
+
+  } catch (error) {
+    console.error('Error getting event service status:', error);
+    res.status(500).json({
+      error: 'Failed to get status',
+      message: 'Unable to get event service status'
     });
   }
 });

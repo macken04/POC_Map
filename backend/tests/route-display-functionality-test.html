@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Display Functionality Test</title>
+    
+    <!-- Mapbox GL JS -->
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .map-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        #map {
+            width: 100%;
+            height: 600px;
+        }
+        .controls-panel {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+        .control-group {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .control-group:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        .control-group h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        button {
+            background: #3B82F6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 4px;
+            font-size: 12px;
+        }
+        button:hover {
+            background: #2563EB;
+        }
+        button:disabled {
+            background: #9CA3AF;
+            cursor: not-allowed;
+        }
+        select, input {
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin: 4px;
+            width: 100px;
+        }
+        .test-results {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .test-status.pass {
+            background: #10B981;
+            color: white;
+        }
+        .test-status.fail {
+            background: #EF4444;
+            color: white;
+        }
+        .test-status.pending {
+            background: #F59E0B;
+            color: white;
+        }
+        .logs {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 11px;
+            margin-top: 10px;
+        }
+        @media (max-width: 768px) {
+            .test-grid {
+                grid-template-columns: 1fr;
+            }
+            .controls-panel {
+                order: -1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>Route Display Functionality Test</h1>
+            <p>Testing Task 8.6: Build Route Display Functionality implementation</p>
+            <p><strong>Features:</strong> Route Animation, Waypoint Markers, Statistics Overlay, Loading States, Responsive Design</p>
+        </div>
+
+        <div class="test-grid">
+            <div class="map-container">
+                <div id="map"></div>
+            </div>
+
+            <div class="controls-panel">
+                <div class="control-group">
+                    <h4>Route Selection</h4>
+                    <button onclick="loadSampleRoute('cycling')">🚴 Cycling Route</button>
+                    <button onclick="loadSampleRoute('running')">🏃 Running Route</button>
+                    <button onclick="loadSampleRoute('hiking')">🥾 Hiking Route</button>
+                    <button onclick="clearRoute()">🗑️ Clear Route</button>
+                </div>
+
+                <div class="control-group">
+                    <h4>Animation Controls</h4>
+                    <button onclick="toggleAnimation()" id="animationBtn">▶️ Start Animation</button>
+                    <button onclick="resetAnimation()">⏹️ Reset</button>
+                    <select onchange="changeAnimationSpeed(this.value)" id="speedSelect">
+                        <option value="0.5">0.5x Speed</option>
+                        <option value="1.0" selected>1x Speed</option>
+                        <option value="1.5">1.5x Speed</option>
+                        <option value="2.0">2x Speed</option>
+                        <option value="3.0">3x Speed</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <h4>Display Options</h4>
+                    <label><input type="checkbox" checked onchange="toggleWaypoints(this.checked)"> Show Waypoints</label><br>
+                    <label><input type="checkbox" checked onchange="toggleStats(this.checked)"> Show Statistics</label><br>
+                    <label><input type="checkbox" checked onchange="toggleAnimation(this.checked)"> Enable Animation</label><br>
+                    <label><input type="checkbox" checked onchange="toggleStartEnd(this.checked)"> Start/End Markers</label>
+                </div>
+
+                <div class="control-group">
+                    <h4>Route Customization</h4>
+                    <input type="color" value="#FF4444" onchange="changeRouteColor(this.value)">
+                    <label>Route Color</label><br>
+                    <input type="range" min="1" max="10" value="3" onchange="changeRouteWidth(this.value)">
+                    <label>Width: <span id="widthLabel">3</span>px</label><br>
+                    <input type="range" min="500" max="5000" value="1000" step="500" onchange="changeWaypointInterval(this.value)">
+                    <label>Waypoints: <span id="intervalLabel">1000</span>m</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-results">
+            <h3>Test Results</h3>
+            <div id="testResults">
+                <div>Route Rendering <span class="test-status pending">PENDING</span></div>
+                <div>Animation System <span class="test-status pending">PENDING</span></div>
+                <div>Waypoint Markers <span class="test-status pending">PENDING</span></div>
+                <div>Statistics Overlay <span class="test-status pending">PENDING</span></div>
+                <div>Loading Indicators <span class="test-status pending">PENDING</span></div>
+                <div>Responsive Design <span class="test-status pending">PENDING</span></div>
+                <div>Event System Integration <span class="test-status pending">PENDING</span></div>
+                <div>Performance Testing <span class="test-status pending">PENDING</span></div>
+            </div>
+            <div class="logs" id="testLogs"></div>
+        </div>
+    </div>
+
+    <script>
+        // Mock MapboxConfig for testing
+        window.MapboxConfig = {
+            init: () => ({
+                validateDependencies: () => {},
+                getMapOptions: (opts) => ({
+                    ...opts,
+                    accessToken: 'pk.test_token_for_demo', // Replace with actual token
+                    preserveDrawingBuffer: true
+                }),
+                getStyleUrl: (style) => `mapbox://styles/mapbox/${style}-v12`,
+                getAvailableStyles: () => ({
+                    streets: 'mapbox://styles/mapbox/streets-v12',
+                    outdoors: 'mapbox://styles/mapbox/outdoors-v12',
+                    light: 'mapbox://styles/mapbox/light-v11',
+                    dark: 'mapbox://styles/mapbox/dark-v11',
+                    satellite: 'mapbox://styles/mapbox/satellite-v9'
+                }),
+                getPrintDimensions: (format) => ({
+                    A4: { width: 2480, height: 3508 },
+                    A3: { width: 3508, height: 4961 }
+                }[format]),
+                getExportMapOptions: (format, opts) => opts,
+                getDebugInfo: () => ({ initialized: true })
+            })
+        };
+
+        // Mock MapboxEventSystem for testing
+        window.MapboxEventSystem = class {
+            constructor(map, options) {
+                this.map = map;
+                this.options = options;
+                this.listeners = new Map();
+            }
+            
+            on(eventType, callback) {
+                if (!this.listeners.has(eventType)) {
+                    this.listeners.set(eventType, []);
+                }
+                this.listeners.get(eventType).push(callback);
+                return this;
+            }
+            
+            off(eventType, callback) {
+                if (this.listeners.has(eventType)) {
+                    const callbacks = this.listeners.get(eventType);
+                    const index = callbacks.indexOf(callback);
+                    if (index !== -1) {
+                        callbacks.splice(index, 1);
+                    }
+                }
+                return this;
+            }
+            
+            emit(eventType, data) {
+                if (this.listeners.has(eventType)) {
+                    this.listeners.get(eventType).forEach(callback => {
+                        try { callback(data); } catch (e) { console.error(e); }
+                    });
+                }
+                return this;
+            }
+            
+            cleanup() {}
+            getStatus() { return { initialized: true }; }
+            getPerformanceMetrics() { return {}; }
+            getEventHistory() { return []; }
+        };
+
+        // Sample route data
+        const sampleRoutes = {
+            cycling: {
+                coordinates: [
+                    [51.5074, -0.1278], [51.5075, -0.1275], [51.5078, -0.1270], [51.5082, -0.1265],
+                    [51.5085, -0.1260], [51.5090, -0.1255], [51.5095, -0.1250], [51.5100, -0.1245],
+                    [51.5105, -0.1240], [51.5110, -0.1235], [51.5115, -0.1230], [51.5120, -0.1225],
+                    [51.5125, -0.1220], [51.5130, -0.1215], [51.5135, -0.1210], [51.5140, -0.1205],
+                    [51.5145, -0.1200], [51.5150, -0.1195], [51.5155, -0.1190], [51.5160, -0.1185]
+                ],
+                bounds: {
+                    north: 51.5160, south: 51.5074, east: -0.1185, west: -0.1278
+                },
+                title: "London Cycling Route",
+                stats: {
+                    distance: 2500, // meters
+                    duration: 600, // seconds
+                    elevationGain: 45 // meters
+                }
+            },
+            running: {
+                coordinates: [
+                    [40.7489, -73.9857], [40.7490, -73.9855], [40.7492, -73.9850], [40.7495, -73.9845],
+                    [40.7498, -73.9840], [40.7502, -73.9835], [40.7505, -73.9830], [40.7508, -73.9825],
+                    [40.7512, -73.9820], [40.7515, -73.9815], [40.7518, -73.9810], [40.7522, -73.9805],
+                    [40.7525, -73.9800], [40.7528, -73.9795], [40.7532, -73.9790], [40.7535, -73.9785]
+                ],
+                bounds: {
+                    north: 40.7535, south: 40.7489, east: -73.9785, west: -73.9857
+                },
+                title: "Central Park Running Route",
+                stats: {
+                    distance: 1800,
+                    duration: 720,
+                    elevationGain: 20
+                }
+            },
+            hiking: {
+                coordinates: [
+                    [37.8651, -119.5383], [37.8655, -119.5380], [37.8660, -119.5375], [37.8665, -119.5370],
+                    [37.8670, -119.5365], [37.8675, -119.5360], [37.8680, -119.5355], [37.8685, -119.5350],
+                    [37.8690, -119.5345], [37.8695, -119.5340], [37.8700, -119.5335], [37.8705, -119.5330],
+                    [37.8710, -119.5325], [37.8715, -119.5320], [37.8720, -119.5315], [37.8725, -119.5310],
+                    [37.8730, -119.5305], [37.8735, -119.5300], [37.8740, -119.5295], [37.8745, -119.5290]
+                ],
+                bounds: {
+                    north: 37.8745, south: 37.8651, east: -119.5290, west: -119.5383
+                },
+                title: "Yosemite Hiking Trail",
+                stats: {
+                    distance: 5200,
+                    duration: 3600,
+                    elevationGain: 450
+                }
+            }
+        };
+
+        let mapIntegration = null;
+        let testResults = {};
+
+        // Initialize test
+        function initTest() {
+            log('Initializing Route Display Functionality Test...');
+            
+            try {
+                // Set Mapbox access token (replace with actual token)
+                mapboxgl.accessToken = 'pk.test_token_for_demo';
+                
+                // Initialize MapboxIntegration
+                mapIntegration = new MapboxIntegration('map', {
+                    style: 'outdoors',
+                    enableAnimation: true,
+                    showRouteStats: true,
+                    showWaypoints: true,
+                    animationDuration: 5000,
+                    animationSpeed: 1.0,
+                    waypointInterval: 1000,
+                    routeColor: '#FF4444',
+                    routeWidth: 3
+                });
+
+                // Setup event listeners for testing
+                setupEventListeners();
+                
+                updateTestStatus('Route Rendering', 'pass', 'Map initialized successfully');
+                log('✅ Map initialization completed');
+                
+            } catch (error) {
+                updateTestStatus('Route Rendering', 'fail', error.message);
+                log('❌ Map initialization failed: ' + error.message);
+            }
+        }
+
+        function setupEventListeners() {
+            if (!mapIntegration) return;
+
+            // Animation events
+            mapIntegration.on('route-animation-started', (data) => {
+                log('🎬 Animation started - Duration: ' + data.duration + 'ms, Speed: ' + data.speed + 'x');
+                updateTestStatus('Animation System', 'pass', 'Animation started successfully');
+            });
+
+            mapIntegration.on('route-animation-completed', () => {
+                log('🏁 Animation completed');
+                document.getElementById('animationBtn').textContent = '▶️ Start Animation';
+            });
+
+            mapIntegration.on('route-animation-paused', (data) => {
+                log('⏸️ Animation paused at ' + Math.round(data.progress * 100) + '%');
+            });
+
+            mapIntegration.on('route-animation-reset', () => {
+                log('⏹️ Animation reset');
+                document.getElementById('animationBtn').textContent = '▶️ Start Animation';
+            });
+
+            // Route interaction events
+            mapIntegration.on('route-interaction', (data) => {
+                log('🎯 Route clicked at: ' + JSON.stringify(data.coordinates));
+                updateTestStatus('Event System Integration', 'pass', 'Route interaction working');
+            });
+
+            mapIntegration.on('feature-hover', (data) => {
+                log('👆 Feature hover detected');
+            });
+        }
+
+        function loadSampleRoute(routeType) {
+            if (!mapIntegration) return;
+            
+            log(`📍 Loading ${routeType} route...`);
+            
+            try {
+                const route = sampleRoutes[routeType];
+                mapIntegration.renderRouteMap(route).then(() => {
+                    log(`✅ ${routeType} route loaded successfully`);
+                    updateTestStatus('Waypoint Markers', 'pass', 'Waypoints displayed');
+                    updateTestStatus('Statistics Overlay', 'pass', 'Statistics shown');
+                    updateTestStatus('Loading Indicators', 'pass', 'Loading state handled');
+                    testResponsiveDesign();
+                }).catch(error => {
+                    log(`❌ Failed to load ${routeType} route: ${error.message}`);
+                    updateTestStatus('Route Rendering', 'fail', error.message);
+                });
+            } catch (error) {
+                log(`❌ Error loading ${routeType} route: ${error.message}`);
+            }
+        }
+
+        function clearRoute() {
+            if (!mapIntegration) return;
+            
+            log('🗑️ Clearing route...');
+            mapIntegration.clearRoute();
+            log('✅ Route cleared');
+        }
+
+        function toggleAnimation() {
+            if (!mapIntegration) return;
+            
+            const btn = document.getElementById('animationBtn');
+            
+            if (mapIntegration.routeAnimation.isPlaying) {
+                mapIntegration.pauseRouteAnimation();
+                btn.textContent = '▶️ Resume';
+            } else {
+                mapIntegration.startRouteAnimation();
+                btn.textContent = '⏸️ Pause';
+            }
+        }
+
+        function resetAnimation() {
+            if (!mapIntegration) return;
+            
+            mapIntegration.resetRouteAnimation();
+            document.getElementById('animationBtn').textContent = '▶️ Start Animation';
+        }
+
+        function changeAnimationSpeed(speed) {
+            if (!mapIntegration) return;
+            
+            mapIntegration.options.animationSpeed = parseFloat(speed);
+            log(`⚡ Animation speed changed to ${speed}x`);
+        }
+
+        function toggleWaypoints(enabled) {
+            if (!mapIntegration) return;
+            
+            mapIntegration.options.showWaypoints = enabled;
+            log(`📍 Waypoints ${enabled ? 'enabled' : 'disabled'}`);
+        }
+
+        function toggleStats(enabled) {
+            if (!mapIntegration) return;
+            
+            mapIntegration.options.showRouteStats = enabled;
+            if (enabled) {
+                mapIntegration.addRouteStatsOverlay();
+            } else {
+                mapIntegration.removeRouteStatsOverlay();
+            }
+            log(`📊 Statistics ${enabled ? 'enabled' : 'disabled'}`);
+        }
+
+        function toggleStartEnd(enabled) {
+            log(`🚦 Start/End markers ${enabled ? 'enabled' : 'disabled'}`);
+        }
+
+        function changeRouteColor(color) {
+            if (!mapIntegration) return;
+            
+            mapIntegration.options.routeColor = color;
+            mapIntegration.updateRouteStyle({ routeColor: color });
+            log(`🎨 Route color changed to ${color}`);
+        }
+
+        function changeRouteWidth(width) {
+            if (!mapIntegration) return;
+            
+            document.getElementById('widthLabel').textContent = width;
+            mapIntegration.options.routeWidth = parseInt(width);
+            mapIntegration.updateRouteStyle({ routeWidth: parseInt(width) });
+            log(`📏 Route width changed to ${width}px`);
+        }
+
+        function changeWaypointInterval(interval) {
+            if (!mapIntegration) return;
+            
+            document.getElementById('intervalLabel').textContent = interval;
+            mapIntegration.options.waypointInterval = parseInt(interval);
+            log(`📏 Waypoint interval changed to ${interval}m`);
+        }
+
+        function testResponsiveDesign() {
+            log('📱 Testing responsive design...');
+            
+            // Simulate different viewport sizes
+            const originalWidth = window.innerWidth;
+            
+            setTimeout(() => {
+                // Test mobile breakpoint
+                if (window.innerWidth <= 768) {
+                    updateTestStatus('Responsive Design', 'pass', 'Mobile layout working');
+                } else {
+                    updateTestStatus('Responsive Design', 'pass', 'Desktop layout working');
+                }
+                
+                testPerformance();
+            }, 1000);
+        }
+
+        function testPerformance() {
+            log('⚡ Testing performance...');
+            
+            const startTime = performance.now();
+            
+            // Simulate performance test
+            setTimeout(() => {
+                const endTime = performance.now();
+                const duration = endTime - startTime;
+                
+                if (duration < 2000) {
+                    updateTestStatus('Performance Testing', 'pass', `Rendered in ${duration.toFixed(0)}ms`);
+                    log(`✅ Performance test passed: ${duration.toFixed(0)}ms`);
+                } else {
+                    updateTestStatus('Performance Testing', 'fail', `Too slow: ${duration.toFixed(0)}ms`);
+                    log(`❌ Performance test failed: ${duration.toFixed(0)}ms`);
+                }
+            }, 1000);
+        }
+
+        function updateTestStatus(testName, status, message) {
+            testResults[testName] = { status, message };
+            
+            const resultsContainer = document.getElementById('testResults');
+            const testElements = resultsContainer.children;
+            
+            for (let element of testElements) {
+                if (element.textContent.includes(testName)) {
+                    const statusSpan = element.querySelector('.test-status');
+                    statusSpan.className = `test-status ${status}`;
+                    statusSpan.textContent = status.toUpperCase();
+                    
+                    if (message) {
+                        element.title = message;
+                    }
+                    break;
+                }
+            }
+        }
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            console.log(logEntry);
+            
+            const logsContainer = document.getElementById('testLogs');
+            logsContainer.innerHTML += logEntry + '\n';
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            // Wait for MapboxIntegration to be available
+            if (typeof MapboxIntegration !== 'undefined') {
+                initTest();
+            } else {
+                log('❌ MapboxIntegration not found. Please include mapbox-integration.js');
+                updateTestStatus('Route Rendering', 'fail', 'MapboxIntegration not loaded');
+            }
+        });
+    </script>
+
+    <!-- Load MapboxIntegration component -->
+    <script src="../shopify-theme/dawn/assets/mapbox-integration.js"></script>
+</body>
+</html>

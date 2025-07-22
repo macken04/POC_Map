@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapbox Event System - Comprehensive Testing</title>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v3.13.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v3.13.0/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .test-section {
+            background: white;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .test-header {
+            background: #2563eb;
+            color: white;
+            padding: 15px 20px;
+            font-weight: bold;
+        }
+
+        .test-content {
+            padding: 20px;
+        }
+
+        .test-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .test-controls button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background: #3b82f6;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .test-controls button:hover {
+            background: #2563eb;
+        }
+
+        .test-controls button.secondary {
+            background: #6b7280;
+        }
+
+        .test-controls button.success {
+            background: #10b981;
+        }
+
+        .test-controls button.danger {
+            background: #ef4444;
+        }
+
+        #map {
+            width: 100%;
+            height: 400px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .log-container {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+
+        .log-entry.info {
+            color: #3b82f6;
+        }
+
+        .log-entry.success {
+            color: #10b981;
+        }
+
+        .log-entry.warning {
+            color: #f59e0b;
+        }
+
+        .log-entry.error {
+            color: #ef4444;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1f2937;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .event-history {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 10px;
+            background: #f9fafb;
+        }
+
+        .event-item {
+            padding: 5px;
+            margin-bottom: 5px;
+            background: white;
+            border-radius: 3px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .event-type {
+            font-weight: bold;
+            color: #1f2937;
+        }
+
+        .event-time {
+            color: #6b7280;
+            font-size: 11px;
+        }
+
+        .performance-chart {
+            display: flex;
+            align-items: end;
+            height: 100px;
+            gap: 2px;
+            margin-top: 10px;
+        }
+
+        .performance-bar {
+            background: #3b82f6;
+            min-width: 8px;
+            border-radius: 2px 2px 0 0;
+            position: relative;
+        }
+
+        .performance-bar:hover::after {
+            content: attr(data-value) 'ms';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        .mobile-simulation {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .touch-area {
+            width: 200px;
+            height: 150px;
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            cursor: pointer;
+            user-select: none;
+            touch-action: none;
+        }
+
+        .touch-area.active {
+            border-color: #3b82f6;
+            background: #dbeafe;
+        }
+
+        @media (max-width: 768px) {
+            .test-controls {
+                flex-direction: column;
+            }
+
+            .test-controls button {
+                width: 100%;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .mobile-simulation {
+                flex-direction: column;
+            }
+
+            .touch-area {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mapbox Event System - Comprehensive Testing Suite</h1>
+        
+        <!-- Map Container -->
+        <div class="test-section">
+            <div class="test-header">Interactive Map Testing</div>
+            <div class="test-content">
+                <div id="map"></div>
+                
+                <div class="test-controls">
+                    <button onclick="loadTestRoute()">Load Test Route</button>
+                    <button onclick="clearMap()">Clear Map</button>
+                    <button onclick="simulateError()" class="danger">Simulate Error</button>
+                    <button onclick="triggerExport()" class="success">Test Export</button>
+                    <button onclick="toggleInteraction()">Toggle Interaction</button>
+                    <button onclick="changeStyle()">Change Style</button>
+                    <button onclick="fitToBounds()">Fit to Bounds</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Event Statistics -->
+        <div class="test-section">
+            <div class="test-header">Event Statistics</div>
+            <div class="test-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-events">0</div>
+                        <div class="stat-label">Total Events</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="map-events">0</div>
+                        <div class="stat-label">Map Events</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="user-events">0</div>
+                        <div class="stat-label">User Events</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="touch-events">0</div>
+                        <div class="stat-label">Touch Events</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="error-count">0</div>
+                        <div class="stat-label">Errors</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="avg-processing">0ms</div>
+                        <div class="stat-label">Avg Processing Time</div>
+                    </div>
+                </div>
+
+                <div class="test-controls">
+                    <button onclick="resetStats()" class="secondary">Reset Statistics</button>
+                    <button onclick="exportStats()" class="success">Export Stats</button>
+                    <button onclick="showPerformanceChart()">Performance Chart</button>
+                </div>
+
+                <div id="performance-chart" class="performance-chart" style="display: none;">
+                    <!-- Performance bars will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Touch and Gesture Testing -->
+        <div class="test-section">
+            <div class="test-header">Touch & Gesture Testing</div>
+            <div class="test-content">
+                <p>Test touch interactions and gestures on the areas below (works on touch devices or with dev tools touch simulation):</p>
+                
+                <div class="mobile-simulation">
+                    <div class="touch-area" id="touch-area-1" data-area="1">
+                        <span>Touch Area 1<br>Single Touch</span>
+                    </div>
+                    <div class="touch-area" id="touch-area-2" data-area="2">
+                        <span>Touch Area 2<br>Multi-Touch</span>
+                    </div>
+                </div>
+
+                <div class="test-controls">
+                    <button onclick="simulateTouch('single')">Simulate Single Touch</button>
+                    <button onclick="simulateTouch('double')">Simulate Double Touch</button>
+                    <button onclick="simulateTouch('pinch')">Simulate Pinch</button>
+                    <button onclick="simulateTouch('rotate')">Simulate Rotation</button>
+                    <button onclick="toggleTouchTracking()">Toggle Touch Tracking</button>
+                </div>
+
+                <div id="touch-log" class="log-container" style="max-height: 150px;">
+                    <!-- Touch events will be logged here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Event History -->
+        <div class="test-section">
+            <div class="test-header">Recent Event History</div>
+            <div class="test-content">
+                <div class="test-controls">
+                    <button onclick="refreshEventHistory()">Refresh History</button>
+                    <button onclick="filterEvents('all')">All Events</button>
+                    <button onclick="filterEvents('map')">Map Events</button>
+                    <button onclick="filterEvents('user')">User Events</button>
+                    <button onclick="clearEventHistory()" class="secondary">Clear History</button>
+                </div>
+                
+                <div id="event-history" class="event-history">
+                    <!-- Event history will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- System Log -->
+        <div class="test-section">
+            <div class="test-header">System Event Log</div>
+            <div class="test-content">
+                <div class="test-controls">
+                    <button onclick="clearLog()" class="secondary">Clear Log</button>
+                    <button onclick="toggleAutoScroll()">Toggle Auto-scroll</button>
+                    <button onclick="exportLog()" class="success">Export Log</button>
+                </div>
+                
+                <div id="event-log" class="log-container">
+                    <!-- System logs will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include the event system and integration files -->
+    <script src="../shopify-theme/dawn/assets/mapbox-config.js"></script>
+    <script src="../shopify-theme/dawn/assets/mapbox-event-system.js"></script>
+    <script src="../shopify-theme/dawn/assets/mapbox-integration.js"></script>
+
+    <script>
+        // Test harness variables
+        let mapIntegration;
+        let testStats = {
+            totalEvents: 0,
+            mapEvents: 0,
+            userEvents: 0,
+            touchEvents: 0,
+            errorCount: 0,
+            processingTimes: [],
+            eventHistory: []
+        };
+        let autoScroll = true;
+        let eventFilter = 'all';
+        let touchTracking = true;
+
+        // Sample route data for testing
+        const testRouteData = {
+            coordinates: [
+                [53.3498, -6.2603], [53.3501, -6.2598], [53.3507, -6.2587],
+                [53.3515, -6.2571], [53.3522, -6.2556], [53.3531, -6.2538],
+                [53.3542, -6.2515], [53.3554, -6.2489], [53.3568, -6.2461],
+                [53.3583, -6.2431], [53.3601, -6.2398], [53.3621, -6.2362]
+            ],
+            bounds: {
+                north: 53.3621,
+                south: 53.3498,
+                east: -6.2362,
+                west: -6.2603
+            },
+            title: 'Dublin Test Route'
+        };
+
+        // Initialize testing environment
+        async function initializeTest() {
+            try {
+                log('Initializing Mapbox Event System Test...', 'info');
+                
+                // Mock Shopify settings for testing
+                window.shopifyMapboxSettings = {
+                    accessToken: 'pk.eyJ1IjoidGVzdCIsImEiOiJjbHR6aGp3eHcwMjR2MmtvNnp2b29kcWZ5In0.test-token-for-demo', // Demo token
+                    defaultStyle: 'mapbox://styles/mapbox/outdoors-v11'
+                };
+
+                // Initialize the map integration with event system enabled
+                mapIntegration = new MapboxIntegration('map', {
+                    enableEventSystem: true,
+                    eventSystemOptions: {
+                        enableEventHistory: true,
+                        enableGestureRecognition: true,
+                        enableAnalytics: true,
+                        logPerformanceMetrics: true
+                    }
+                });
+
+                // Wait for initialization
+                await mapIntegration.init();
+
+                // Set up comprehensive event listeners
+                setupEventListeners();
+
+                // Initialize touch areas
+                setupTouchAreas();
+
+                log('Test environment initialized successfully!', 'success');
+                
+            } catch (error) {
+                log(`Initialization failed: ${error.message}`, 'error');
+                console.error('Test initialization error:', error);
+            }
+        }
+
+        // Set up event listeners for testing
+        function setupEventListeners() {
+            if (!mapIntegration.eventSystem) {
+                log('Event system not available', 'warning');
+                return;
+            }
+
+            // Listen to all event types
+            const eventTypes = [
+                'map-load', 'map-resize', 'map-move', 'map-zoom',
+                'user-click', 'user-dblclick', 'user-mousemove', 'user-mouseenter',
+                'touch-start', 'touch-move', 'touch-end',
+                'gesture-pinch', 'gesture-rotate',
+                'route-clicked', 'feature-hover', 'map-empty-click',
+                'export-started', 'export-completed',
+                'system-error', 'system-initialized'
+            ];
+
+            eventTypes.forEach(eventType => {
+                mapIntegration.on(eventType, (eventData) => {
+                    handleTestEvent(eventType, eventData);
+                });
+            });
+
+            log('Event listeners configured for comprehensive testing', 'info');
+        }
+
+        // Handle test events
+        function handleTestEvent(eventType, eventData) {
+            const startTime = performance.now();
+            
+            // Update statistics
+            testStats.totalEvents++;
+            
+            if (eventType.startsWith('map-')) {
+                testStats.mapEvents++;
+            } else if (eventType.startsWith('user-')) {
+                testStats.userEvents++;
+            } else if (eventType.startsWith('touch-') || eventType.startsWith('gesture-')) {
+                testStats.touchEvents++;
+            }
+
+            if (eventType.includes('error')) {
+                testStats.errorCount++;
+            }
+
+            // Track processing time
+            const processingTime = performance.now() - startTime;
+            testStats.processingTimes.push(processingTime);
+
+            // Add to event history
+            testStats.eventHistory.unshift({
+                type: eventType,
+                timestamp: Date.now(),
+                data: eventData,
+                processingTime
+            });
+
+            // Limit history size
+            if (testStats.eventHistory.length > 100) {
+                testStats.eventHistory.pop();
+            }
+
+            // Update UI
+            updateStatsDisplay();
+            updateEventHistory();
+            
+            // Log the event
+            const logLevel = eventType.includes('error') ? 'error' : 
+                           eventType.includes('system') ? 'success' : 'info';
+            log(`${eventType}: ${JSON.stringify(eventData).substring(0, 100)}...`, logLevel);
+        }
+
+        // Update statistics display
+        function updateStatsDisplay() {
+            document.getElementById('total-events').textContent = testStats.totalEvents;
+            document.getElementById('map-events').textContent = testStats.mapEvents;
+            document.getElementById('user-events').textContent = testStats.userEvents;
+            document.getElementById('touch-events').textContent = testStats.touchEvents;
+            document.getElementById('error-count').textContent = testStats.errorCount;
+            
+            const avgProcessing = testStats.processingTimes.length > 0 
+                ? (testStats.processingTimes.reduce((a, b) => a + b, 0) / testStats.processingTimes.length).toFixed(1)
+                : 0;
+            document.getElementById('avg-processing').textContent = avgProcessing + 'ms';
+        }
+
+        // Update event history display
+        function updateEventHistory() {
+            const historyContainer = document.getElementById('event-history');
+            const filteredEvents = eventFilter === 'all' 
+                ? testStats.eventHistory 
+                : testStats.eventHistory.filter(event => event.type.startsWith(eventFilter));
+            
+            historyContainer.innerHTML = filteredEvents.slice(0, 20).map(event => `
+                <div class="event-item">
+                    <span class="event-type">${event.type}</span>
+                    <span class="event-time">${new Date(event.timestamp).toLocaleTimeString()}</span>
+                </div>
+            `).join('');
+        }
+
+        // Test functions
+        function loadTestRoute() {
+            mapIntegration.renderRouteMap(testRouteData);
+            log('Test route loaded', 'info');
+        }
+
+        function clearMap() {
+            mapIntegration.clearRoute();
+            log('Map cleared', 'info');
+        }
+
+        function simulateError() {
+            mapIntegration.emit('system-error', {
+                error: 'Simulated test error',
+                timestamp: Date.now(),
+                testMode: true
+            });
+            log('Simulated error triggered', 'warning');
+        }
+
+        function triggerExport() {
+            mapIntegration.emit('export-started', { format: 'A4' });
+            setTimeout(() => {
+                mapIntegration.emit('export-completed', { 
+                    format: 'A4',
+                    filename: 'test-export.png'
+                });
+            }, 2000);
+            log('Export simulation triggered', 'info');
+        }
+
+        function toggleInteraction() {
+            const currentInteraction = mapIntegration.options.allowInteraction;
+            mapIntegration.options.allowInteraction = !currentInteraction;
+            log(`Interaction ${currentInteraction ? 'disabled' : 'enabled'}`, 'info');
+        }
+
+        function changeStyle() {
+            const styles = ['outdoors', 'streets', 'satellite', 'light', 'dark'];
+            const currentStyle = Math.floor(Math.random() * styles.length);
+            mapIntegration.setStyle(styles[currentStyle]);
+            log(`Style changed to ${styles[currentStyle]}`, 'info');
+        }
+
+        function fitToBounds() {
+            if (mapIntegration.map && testRouteData.bounds) {
+                mapIntegration.map.fitBounds([
+                    [testRouteData.bounds.west, testRouteData.bounds.south],
+                    [testRouteData.bounds.east, testRouteData.bounds.north]
+                ], { padding: 50 });
+                log('Fitted to test route bounds', 'info');
+            }
+        }
+
+        function resetStats() {
+            testStats = {
+                totalEvents: 0,
+                mapEvents: 0,
+                userEvents: 0,
+                touchEvents: 0,
+                errorCount: 0,
+                processingTimes: [],
+                eventHistory: []
+            };
+            updateStatsDisplay();
+            updateEventHistory();
+            log('Statistics reset', 'info');
+        }
+
+        function exportStats() {
+            const statsData = {
+                ...testStats,
+                exportTime: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                testDuration: performance.now()
+            };
+            
+            const blob = new Blob([JSON.stringify(statsData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `mapbox-event-test-stats-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            log('Statistics exported', 'success');
+        }
+
+        function showPerformanceChart() {
+            const chartContainer = document.getElementById('performance-chart');
+            const isVisible = chartContainer.style.display !== 'none';
+            
+            if (isVisible) {
+                chartContainer.style.display = 'none';
+                return;
+            }
+
+            chartContainer.style.display = 'flex';
+            
+            // Generate performance bars from recent processing times
+            const recentTimes = testStats.processingTimes.slice(-20);
+            const maxTime = Math.max(...recentTimes, 1);
+            
+            chartContainer.innerHTML = recentTimes.map(time => {
+                const height = Math.max(5, (time / maxTime) * 90);
+                return `<div class="performance-bar" style="height: ${height}px" data-value="${time.toFixed(1)}"></div>`;
+            }).join('');
+        }
+
+        // Touch simulation functions
+        function setupTouchAreas() {
+            const touchAreas = document.querySelectorAll('.touch-area');
+            
+            touchAreas.forEach(area => {
+                // Mouse events for desktop testing
+                area.addEventListener('mousedown', handleTouchAreaEvent);
+                area.addEventListener('mouseup', handleTouchAreaEvent);
+                area.addEventListener('mousemove', handleTouchAreaEvent);
+                
+                // Touch events for mobile testing
+                area.addEventListener('touchstart', handleTouchAreaEvent, { passive: false });
+                area.addEventListener('touchmove', handleTouchAreaEvent, { passive: false });
+                area.addEventListener('touchend', handleTouchAreaEvent);
+            });
+        }
+
+        function handleTouchAreaEvent(event) {
+            if (!touchTracking) return;
+            
+            const area = event.currentTarget;
+            const areaId = area.dataset.area;
+            
+            area.classList.toggle('active', event.type.includes('start') || event.type.includes('down'));
+            
+            const touchData = {
+                area: areaId,
+                eventType: event.type,
+                touches: event.touches ? Array.from(event.touches) : [],
+                timestamp: Date.now()
+            };
+            
+            logToTouchArea(`Touch Area ${areaId}: ${event.type} - ${touchData.touches.length} touches`);
+            
+            // Simulate event system touch events
+            if (mapIntegration.eventSystem) {
+                mapIntegration.eventSystem.emit(`touch-${event.type.replace('mouse', 'touch').replace('down', 'start').replace('up', 'end')}`, touchData);
+            }
+        }
+
+        function simulateTouch(type) {
+            const touchData = {
+                type: type,
+                timestamp: Date.now(),
+                simulated: true
+            };
+            
+            switch(type) {
+                case 'single':
+                    touchData.touches = [{ x: 100, y: 100, id: 1 }];
+                    break;
+                case 'double':
+                    touchData.touches = [{ x: 100, y: 100, id: 1 }, { x: 120, y: 120, id: 2 }];
+                    break;
+                case 'pinch':
+                    touchData.scaleFactor = 0.8;
+                    break;
+                case 'rotate':
+                    touchData.rotationDelta = 45;
+                    break;
+            }
+            
+            if (mapIntegration.eventSystem) {
+                mapIntegration.eventSystem.emit(`gesture-${type}`, touchData);
+            }
+            
+            logToTouchArea(`Simulated ${type} gesture`);
+        }
+
+        function toggleTouchTracking() {
+            touchTracking = !touchTracking;
+            log(`Touch tracking ${touchTracking ? 'enabled' : 'disabled'}`, 'info');
+        }
+
+        function logToTouchArea(message) {
+            const touchLog = document.getElementById('touch-log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry info';
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            touchLog.appendChild(entry);
+            
+            // Auto-scroll if enabled
+            if (autoScroll) {
+                touchLog.scrollTop = touchLog.scrollHeight;
+            }
+            
+            // Limit log size
+            while (touchLog.children.length > 50) {
+                touchLog.removeChild(touchLog.firstChild);
+            }
+        }
+
+        // Event history functions
+        function refreshEventHistory() {
+            updateEventHistory();
+            log('Event history refreshed', 'info');
+        }
+
+        function filterEvents(filter) {
+            eventFilter = filter;
+            updateEventHistory();
+            log(`Event filter set to: ${filter}`, 'info');
+        }
+
+        function clearEventHistory() {
+            testStats.eventHistory = [];
+            updateEventHistory();
+            log('Event history cleared', 'info');
+        }
+
+        // Logging functions
+        function log(message, level = 'info') {
+            const logContainer = document.getElementById('event-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${level}`;
+            entry.textContent = `[${timestamp}] ${message}`;
+            
+            logContainer.appendChild(entry);
+            
+            if (autoScroll) {
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+            
+            // Limit log entries
+            while (logContainer.children.length > 100) {
+                logContainer.removeChild(logContainer.firstChild);
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('event-log').innerHTML = '';
+            log('Event log cleared', 'info');
+        }
+
+        function toggleAutoScroll() {
+            autoScroll = !autoScroll;
+            log(`Auto-scroll ${autoScroll ? 'enabled' : 'disabled'}`, 'info');
+        }
+
+        function exportLog() {
+            const logEntries = Array.from(document.querySelectorAll('#event-log .log-entry')).map(entry => entry.textContent);
+            const logData = {
+                entries: logEntries,
+                exportTime: new Date().toISOString(),
+                totalEntries: logEntries.length
+            };
+            
+            const blob = new Blob([JSON.stringify(logData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `mapbox-event-log-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            log('Event log exported', 'success');
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', initializeTest);
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (mapIntegration) {
+                mapIntegration.cleanup();
+            }
+        });
+    </script>
+</body>
+</html>
