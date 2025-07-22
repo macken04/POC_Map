@@ -63,14 +63,8 @@ const { cache, generateStravaKey, getCachedOrFetch } = require('../services/cach
  * Enhanced with rate limit tracking
  */
 async function stravaApiRequest(url, accessToken) {
-  // Debug logging for token access
-  console.log('Strava API request:', {
-    url: url.replace(/\?.*$/, ''),
-    hasToken: !!accessToken,
-    tokenPrefix: accessToken ? accessToken.substring(0, 8) + '...' : 'MISSING'
-  });
-
   if (!accessToken) {
+    console.error('No access token provided for Strava API request');
     const error = new Error('No access token provided for Strava API request');
     error.status = 401;
     throw error;

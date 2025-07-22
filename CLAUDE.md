@@ -7,7 +7,8 @@
 - **Backend**: Local Node.js/Express server with session-based authentication
 - **Maps**: Mapbox GL JS for both interactive display and high-resolution export
 - **High-Resolution Export**: Mapbox GL JS Canvas Export + Puppeteer for 300 DPI print-quality maps
-- **APIs**: Strava API v3 for session-based authentication and activity data
+- **APIs**: Strava API v3 for OAuth authentication and activity data
+- **Authentication**: Hybrid session-based + cross-domain token system for Shopify integration
 - **Shopify Integration**: Store-Level App (private app for single store, not Partner/Public app)
 - **Storage**: Local file system for generated map images
 - **Development**: ngrok for external access to local server
@@ -22,7 +23,7 @@
 - Mapbox GL JS for map rendering
 - Puppeteer for headless browser rendering
 - Strava API v3 for OAuth and activity data
-- Session-based authentication (no database required)
+- Hybrid authentication system (session-based + cross-domain tokens for Shopify integration)
 - ngrok for local development tunneling
 
 ### Project Structure
@@ -42,7 +43,9 @@ map_site_vibe/
 │   │   └── maps.js              # Map generation routes
 │   ├── services/
 │   │   ├── stravaService.js     # Strava API calls
-│   │   └── mapService.js        # Map generation logic
+│   │   ├── mapService.js        # Map generation logic
+│   │   ├── tokenManager.js      # Session-based token management
+│   │   └── crossDomainTokenStore.js # Cross-domain authentication tokens
 │   ├── utils/
 │   │   └── envValidator.js      # Environment validation
 │   ├── tests/

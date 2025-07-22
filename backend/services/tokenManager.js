@@ -318,18 +318,10 @@ class TokenManager {
           req.auth = authStatus;
           // For cross-domain, provide tokens from the token store
           req.getAccessToken = () => {
-            console.log('Cross-domain getAccessToken called:', {
-              hasStravaTokens: !!tokenData.stravaTokens,
-              hasAccessToken: !!(tokenData.stravaTokens && tokenData.stravaTokens.accessToken),
-              tokenPrefix: tokenData.stravaTokens && tokenData.stravaTokens.accessToken ? 
-                tokenData.stravaTokens.accessToken.substring(0, 8) + '...' : 'MISSING'
-            });
-            
             if (tokenData.stravaTokens && tokenData.stravaTokens.accessToken) {
               return tokenData.stravaTokens.accessToken;
             }
             // Fallback to session
-            console.log('Falling back to session-based token access');
             return this.getAccessToken(req);
           };
           req.getRefreshToken = () => {

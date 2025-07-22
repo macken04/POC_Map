@@ -9,7 +9,7 @@ A custom Shopify platform that enables users to create and purchase high-quality
 - **Backend**: Node.js/Express server with session-based authentication
 - **Maps**: Mapbox GL JS for interactive display and high-resolution export
 - **High-Resolution Export**: Canvas export with device pixel ratio manipulation for 300 DPI print quality
-- **Authentication**: Strava API v3 OAuth flow with session-based storage
+- **Authentication**: Strava API v3 OAuth flow with hybrid session + cross-domain token system
 - **E-commerce**: Shopify Store-Level App (private app integration)
 - **Development**: ngrok for local development tunneling
 
@@ -108,7 +108,9 @@ map_site_vibe/
 │   │   └── maps.js            # Map generation routes
 │   ├── services/              # Business logic
 │   │   ├── stravaService.js   # Strava API calls
-│   │   └── mapService.js      # Map generation logic
+│   │   ├── mapService.js      # Map generation logic
+│   │   ├── tokenManager.js    # Session-based token management
+│   │   └── crossDomainTokenStore.js # Cross-domain authentication
 │   └── generated-maps/        # Local map storage
 ├── shopify-app/               # Shopify app configuration (to be implemented)
 ├── docs/                      # Documentation
