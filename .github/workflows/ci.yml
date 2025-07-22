@@ -1,0 +1,206 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main, develop ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+
+    - name: Install dependencies
+      run: |
+        cd backend
+        npm ci
+
+    - name: Validate environment configuration
+      run: |
+        cd backend
+        npm run test:config
+      env:
+        NODE_ENV: test
+        STRAVA_CLIENT_ID: ${{ secrets.STRAVA_CLIENT_ID }}
+        STRAVA_CLIENT_SECRET: ${{ secrets.STRAVA_CLIENT_SECRET }}
+        STRAVA_REDIRECT_URI: ${{ secrets.STRAVA_REDIRECT_URI }}
+        SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+        MAPBOX_ACCESS_TOKEN: ${{ secrets.MAPBOX_ACCESS_TOKEN }}
+
+    - name: Run unit tests
+      run: |
+        cd backend
+        npm run test:unit
+      env:
+        NODE_ENV: test
+        SESSION_SECRET: test_session_secret_minimum_32_chars
+
+    - name: Run token tests
+      run: |
+        cd backend
+        npm run test:tokens
+      env:
+        NODE_ENV: test
+        SESSION_SECRET: test_session_secret_minimum_32_chars
+
+    - name: Run CSRF protection tests
+      run: |
+        cd backend
+        npm run test:csrf
+      env:
+        NODE_ENV: test
+        SESSION_SECRET: test_session_secret_minimum_32_chars
+
+    - name: Run error handling tests
+      run: |
+        cd backend
+        npm run test:error-handling
+      env:
+        NODE_ENV: test
+        SESSION_SECRET: test_session_secret_minimum_32_chars
+
+    - name: Run enhanced token refresh tests
+      run: |
+        cd backend
+        npm run test:token-refresh
+      env:
+        NODE_ENV: test
+        SESSION_SECRET: test_session_secret_minimum_32_chars
+
+    - name: Start server for integration tests
+      run: |
+        cd backend
+        npm start &
+        sleep 5
+      env:
+        NODE_ENV: test
+        PORT: 3000
+        SESSION_SECRET: test_session_secret_minimum_32_chars
+        STRAVA_CLIENT_ID: test_client_id
+        STRAVA_CLIENT_SECRET: test_client_secret
+        STRAVA_REDIRECT_URI: http://localhost:3000/auth/strava/callback
+
+    - name: Run integration tests
+      run: |
+        cd backend
+        npm run test:integration
+      env:
+        NODE_ENV: test
+        SESSION_SECRET: test_session_secret_minimum_32_chars
+
+    - name: Run comprehensive test suite
+      run: |
+        cd backend
+        npm test
+      env:
+        NODE_ENV: test
+        SESSION_SECRET: test_session_secret_minimum_32_chars
+
+    - name: Upload test reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-reports-${{ matrix.node-version }}
+        path: |
+          backend/tests/*-test-report.json
+          backend/tests/test-summary.md
+          backend/tests/comprehensive-test-report.json
+
+  mapbox-tests:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+
+    - name: Install dependencies
+      run: |
+        cd backend
+        npm ci
+
+    - name: Run Mapbox integration tests
+      run: |
+        cd backend
+        node tests/mapbox-integration-test.js
+      env:
+        NODE_ENV: test
+        MAPBOX_ACCESS_TOKEN: ${{ secrets.MAPBOX_ACCESS_TOKEN }}
+
+    - name: Run DPI export validation tests
+      run: |
+        cd backend
+        node tests/dpi-export-validation.js
+
+    - name: Run WebGL support tests
+      run: |
+        cd backend
+        node tests/webgl-support-test.js
+
+    - name: Upload Mapbox test reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: mapbox-test-reports
+        path: |
+          backend/tests/mapbox-integration-test-report.json
+          backend/tests/test-summary.md
+
+  security-tests:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+
+    - name: Install dependencies
+      run: |
+        cd backend
+        npm ci
+
+    - name: Run security improvement tests
+      run: |
+        cd backend
+        node tests/security-improvements-test.js
+      env:
+        NODE_ENV: test
+        SESSION_SECRET: test_session_secret_minimum_32_chars
+        MAPBOX_ACCESS_TOKEN: test_token
+
+    - name: Upload security test reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-test-reports
+        path: |
+          backend/tests/*security*-report.json

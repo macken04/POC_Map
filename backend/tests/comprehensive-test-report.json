@@ -25,13 +25,183 @@
       }
     ]
   },
+  "activityFilteringTests": {
+    "success": true,
+    "results": {
+      "totalTests": 32,
+      "passedTests": 32,
+      "failedTests": 0,
+      "testDetails": [
+        {
+          "name": "Valid query parameters",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Invalid distance parameters",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Min greater than max distance",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Invalid sort field",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Filter by single activity type - Ride",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Filter by multiple activity types",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Filter by non-existent activity type",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Filter by minimum distance",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Filter by maximum distance",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Filter by distance range",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Filter by minimum elevation",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Filter by maximum elevation",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Filter by minimum duration",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Filter by maximum duration",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Search by name - case insensitive",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Search by partial name match",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Search with no matches",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Multiple filter combination",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Restrictive filters return no results",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Sort by distance descending",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Sort by distance ascending",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Sort by name alphabetically",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Sort by start date descending",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Sort by elevation gain",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Build valid Strava API parameters",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Generate comprehensive filter summary",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Handle empty activities array",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Handle null activities",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Handle activities with missing fields",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Sort empty array",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Sort with invalid field falls back gracefully",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        },
+        {
+          "name": "Performance with large dataset",
+          "status": "PASS",
+          "message": "Test passed successfully"
+        }
+      ]
+    }
+  },
   "summary": {
-    "totalTests": 5,
-    "passedTests": 5,
+    "totalTests": 37,
+    "passedTests": 37,
     "failedTests": 0,
     "successRate": "100.0%",
-    "executionTime": 228,
-    "timestamp": "2025-07-21T13:07:53.345Z",
+    "executionTime": 472,
+    "timestamp": "2025-07-21T18:42:18.462Z",
     "breakdown": {
       "integrationTests": {
         "passed": 0,
@@ -42,6 +212,11 @@
         "passed": 5,
         "failed": 0,
         "rate": "100.0%"
+      },
+      "activityFilteringTests": {
+        "passed": 32,
+        "failed": 0,
+        "rate": "100.0%"
       }
     }
   },
@@ -49,6 +224,6 @@
     "nodeVersion": "v24.4.0",
     "platform": "darwin",
     "arch": "arm64",
-    "timestamp": "2025-07-21T13:07:53.345Z"
+    "timestamp": "2025-07-21T18:42:18.462Z"
   }
 }

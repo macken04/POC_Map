@@ -5,6 +5,9 @@
 
 const MapboxIntegrationTest = require('./mapbox-integration-test');
 const DPIExportValidator = require('./dpi-export-validation');
+const ActivityFilteringTest = require('./activity-filtering-test');
+const CacheServiceTester = require('./cache-service-test');
+const CacheIntegrationTester = require('./cache-integration-test');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -14,6 +17,9 @@ class MasterTestRunner {
     this.results = {
       integrationTests: null,
       dpiValidation: null,
+      activityFilteringTests: null,
+      cacheServiceTests: null,
+      cacheIntegrationTests: null,
       summary: {
         totalTests: 0,
         passedTests: 0,
@@ -26,7 +32,7 @@ class MasterTestRunner {
   }
 
   async runAllTests() {
-    console.log('🚀 Starting Comprehensive Mapbox Test Suite...\n');
+    console.log('🚀 Starting Comprehensive Test Suite...\n');
     
     // Run Integration Tests
     console.log('📋 Running Integration Tests...');
@@ -36,6 +42,18 @@ class MasterTestRunner {
     console.log('\n📐 Running DPI Export Validation...');
     const dpiValidator = new DPIExportValidator();
     this.results.dpiValidation = dpiValidator.runAllValidations();
+    
+    console.log('\n🔍 Running Activity Filtering Tests...');
+    const activityFilteringTest = new ActivityFilteringTest();
+    this.results.activityFilteringTests = await activityFilteringTest.runAllTests();
+    
+    console.log('\n💾 Running Cache Service Tests...');
+    const cacheServiceTest = new CacheServiceTester();
+    this.results.cacheServiceTests = await cacheServiceTest.runAllTests();
+    
+    console.log('\n🔗 Running Cache Integration Tests...');
+    const cacheIntegrationTest = new CacheIntegrationTester();
+    this.results.cacheIntegrationTests = await cacheIntegrationTest.runAllTests();
     
     // Calculate summary
     this.calculateSummary();
@@ -70,9 +88,35 @@ class MasterTestRunner {
       this.results.dpiValidation.results.length : 0;
     const dpiFailed = dpiTotal - dpiPassed;
     
-    const totalTests = (integrationPassed + integrationFailed) + dpiTotal;
-    const totalPassed = integrationPassed + dpiPassed;
-    const totalFailed = integrationFailed + dpiFailed;
+    // Safely extract activity filtering test results
+    const filteringPassed = (this.results.activityFilteringTests && 
+      this.results.activityFilteringTests.results &&
+      typeof this.results.activityFilteringTests.results.passedTests === 'number') ? 
+      this.results.activityFilteringTests.results.passedTests : 0;
+    const filteringFailed = (this.results.activityFilteringTests && 
+      this.results.activityFilteringTests.results &&
+      typeof this.results.activityFilteringTests.results.failedTests === 'number') ? 
+      this.results.activityFilteringTests.results.failedTests : 0;
+    
+    // Safely extract cache service test results
+    const cacheServicePassed = (this.results.cacheServiceTests && 
+      typeof this.results.cacheServiceTests.passed === 'number') ? 
+      this.results.cacheServiceTests.passed : 0;
+    const cacheServiceFailed = (this.results.cacheServiceTests && 
+      typeof this.results.cacheServiceTests.failed === 'number') ? 
+      this.results.cacheServiceTests.failed : 0;
+    
+    // Safely extract cache integration test results  
+    const cacheIntegrationPassed = (this.results.cacheIntegrationTests && 
+      typeof this.results.cacheIntegrationTests.passed === 'number') ? 
+      this.results.cacheIntegrationTests.passed : 0;
+    const cacheIntegrationFailed = (this.results.cacheIntegrationTests && 
+      typeof this.results.cacheIntegrationTests.failed === 'number') ? 
+      this.results.cacheIntegrationTests.failed : 0;
+    
+    const totalTests = (integrationPassed + integrationFailed) + dpiTotal + (filteringPassed + filteringFailed) + (cacheServicePassed + cacheServiceFailed) + (cacheIntegrationPassed + cacheIntegrationFailed);
+    const totalPassed = integrationPassed + dpiPassed + filteringPassed + cacheServicePassed + cacheIntegrationPassed;
+    const totalFailed = integrationFailed + dpiFailed + filteringFailed + cacheServiceFailed + cacheIntegrationFailed;
     const successRate = totalTests > 0 ? ((totalPassed / totalTests) * 100).toFixed(1) : '0';
     
     this.results.summary = {
@@ -93,6 +137,24 @@ class MasterTestRunner {
           passed: dpiPassed,
           failed: dpiFailed,
           rate: dpiTotal > 0 ? `${((dpiPassed / dpiTotal) * 100).toFixed(1)}%` : '0%'
+        },
+        activityFilteringTests: {
+          passed: filteringPassed,
+          failed: filteringFailed,
+          rate: filteringPassed + filteringFailed > 0 ? 
+            `${((filteringPassed / (filteringPassed + filteringFailed)) * 100).toFixed(1)}%` : '0%'
+        },
+        cacheServiceTests: {
+          passed: cacheServicePassed,
+          failed: cacheServiceFailed,
+          rate: cacheServicePassed + cacheServiceFailed > 0 ? 
+            `${((cacheServicePassed / (cacheServicePassed + cacheServiceFailed)) * 100).toFixed(1)}%` : '0%'
+        },
+        cacheIntegrationTests: {
+          passed: cacheIntegrationPassed,
+          failed: cacheIntegrationFailed,
+          rate: cacheIntegrationPassed + cacheIntegrationFailed > 0 ? 
+            `${((cacheIntegrationPassed / (cacheIntegrationPassed + cacheIntegrationFailed)) * 100).toFixed(1)}%` : '0%'
         }
       }
     };

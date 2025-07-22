@@ -29,9 +29,9 @@ function getConfig() {
     session: {
       secret: process.env.SESSION_SECRET,
       maxAge: parseInt(process.env.SESSION_MAX_AGE) || 86400000, // 24 hours
-      secure: env === 'production',
+      secure: env === 'production' || process.env.NGROK_URL?.includes('https'),
       httpOnly: true,
-      sameSite: env === 'production' ? 'strict' : 'lax',
+      sameSite: env === 'production' ? 'strict' : 'none',
       name: process.env.SESSION_NAME || 'connect.sid',
       // Enhanced security settings
       rolling: true, // Reset expiration on activity
@@ -39,10 +39,10 @@ function getConfig() {
       resave: false,
       // Cookie settings for different environments
       cookie: {
-        secure: env === 'production',
+        secure: env === 'production' || process.env.NGROK_URL?.includes('https'),
         httpOnly: true,
         maxAge: parseInt(process.env.SESSION_MAX_AGE) || 86400000,
-        sameSite: env === 'production' ? 'strict' : 'lax'
+        sameSite: env === 'production' ? 'strict' : 'none'
       }
     },
     
@@ -101,6 +101,21 @@ function getConfig() {
       timeout: parseInt(process.env.MAP_EXPORT_TIMEOUT) || 30000,
       quality: parseInt(process.env.MAP_QUALITY) || 300,
       format: process.env.MAP_FORMAT || 'png'
+    },
+    
+    // Cache configuration
+    cache: {
+      enabled: process.env.CACHE_ENABLED !== 'false',
+      maxSize: parseInt(process.env.CACHE_MAX_SIZE) || 1000,
+      cleanupInterval: parseInt(process.env.CACHE_CLEANUP_INTERVAL) || 5 * 60 * 1000, // 5 minutes
+      compression: process.env.CACHE_COMPRESSION !== 'false',
+      warmupEnabled: process.env.CACHE_WARMUP_ENABLED !== 'false',
+      ttl: {
+        activities: parseInt(process.env.CACHE_TTL_ACTIVITIES) || 5 * 60 * 1000,        // 5 minutes
+        activityDetails: parseInt(process.env.CACHE_TTL_ACTIVITY_DETAILS) || 60 * 60 * 1000, // 1 hour  
+        activityStreams: parseInt(process.env.CACHE_TTL_ACTIVITY_STREAMS) || 24 * 60 * 60 * 1000, // 24 hours
+        athlete: parseInt(process.env.CACHE_TTL_ATHLETE) || 15 * 60 * 1000             // 15 minutes
+      }
     }
   };
 

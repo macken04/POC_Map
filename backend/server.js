@@ -18,13 +18,14 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://api.mapbox.com"],
-      scriptSrc: ["'self'", "https://api.mapbox.com"],
-      imgSrc: ["'self'", "data:", "https://api.mapbox.com", "https://**.tiles.mapbox.com"],
-      connectSrc: ["'self'", "https://api.mapbox.com", "https://events.mapbox.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://api.mapbox.com", "https://cdn.shopify.com", "https://fonts.shopify.com"],
+      scriptSrc: ["'self'", "https://api.mapbox.com", "https://cdn.shopify.com", "https://monorail-edge.shopifysvc.com"],
+      imgSrc: ["'self'", "data:", "https://api.mapbox.com", "https://**.tiles.mapbox.com", "https://cdn.shopify.com"],
+      connectSrc: ["'self'", "https://api.mapbox.com", "https://events.mapbox.com", "https://monorail-edge.shopifysvc.com", "https://cdn.shopify.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "https://fonts.shopify.com", "https://cdn.shopify.com"],
       objectSrc: ["'none'"],
-      mediaSrc: ["'self'"]
+      mediaSrc: ["'self'"],
+      frameSrc: ["'self'", "https://print-my-ride-version-5.myshopify.com"]
     }
   },
   crossOriginEmbedderPolicy: false // Required for Mapbox GL JS
@@ -38,8 +39,49 @@ app.use(compression());
 
 // 4. CORS configuration
 app.use(cors({
-  origin: appConfig.cors.allowedOrigins,
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if the origin is in our allowed list
+    if (appConfig.cors.allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // For development, also check localhost variants
+    if (appConfig.env === 'development') {
+      const localhostVariants = [
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        'https://localhost:3000',
+        'https://127.0.0.1:3000'
+      ];
+      if (localhostVariants.includes(origin)) {
+        return callback(null, true);
+      }
+    }
+    
+    // Allow Shopify CDN and checkout domains
+    const shopifyDomains = [
+      'https://cdn.shopify.com',
+      'https://fonts.shopify.com',
+      'https://monorail-edge.shopifysvc.com',
+      'https://checkout.shopify.com'
+    ];
+    
+    if (shopifyDomains.some(domain => origin?.startsWith(domain))) {
+      return callback(null, true);
+    }
+    
+    console.warn('CORS blocked origin:', origin, 'Allowed origins:', appConfig.cors.allowedOrigins);
+    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+    return callback(new Error(msg), false);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'X-Shopify-Topic', 'X-Shopify-Hmac-Sha256', 'X-Session-Token', 'ngrok-skip-browser-warning'],
+  optionsSuccessStatus: 200,
+  preflightContinue: false
 }));
 
 // 5. Body parsing middleware
@@ -64,6 +106,26 @@ app.use(sessionSecurity.getAllMiddleware());
 
 // Static files
 app.use('/generated-maps', express.static(appConfig.storage.generatedMapsDir));
+
+// Additional CORS middleware for API routes and auth routes accessed from Shopify
+app.use(['/api', '/auth'], (req, res, next) => {
+  const origin = req.headers.origin;
+  
+  // Set CORS headers explicitly for cross-domain routes
+  res.header('Access-Control-Allow-Origin', origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS,POST,PUT,DELETE');
+  res.header('Access-Control-Allow-Headers', 'Origin,X-Requested-With,Content-Type,Accept,Authorization,X-Shopify-Topic,X-Shopify-Hmac-Sha256,X-Session-Token,ngrok-skip-browser-warning');
+  res.header('Access-Control-Max-Age', '86400');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  
+  next();
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {

@@ -180,18 +180,62 @@ npm install
 
 ## Continuous Integration
 
-### Automated Testing
-Add to CI/CD pipeline:
-```yaml
-- name: Run Mapbox Tests
-  run: |
-    cd backend
-    node tests/test-runner.js
+### GitHub Actions Workflow
+The project includes a comprehensive CI pipeline at `.github/workflows/ci.yml` that automatically runs on:
+- Push to master, main, or develop branches  
+- Pull requests to master or main branches
+
+### CI Pipeline Structure
+
+#### 1. Main Test Job
+- **Matrix Testing**: Node.js 18.x, 20.x, and 22.x
+- **Environment Validation**: Configuration and environment variable testing
+- **Unit Tests**: OAuth components, token management, and utilities  
+- **Security Tests**: CSRF protection and token security validation
+- **Integration Tests**: Full OAuth flow with running server
+
+#### 2. Mapbox Test Job
+- **Mapbox Integration**: Core Mapbox GL JS functionality
+- **DPI Export Validation**: High-resolution export capabilities
+- **WebGL Support**: Browser compatibility testing
+
+#### 3. Security Test Job  
+- **Security Improvements**: Comprehensive security validation
+- **API Key Management**: Secure token handling verification
+
+### Available CI Scripts
+```bash
+# Run CI test suite (without server dependencies)
+npm run test:ci
+
+# Run Mapbox-specific tests  
+npm run test:mapbox
+
+# Run security tests
+npm run test:security
+
+# Run complete test suite
+npm run test:all
 ```
+
+### Required CI Environment Variables
+Configure these secrets in your GitHub repository:
+- `STRAVA_CLIENT_ID` - Strava API client ID
+- `STRAVA_CLIENT_SECRET` - Strava API client secret
+- `STRAVA_REDIRECT_URI` - OAuth callback URL  
+- `SESSION_SECRET` - Session encryption secret (minimum 32 characters)
+- `MAPBOX_ACCESS_TOKEN` - Mapbox API access token
+
+### CI Test Artifacts
+The pipeline automatically uploads test reports as artifacts:
+- `test-reports-{node-version}` - Main test suite results
+- `mapbox-test-reports` - Mapbox integration test results
+- `security-test-reports` - Security validation results
 
 ### Test Coverage Goals
 - 100% pass rate for integration tests
 - All DPI validation checks passing
+- Security tests must pass (critical for deployment)
 - Manual browser tests verified quarterly
 
 ## Maintenance

@@ -298,6 +298,81 @@ class TokenManager {
     } = options;
 
     return (req, res, next) => {
+      // Check for cross-domain token authentication first
+      const crossDomainToken = req.query.token || req.headers['x-session-token'];
+      
+      if (crossDomainToken) {
+        // First check persistent token store
+        const crossDomainTokenStore = require('./crossDomainTokenStore');
+        const tokenData = crossDomainTokenStore.getTokenData(crossDomainToken);
+        
+        if (tokenData) {
+          // Valid token from persistent store - create auth status
+          const authStatus = {
+            authenticated: true,
+            athlete: tokenData.athlete,
+            crossDomain: true,
+            tokenSource: 'persistent-store'
+          };
+          
+          req.auth = authStatus;
+          // For cross-domain, provide tokens from the token store
+          req.getAccessToken = () => {
+            console.log('Cross-domain getAccessToken called:', {
+              hasStravaTokens: !!tokenData.stravaTokens,
+              hasAccessToken: !!(tokenData.stravaTokens && tokenData.stravaTokens.accessToken),
+              tokenPrefix: tokenData.stravaTokens && tokenData.stravaTokens.accessToken ? 
+                tokenData.stravaTokens.accessToken.substring(0, 8) + '...' : 'MISSING'
+            });
+            
+            if (tokenData.stravaTokens && tokenData.stravaTokens.accessToken) {
+              return tokenData.stravaTokens.accessToken;
+            }
+            // Fallback to session
+            console.log('Falling back to session-based token access');
+            return this.getAccessToken(req);
+          };
+          req.getRefreshToken = () => {
+            if (tokenData.stravaTokens && tokenData.stravaTokens.refreshToken) {
+              return tokenData.stravaTokens.refreshToken;
+            }
+            // Fallback to session
+            return this.getRefreshToken(req);
+          };
+          
+          return next();
+        }
+        
+        // Fallback to session-based validation
+        if (req.session && req.session.crossDomainToken === crossDomainToken &&
+            req.session.crossDomainTokenExpiry > Date.now()) {
+          
+          // Valid cross-domain token - proceed with authentication
+          const authStatus = this.getAuthStatus(req);
+          
+          if (!authStatus.authenticated) {
+            return res.status(401).json({
+              error: 'Token expired',
+              message: 'Strava access token has expired. Please re-authenticate.'
+            });
+          }
+          
+          // Add auth info to request for use in routes
+          req.auth = authStatus;
+          req.getAccessToken = () => this.getAccessToken(req);
+          req.getRefreshToken = () => this.getRefreshToken(req);
+          
+          return next();
+        } else {
+          // Invalid or expired cross-domain token
+          return res.status(401).json({
+            error: 'Invalid cross-domain token',
+            message: 'Cross-domain token is invalid or expired. Please re-authenticate.'
+          });
+        }
+      }
+      
+      // Fall back to standard session-based authentication
       if (!this.validateSession(req)) {
         return res.status(401).json({
           error: 'Invalid session',

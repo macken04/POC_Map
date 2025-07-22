@@ -1,5 +1,7 @@
 # OAuth Implementation Test Suite
 
+[![CI](https://github.com/your-username/map_site_vibe/workflows/CI/badge.svg)](https://github.com/your-username/map_site_vibe/actions)
+
 Comprehensive testing suite for the Shopify Custom Map Printing Platform OAuth implementation with Strava API integration.
 
 ## Overview

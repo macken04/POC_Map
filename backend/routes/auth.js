@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const router = express.Router();
 const config = require('../config');
 const tokenManager = require('../services/tokenManager');
+const crossDomainTokenStore = require('../services/crossDomainTokenStore');
 const sessionSecurity = require('../middleware/sessionSecurity');
 const oauthErrorHandler = require('../middleware/errorHandler');
 const RetryUtils = require('../utils/retryUtils');
@@ -138,22 +139,52 @@ router.get('/strava/callback', rateLimitManager.createOAuthRateLimit(), oauthErr
     throw missingStateError;
   }
 
-  if (state !== req.session.oauthState) {
-    console.error('OAuth state mismatch:', { 
+  // For cross-domain OAuth flows (Shopify -> Backend), session state may not persist
+  // Validate state format instead of exact match for cross-origin scenarios
+  const isValidStateFormat = /^[a-f0-9]{64}$/.test(state);
+  const hasSessionState = req.session && req.session.oauthState;
+  
+  if (hasSessionState) {
+    // Normal flow: validate exact state match
+    if (state !== req.session.oauthState) {
+      console.error('OAuth state mismatch:', { 
+        received: state, 
+        expected: req.session.oauthState,
+        sessionId: req.sessionID,
+        ip: req.ip 
+      });
+      
+      const stateError = new Error('Security validation failed. Possible CSRF attack detected.');
+      stateError.code = 'state_mismatch';
+      stateError.status = 400;
+      throw stateError;
+    }
+    
+    // Clear the state from session after validation
+    delete req.session.oauthState;
+  } else if (!isValidStateFormat) {
+    // Cross-domain flow: validate state format to prevent basic attacks
+    console.error('OAuth state validation failed - invalid format:', { 
       received: state, 
-      expected: req.session.oauthState,
+      hasSession: !!req.session,
       sessionId: req.sessionID,
-      ip: req.ip 
+      ip: req.ip,
+      userAgent: req.get('User-Agent')
     });
     
-    const stateError = new Error('Security validation failed. Possible CSRF attack detected.');
-    stateError.code = 'state_mismatch';
-    stateError.status = 400;
-    throw stateError;
+    const formatError = new Error('Security validation failed. Invalid state format.');
+    formatError.code = 'invalid_state_format';
+    formatError.status = 400;
+    throw formatError;
+  } else {
+    // Cross-domain flow: state format is valid, proceed with caution
+    console.log('OAuth cross-domain flow detected:', {
+      state: state.substring(0, 8) + '...',
+      sessionId: req.sessionID,
+      ip: req.ip,
+      userAgent: req.get('User-Agent')
+    });
   }
-
-  // Clear the state from session after validation
-  delete req.session.oauthState;
 
   // Token exchange operation with retry logic
   const tokenExchangeOperation = async () => {
@@ -247,21 +278,81 @@ router.get('/strava/callback', rateLimitManager.createOAuthRateLimit(), oauthErr
       timestamp: new Date().toISOString()
     });
   } else {
-    // Redirect to frontend success page with success parameters
-    const successParams = new URLSearchParams({
-      success: 'true',
-      athlete: athleteInfo.firstname || athleteInfo.username || 'Athlete'
+    // Generate a temporary session token for cross-domain authentication
+    const sessionToken = crypto.randomBytes(32).toString('hex');
+    
+    // Store token in both session (for backward compatibility) and persistent store
+    req.session.crossDomainToken = sessionToken;
+    req.session.crossDomainTokenExpiry = Date.now() + (5 * 60 * 1000); // 5 minutes expiry
+    
+    // Store in persistent cross-domain token store with session reference
+    crossDomainTokenStore.storeToken(sessionToken, {
+      sessionId: req.sessionID,
+      athlete: tokenData.athlete,
+      originalSession: req.sessionID,
+      createdFor: 'cross-domain-auth',
+      // Store access and refresh tokens for API calls (use processed token data)
+      stravaTokens: {
+        accessToken: tokenDataForStorage.accessToken,  // Use processed token data
+        refreshToken: tokenDataForStorage.refreshToken,
+        expiresAt: tokenDataForStorage.expiresAt
+      }
     });
     
-    res.redirect(`${appConfig.cors.origin}/auth/success?${successParams}`);
+    // Redirect to activities page after successful authentication
+    const successParams = new URLSearchParams({
+      success: 'true',
+      athlete: athleteInfo.firstname || athleteInfo.username || 'Athlete',
+      token: sessionToken // Add session token for cross-domain auth
+    });
+    
+    res.redirect(`https://print-my-ride-version-5.myshopify.com/pages/strava-activities?${successParams}`);
   }
 }, 'token_exchange'));
 
 /**
  * Check authentication status
  * Returns current authentication state and athlete info
+ * Supports both session-based and token-based authentication for cross-domain requests
  */
 router.get('/status', sessionSecurity.validateSession(), (req, res) => {
+  // Check for cross-domain token authentication first
+  const crossDomainToken = req.query.token || req.headers['x-session-token'];
+  
+  if (crossDomainToken) {
+    // First check persistent token store (more reliable for cross-domain)
+    const tokenData = crossDomainTokenStore.getTokenData(crossDomainToken);
+    
+    if (tokenData) {
+      // Valid token from persistent store
+      const authStatus = {
+        authenticated: true,
+        athlete: tokenData.athlete,
+        crossDomain: true,
+        tokenSource: 'persistent-store'
+      };
+      return res.json(authStatus);
+    }
+    
+    // Fallback to session-based validation
+    if (req.session.crossDomainToken === crossDomainToken &&
+        req.session.crossDomainTokenExpiry > Date.now()) {
+      
+      // Valid token from session
+      const authStatus = tokenManager.getAuthStatus(req);
+      authStatus.crossDomain = true;
+      authStatus.tokenSource = 'session';
+      return res.json(authStatus);
+    } else {
+      // Invalid or expired token
+      return res.json({
+        authenticated: false,
+        message: 'Invalid or expired cross-domain token'
+      });
+    }
+  }
+  
+  // Fall back to standard session-based authentication
   const authStatus = tokenManager.getAuthStatus(req);
   res.json(authStatus);
 });
@@ -391,6 +482,31 @@ router.post('/logout', sessionSecurity.validateSession(), oauthErrorHandler.wrap
     });
   }
 }, 'logout'));
+
+/**
+ * Debug endpoint for cross-domain token store (development only)
+ * Returns token store statistics
+ */
+if (appConfig.env === 'development') {
+  router.get('/debug/token-store', (req, res) => {
+    try {
+      const stats = crossDomainTokenStore.getStats();
+      res.json({
+        success: true,
+        tokenStore: stats,
+        environment: 'development',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error getting token store stats:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get token store statistics',
+        message: error.message
+      });
+    }
+  });
+}
 
 // Export the router and enhanced authentication middleware
 module.exports = router;

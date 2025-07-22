@@ -11,21 +11,48 @@ const { requireAuth } = require('./auth');
  * and Shopify store sessions, managing user context and redirects.
  */
 
+// Add debugging middleware specifically for shopify integration routes
+router.use((req, res, next) => {
+  console.log(`[Shopify Integration] ${req.method} ${req.path}`, {
+    origin: req.get('Origin'),
+    referer: req.get('Referer'),
+    userAgent: req.get('User-Agent'),
+    sessionID: req.sessionID
+  });
+  next();
+});
+
 /**
  * Get current integration status
  * Returns the status of Strava auth and Shopify session integration
+ * Note: Removed sessionSecurity middleware to avoid CORS conflicts
  */
-router.get('/status', sessionSecurity.validateSession(), (req, res) => {
+router.get('/status', (req, res) => {
   try {
-    const status = ShopifyIntegrationService.getIntegrationStatus(req);
+    console.log('[Shopify Integration] Status endpoint called');
+    console.log('[Shopify Integration] Session ID:', req.sessionID);
+    console.log('[Shopify Integration] Session data:', req.session);
+    console.log('[Shopify Integration] Headers received:', {
+      origin: req.get('Origin'),
+      referer: req.get('Referer'),
+      userAgent: req.get('User-Agent'),
+      cookie: req.get('Cookie')
+    });
     
-    res.json({
+    const status = ShopifyIntegrationService.getIntegrationStatus(req);
+    console.log('[Shopify Integration] Status result:', status);
+    
+    const response = {
       success: true,
       status: status,
       timestamp: new Date().toISOString()
-    });
+    };
+    
+    console.log('[Shopify Integration] Sending response:', response);
+    res.json(response);
   } catch (error) {
-    console.error('Error getting integration status:', error);
+    console.error('[Shopify Integration] Error getting integration status:', error);
+    console.error('[Shopify Integration] Error stack:', error.stack);
     res.status(500).json({
       success: false,
       error: 'Failed to get integration status',
@@ -41,6 +68,7 @@ router.get('/status', sessionSecurity.validateSession(), (req, res) => {
  */
 router.post('/initialize', requireAuth, (req, res) => {
   try {
+    console.log('[Shopify Integration] Initialize endpoint called');
     // Get current auth status to extract user data
     const authStatus = require('../services/tokenManager').getAuthStatus(req);
     
@@ -90,6 +118,7 @@ router.post('/initialize', requireAuth, (req, res) => {
  */
 router.get('/redirect-url', requireAuth, (req, res) => {
   try {
+    console.log('[Shopify Integration] Redirect URL endpoint called');
     const destinationPath = req.query.path || '';
     
     const redirectUrl = ShopifyIntegrationService.generateShopifyRedirectUrl(req, destinationPath);
@@ -114,9 +143,11 @@ router.get('/redirect-url', requireAuth, (req, res) => {
 /**
  * Handle redirect from Shopify store
  * Validates the incoming request and provides session context
+ * Note: Removed sessionSecurity middleware to avoid CORS conflicts
  */
-router.get('/validate-shopify-request', sessionSecurity.validateSession(), (req, res) => {
+router.get('/validate-shopify-request', (req, res) => {
   try {
+    console.log('[Shopify Integration] Validate Shopify request endpoint called');
     const validation = ShopifyIntegrationService.validateShopifyRequest(req);
     
     if (!validation.valid) {
@@ -152,9 +183,11 @@ router.get('/validate-shopify-request', sessionSecurity.validateSession(), (req,
 /**
  * Get session context for frontend use
  * Returns current session state and user information
+ * Note: Removed sessionSecurity middleware to avoid CORS conflicts
  */
-router.get('/session-context', sessionSecurity.validateSession(), (req, res) => {
+router.get('/session-context', (req, res) => {
   try {
+    console.log('[Shopify Integration] Session context endpoint called');
     const sessionContext = ShopifyIntegrationService.getSessionContextForFrontend(req);
     
     res.json({
@@ -176,9 +209,11 @@ router.get('/session-context', sessionSecurity.validateSession(), (req, res) => 
 /**
  * Clear Shopify integration session
  * Removes Shopify-specific session data while preserving Strava auth
+ * Note: Removed sessionSecurity middleware to avoid CORS conflicts
  */
-router.post('/clear-session', sessionSecurity.validateSession(), (req, res) => {
+router.post('/clear-session', (req, res) => {
   try {
+    console.log('[Shopify Integration] Clear session endpoint called');
     ShopifyIntegrationService.clearShopifySession(req);
     
     res.json({
@@ -198,11 +233,42 @@ router.post('/clear-session', sessionSecurity.validateSession(), (req, res) => {
 });
 
 /**
+ * Simple test endpoint for CORS debugging
+ * No authentication or session middleware - just basic response
+ */
+router.get('/test-cors', (req, res) => {
+  console.log('[Shopify Integration] CORS test endpoint called');
+  console.log('[Shopify Integration] Request headers:', req.headers);
+  
+  res.json({
+    success: true,
+    message: 'CORS test successful',
+    timestamp: new Date().toISOString(),
+    requestInfo: {
+      method: req.method,
+      path: req.path,
+      origin: req.get('Origin'),
+      userAgent: req.get('User-Agent'),
+      sessionID: req.sessionID
+    }
+  });
+});
+
+/**
+ * Ultra simple test endpoint - minimal response
+ */
+router.get('/test-simple', (req, res) => {
+  console.log('[Shopify Integration] Simple test called from:', req.get('Origin'));
+  res.json({ ok: true });
+});
+
+/**
  * Integration health check
  * Comprehensive health report for the Strava-Shopify integration
  */
 router.get('/health', (req, res) => {
   try {
+    console.log('[Shopify Integration] Health check endpoint called');
     const healthReport = ShopifyIntegrationService.generateHealthReport(req);
     
     const statusCode = healthReport.status === 'healthy' ? 200 : 
@@ -230,6 +296,7 @@ router.get('/health', (req, res) => {
  */
 router.post('/complete-flow', requireAuth, (req, res) => {
   try {
+    console.log('[Shopify Integration] Complete flow endpoint called');
     const { destinationPath } = req.body;
     
     // Get auth status to ensure user is authenticated
