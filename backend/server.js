@@ -214,6 +214,28 @@ app.get('/api/client-config', requireAuth, (req, res) => {
   }
 });
 
+// Public Mapbox configuration endpoint (no auth required for basic config)
+app.get('/api/mapbox-config', (req, res) => {
+  try {
+    // Only provide public configuration that's safe to expose
+    res.json({
+      mapbox: {
+        accessToken: appConfig.mapbox.accessToken
+      },
+      styles: {
+        default: 'outdoors',
+        available: ['streets', 'outdoors', 'satellite', 'light', 'dark']
+      }
+    });
+  } catch (error) {
+    console.error('Error providing Mapbox config:', error);
+    res.status(500).json({
+      error: 'Configuration unavailable',
+      message: 'Unable to provide Mapbox configuration'
+    });
+  }
+});
+
 // Dynamic ngrok URL endpoint for frontend access
 app.get('/api/ngrok-url', (req, res) => {
   try {
