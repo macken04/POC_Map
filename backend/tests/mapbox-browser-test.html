@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapbox Browser Validation Test</title>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v3.13.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v3.13.0/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .map-container {
+            height: 400px;
+            margin: 20px 0;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        .controls button {
+            margin: 5px;
+            padding: 10px 15px;
+            background: #007cbf;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .controls button:hover {
+            background: #005a87;
+        }
+        .controls select {
+            margin: 5px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .test-results {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-pass { background-color: #28a745; }
+        .status-fail { background-color: #dc3545; }
+        .status-pending { background-color: #ffc107; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Mapbox GL JS Browser Validation Test</h1>
+            <p>Manual testing page for validating Mapbox integration in the browser</p>
+        </div>
+
+        <!-- Test 1: Basic Map Rendering -->
+        <div class="test-section">
+            <h2>Test 1: Basic Map Rendering</h2>
+            <p>Tests if Mapbox GL JS can initialize and render a basic map.</p>
+            <div id="map1" class="map-container"></div>
+            <div class="controls">
+                <button onclick="initializeMap1()">Initialize Map</button>
+                <button onclick="testMap1Export()">Test Canvas Export</button>
+            </div>
+            <div class="test-results">
+                <div id="map1-results">
+                    <span class="status-indicator status-pending"></span>
+                    Test not run yet
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 2: Multiple Map Styles -->
+        <div class="test-section">
+            <h2>Test 2: Map Style Switching</h2>
+            <p>Tests different Mapbox map styles to ensure they load correctly.</p>
+            <div id="map2" class="map-container"></div>
+            <div class="controls">
+                <select id="styleSelect" onchange="changeMapStyle()">
+                    <option value="streets-v11">Streets</option>
+                    <option value="outdoors-v11">Outdoors</option>
+                    <option value="satellite-v9">Satellite</option>
+                    <option value="light-v10">Light</option>
+                    <option value="dark-v10">Dark</option>
+                </select>
+                <button onclick="initializeMap2()">Initialize Map</button>
+            </div>
+            <div class="test-results">
+                <div id="map2-results">
+                    <span class="status-indicator status-pending"></span>
+                    Test not run yet
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 3: Route Display -->
+        <div class="test-section">
+            <h2>Test 3: Route Display and High-DPI Export</h2>
+            <p>Tests route rendering and high-resolution export functionality.</p>
+            <div id="map3" class="map-container"></div>
+            <div class="controls">
+                <button onclick="initializeMap3()">Initialize Map with Route</button>
+                <button onclick="testHighDPIExport()">Test High-DPI Export</button>
+                <button onclick="downloadExport()">Download Export</button>
+            </div>
+            <div class="test-results">
+                <div id="map3-results">
+                    <span class="status-indicator status-pending"></span>
+                    Test not run yet
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 4: WebGL Support -->
+        <div class="test-section">
+            <h2>Test 4: WebGL Support Detection</h2>
+            <p>Verifies WebGL support and compatibility.</p>
+            <div class="controls">
+                <button onclick="testWebGLSupport()">Test WebGL Support</button>
+            </div>
+            <div class="test-results">
+                <div id="webgl-results">
+                    <span class="status-indicator status-pending"></span>
+                    Test not run yet
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Summary -->
+        <div class="test-section">
+            <h2>Test Summary</h2>
+            <div id="test-summary">
+                <p>Run the tests above to see the summary</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Replace with your actual Mapbox access token
+        const MAPBOX_TOKEN = 'pk.eyJ1IjoicmVhZHktdG8tcHJpbnQiLCJhIjoiY20wenhqZG9zMDRlNzJrcHpxeHdkZnNuNiJ9.GHmf8KlHNJvxGiwYBnGf_A';
+        mapboxgl.accessToken = MAPBOX_TOKEN;
+
+        let map1, map2, map3;
+        let exportCanvas;
+        const testResults = {};
+
+        // Test data - Dublin route
+        const dublinRoute = [
+            [53.3498, -6.2603], // Dublin start
+            [53.3520, -6.2590], // Dublin point 2
+            [53.3540, -6.2580], // Dublin point 3
+            [53.3560, -6.2570]  // Dublin end
+        ];
+
+        function logResult(testId, success, message, details = null) {
+            testResults[testId] = { success, message, details };
+            const resultDiv = document.getElementById(testId + '-results');
+            const statusClass = success ? 'status-pass' : 'status-fail';
+            const statusText = success ? 'PASS' : 'FAIL';
+            const textClass = success ? 'success' : 'error';
+            
+            resultDiv.innerHTML = `
+                <span class="status-indicator ${statusClass}"></span>
+                <strong class="${textClass}">${statusText}:</strong> ${message}
+                ${details ? '<br><small>' + JSON.stringify(details, null, 2) + '</small>' : ''}
+            `;
+            
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const total = Object.keys(testResults).length;
+            const passed = Object.values(testResults).filter(r => r.success).length;
+            const failed = total - passed;
+            const rate = total > 0 ? (passed / total * 100).toFixed(1) : 0;
+            
+            document.getElementById('test-summary').innerHTML = `
+                <p><strong>Tests Run:</strong> ${total}</p>
+                <p><strong>Passed:</strong> <span class="success">${passed}</span></p>
+                <p><strong>Failed:</strong> <span class="error">${failed}</span></p>
+                <p><strong>Success Rate:</strong> ${rate}%</p>
+            `;
+        }
+
+        // Test 1: Basic Map Rendering
+        function initializeMap1() {
+            try {
+                map1 = new mapboxgl.Map({
+                    container: 'map1',
+                    style: 'mapbox://styles/mapbox/streets-v11',
+                    center: [-6.2603, 53.3498], // Dublin
+                    zoom: 10,
+                    preserveDrawingBuffer: true
+                });
+
+                map1.on('load', () => {
+                    logResult('map1', true, 'Basic map initialized and loaded successfully', {
+                        style: 'streets-v11',
+                        center: [-6.2603, 53.3498],
+                        zoom: 10
+                    });
+                });
+
+                map1.on('error', (e) => {
+                    logResult('map1', false, 'Map failed to load', { error: e.error.message });
+                });
+            } catch (error) {
+                logResult('map1', false, 'Map initialization failed', { error: error.message });
+            }
+        }
+
+        function testMap1Export() {
+            if (!map1) {
+                logResult('map1-export', false, 'Map not initialized', null);
+                return;
+            }
+
+            try {
+                const canvas = map1.getCanvas();
+                const dataURL = canvas.toDataURL();
+                if (dataURL && dataURL.startsWith('data:image')) {
+                    logResult('map1-export', true, 'Canvas export successful', {
+                        canvasSize: `${canvas.width}x${canvas.height}`,
+                        dataURLLength: dataURL.length
+                    });
+                } else {
+                    logResult('map1-export', false, 'Canvas export failed - invalid data URL', null);
+                }
+            } catch (error) {
+                logResult('map1-export', false, 'Canvas export failed', { error: error.message });
+            }
+        }
+
+        // Test 2: Map Style Switching
+        function initializeMap2() {
+            try {
+                map2 = new mapboxgl.Map({
+                    container: 'map2',
+                    style: 'mapbox://styles/mapbox/streets-v11',
+                    center: [-6.2603, 53.3498], // Dublin
+                    zoom: 10,
+                    preserveDrawingBuffer: true
+                });
+
+                map2.on('load', () => {
+                    logResult('map2', true, 'Style switching map initialized successfully');
+                });
+
+                map2.on('error', (e) => {
+                    logResult('map2', false, 'Style switching map failed to load', { error: e.error.message });
+                });
+            } catch (error) {
+                logResult('map2', false, 'Style switching map initialization failed', { error: error.message });
+            }
+        }
+
+        function changeMapStyle() {
+            if (!map2) return;
+            
+            const selectedStyle = document.getElementById('styleSelect').value;
+            try {
+                map2.setStyle(`mapbox://styles/mapbox/${selectedStyle}`);
+                logResult('map2-style', true, `Style changed to ${selectedStyle}`, { style: selectedStyle });
+            } catch (error) {
+                logResult('map2-style', false, 'Style change failed', { error: error.message });
+            }
+        }
+
+        // Test 3: Route Display and High-DPI Export
+        function initializeMap3() {
+            try {
+                map3 = new mapboxgl.Map({
+                    container: 'map3',
+                    style: 'mapbox://styles/mapbox/outdoors-v11',
+                    center: [-6.2603, 53.3498], // Dublin
+                    zoom: 12,
+                    preserveDrawingBuffer: true
+                });
+
+                map3.on('load', () => {
+                    // Add route source and layer
+                    const routeGeoJSON = {
+                        type: 'Feature',
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: dublinRoute.map(coord => [coord[1], coord[0]]) // [lng, lat]
+                        }
+                    };
+
+                    map3.addSource('route', {
+                        type: 'geojson',
+                        data: routeGeoJSON
+                    });
+
+                    map3.addLayer({
+                        id: 'route',
+                        type: 'line',
+                        source: 'route',
+                        layout: {
+                            'line-join': 'round',
+                            'line-cap': 'round'
+                        },
+                        paint: {
+                            'line-color': '#FF4444',
+                            'line-width': 4
+                        }
+                    });
+
+                    // Add start and end markers
+                    new mapboxgl.Marker({ color: '#10B981' })
+                        .setLngLat([dublinRoute[0][1], dublinRoute[0][0]])
+                        .addTo(map3);
+
+                    new mapboxgl.Marker({ color: '#EF4444' })
+                        .setLngLat([dublinRoute[dublinRoute.length - 1][1], dublinRoute[dublinRoute.length - 1][0]])
+                        .addTo(map3);
+
+                    logResult('map3', true, 'Route map with markers initialized successfully', {
+                        routePoints: dublinRoute.length,
+                        style: 'outdoors-v11'
+                    });
+                });
+
+                map3.on('error', (e) => {
+                    logResult('map3', false, 'Route map failed to load', { error: e.error.message });
+                });
+            } catch (error) {
+                logResult('map3', false, 'Route map initialization failed', { error: error.message });
+            }
+        }
+
+        function testHighDPIExport() {
+            if (!map3) {
+                logResult('map3-export', false, 'Route map not initialized', null);
+                return;
+            }
+
+            try {
+                // Create high-DPI canvas
+                const originalCanvas = map3.getCanvas();
+                const scaleFactor = 3; // 3x for ~300 DPI
+                
+                exportCanvas = document.createElement('canvas');
+                exportCanvas.width = originalCanvas.width * scaleFactor;
+                exportCanvas.height = originalCanvas.height * scaleFactor;
+                
+                const ctx = exportCanvas.getContext('2d');
+                ctx.scale(scaleFactor, scaleFactor);
+                ctx.drawImage(originalCanvas, 0, 0);
+                
+                logResult('map3-export', true, 'High-DPI export successful', {
+                    originalSize: `${originalCanvas.width}x${originalCanvas.height}`,
+                    exportSize: `${exportCanvas.width}x${exportCanvas.height}`,
+                    scaleFactor: scaleFactor
+                });
+            } catch (error) {
+                logResult('map3-export', false, 'High-DPI export failed', { error: error.message });
+            }
+        }
+
+        function downloadExport() {
+            if (!exportCanvas) {
+                alert('Please run High-DPI export test first');
+                return;
+            }
+
+            try {
+                const link = document.createElement('a');
+                link.download = 'mapbox-test-export.png';
+                link.href = exportCanvas.toDataURL();
+                link.click();
+                
+                logResult('map3-download', true, 'Export download successful', {
+                    filename: 'mapbox-test-export.png'
+                });
+            } catch (error) {
+                logResult('map3-download', false, 'Export download failed', { error: error.message });
+            }
+        }
+
+        // Test 4: WebGL Support
+        function testWebGLSupport() {
+            const canvas = document.createElement('canvas');
+            let gl;
+            
+            try {
+                gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                
+                if (!gl) {
+                    logResult('webgl', false, 'WebGL not supported', null);
+                    return;
+                }
+
+                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                
+                logResult('webgl', true, 'WebGL support confirmed', {
+                    vendor: vendor,
+                    renderer: renderer,
+                    version: gl.getParameter(gl.VERSION),
+                    maxTextureSize: gl.getParameter(gl.MAX_TEXTURE_SIZE)
+                });
+            } catch (error) {
+                logResult('webgl', false, 'WebGL test failed', { error: error.message });
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Mapbox Browser Test Page Loaded');
+            console.log('Mapbox GL JS Version:', mapboxgl.version);
+            testWebGLSupport(); // Run WebGL test automatically
+        });
+    </script>
+</body>
+</html>

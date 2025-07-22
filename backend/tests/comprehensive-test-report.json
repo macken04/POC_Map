@@ -1,0 +1,54 @@
+{
+  "dpiValidation": {
+    "success": true,
+    "successRate": "100.0",
+    "results": [
+      {
+        "name": "Print Dimensions",
+        "success": true
+      },
+      {
+        "name": "Pixel Ratio Calculations",
+        "success": true
+      },
+      {
+        "name": "Export Configuration",
+        "success": true
+      },
+      {
+        "name": "Export Workflow",
+        "success": true
+      },
+      {
+        "name": "File Sizes",
+        "success": true
+      }
+    ]
+  },
+  "summary": {
+    "totalTests": 5,
+    "passedTests": 5,
+    "failedTests": 0,
+    "successRate": "100.0%",
+    "executionTime": 228,
+    "timestamp": "2025-07-21T13:07:53.345Z",
+    "breakdown": {
+      "integrationTests": {
+        "passed": 0,
+        "failed": 0,
+        "rate": "0%"
+      },
+      "dpiValidation": {
+        "passed": 5,
+        "failed": 0,
+        "rate": "100.0%"
+      }
+    }
+  },
+  "testEnvironment": {
+    "nodeVersion": "v24.4.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "timestamp": "2025-07-21T13:07:53.345Z"
+  }
+}
