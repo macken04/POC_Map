@@ -27,7 +27,12 @@ class TokenManager {
     }
 
     try {
-      // Add timestamp for storage tracking
+      // Regenerate session for security before token storage (if available)
+      if (req.session.regenerate) {
+        await this.regenerateSession(req);
+      }
+
+      // Add timestamp for storage tracking (use current sessionID after regeneration)
       const tokenDataWithMeta = {
         ...tokenData,
         storedAt: Math.floor(Date.now() / 1000),
@@ -38,11 +43,6 @@ class TokenManager {
       const encryptedTokens = tokenService.encryptTokens(tokenDataWithMeta);
       req.session[this.sessionTokenKey] = encryptedTokens;
       req.session[this.sessionAuthKey] = true;
-
-      // Regenerate session for security after token storage (if available)
-      if (req.session.regenerate) {
-        await this.regenerateSession(req);
-      }
 
       console.log('Tokens stored securely:', tokenService.sanitizeTokenData(tokenDataWithMeta));
     } catch (error) {
@@ -163,10 +163,15 @@ class TokenManager {
    */
   clearTokens(req) {
     if (req.session) {
-      // Get tokens for cleanup before clearing
-      const tokens = this.getTokens(req);
-      if (tokens) {
-        tokenService.clearTokenData(tokens);
+      // Get encrypted tokens directly to avoid recursion
+      const encryptedTokens = req.session[this.sessionTokenKey];
+      if (encryptedTokens) {
+        try {
+          const tokens = tokenService.decryptTokens(encryptedTokens);
+          tokenService.clearTokenData(tokens);
+        } catch (error) {
+          // Ignore decryption errors during cleanup
+        }
       }
 
       delete req.session[this.sessionTokenKey];

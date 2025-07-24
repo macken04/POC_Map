@@ -1,0 +1,457 @@
+{
+  "overview": {
+    "testDate": "2025-07-24T10:14:18.561Z",
+    "totalDuration": 7072,
+    "totalSuites": 5,
+    "totalTests": 58,
+    "totalPassed": 28,
+    "totalFailed": 31,
+    "overallSuccessRate": "48.3"
+  },
+  "suiteResults": [
+    {
+      "type": "unit_tests",
+      "summary": {
+        "total": 36,
+        "passed": 28,
+        "failed": 8,
+        "successRate": "77.8"
+      },
+      "details": [
+        {
+          "name": "Token validation accepts valid data",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.563Z"
+        },
+        {
+          "name": "Token validation rejects invalid data",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.564Z"
+        },
+        {
+          "name": "Token validation rejects missing access token",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.564Z"
+        },
+        {
+          "name": "Token encryption produces non-empty string",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.598Z"
+        },
+        {
+          "name": "Token encryption is not reversible without key",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.598Z"
+        },
+        {
+          "name": "Token decryption recovers original data",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.598Z"
+        },
+        {
+          "name": "Invalid encrypted data throws error",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.598Z"
+        },
+        {
+          "name": "Non-expired tokens detected correctly",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.598Z"
+        },
+        {
+          "name": "Expired tokens detected correctly",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.598Z"
+        },
+        {
+          "name": "Token sanitization removes sensitive data",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.598Z"
+        },
+        {
+          "name": "Secure token generation produces valid tokens",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.598Z"
+        },
+        {
+          "name": "Token data clearing works",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.598Z"
+        },
+        {
+          "name": "Token storage stores tokens securely",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.599Z"
+        },
+        {
+          "name": "Token retrieval returns stored tokens",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.599Z"
+        },
+        {
+          "name": "Authentication status detection works",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.599Z"
+        },
+        {
+          "name": "Auth status provides correct details",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.599Z"
+        },
+        {
+          "name": "Access token retrieval works",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.599Z"
+        },
+        {
+          "name": "Refresh token retrieval works",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.599Z"
+        },
+        {
+          "name": "Session validation works for valid sessions",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.599Z"
+        },
+        {
+          "name": "Session validation fails for invalid sessions",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.599Z"
+        },
+        {
+          "name": "Token clearing removes all tokens",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.599Z"
+        },
+        {
+          "name": "Cleared tokens show not authenticated",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.599Z"
+        },
+        {
+          "name": "Token update preserves existing data",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.599Z"
+        },
+        {
+          "name": "Session ID mismatch clears tokens",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.599Z"
+        },
+        {
+          "name": "Session validation middleware exists",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.600Z"
+        },
+        {
+          "name": "Security headers middleware exists",
+          "passed": false,
+          "message": "sessionSecurity.securityHeaders is not a function",
+          "timestamp": "2025-07-24T10:14:18.600Z"
+        },
+        {
+          "name": "Auth requirement middleware exists",
+          "passed": false,
+          "message": "Test assertion failed",
+          "timestamp": "2025-07-24T10:14:18.600Z"
+        },
+        {
+          "name": "Async wrapper function exists",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.600Z"
+        },
+        {
+          "name": "Error categorization works",
+          "passed": false,
+          "message": "Test assertion failed",
+          "timestamp": "2025-07-24T10:14:18.600Z"
+        },
+        {
+          "name": "OAuth error categorization works",
+          "passed": false,
+          "message": "Test assertion failed",
+          "timestamp": "2025-07-24T10:14:18.600Z"
+        },
+        {
+          "name": "Error response formatting works",
+          "passed": false,
+          "message": "errorHandler.formatErrorResponse is not a function",
+          "timestamp": "2025-07-24T10:14:18.600Z"
+        },
+        {
+          "name": "User-friendly error messages generated",
+          "passed": false,
+          "message": "errorHandler.getUserFriendlyMessage is not a function",
+          "timestamp": "2025-07-24T10:14:18.600Z"
+        },
+        {
+          "name": "OAuth rate limit middleware created",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.600Z"
+        },
+        {
+          "name": "API rate limit middleware created",
+          "passed": false,
+          "message": "rateLimiting.createAPIRateLimit is not a function",
+          "timestamp": "2025-07-24T10:14:18.600Z"
+        },
+        {
+          "name": "Strava rate limit tracking functions exist",
+          "passed": true,
+          "message": "Test passed",
+          "timestamp": "2025-07-24T10:14:18.600Z"
+        },
+        {
+          "name": "Rate limit info extraction works",
+          "passed": false,
+          "message": "rateLimiting.extractRateLimitInfo is not a function",
+          "timestamp": "2025-07-24T10:14:18.600Z"
+        }
+      ],
+      "timestamp": "2025-07-24T10:14:18.600Z",
+      "duration": 37,
+      "suiteName": "Unit Tests"
+    },
+    {
+      "type": "integration_tests",
+      "summary": {
+        "total": 0,
+        "passed": 0,
+        "failed": 0,
+        "successRate": 0
+      },
+      "details": [],
+      "timestamp": "2025-07-24T10:14:18.620Z",
+      "environment": "development",
+      "baseUrl": "http://localhost:3000",
+      "duration": 20,
+      "suiteName": "Integration Tests"
+    },
+    {
+      "suiteName": "Enhanced Token Refresh Tests",
+      "type": "error",
+      "summary": {
+        "total": 0,
+        "passed": 0,
+        "failed": 1
+      },
+      "error": "Invalid token data structure",
+      "timestamp": "2025-07-24T10:14:18.621Z"
+    },
+    {
+      "type": "csrf_protection_tests",
+      "summary": {
+        "total": 1,
+        "passed": 0,
+        "failed": 1,
+        "successRate": "0.0"
+      },
+      "details": [
+        {
+          "name": "Server availability",
+          "passed": false,
+          "message": "Server not running for CSRF tests",
+          "timestamp": "2025-07-24T10:14:18.622Z"
+        }
+      ],
+      "timestamp": "2025-07-24T10:14:18.622Z",
+      "environment": "development",
+      "baseUrl": "http://localhost:3000",
+      "duration": 0,
+      "suiteName": "CSRF Protection Tests"
+    },
+    {
+      "summary": {
+        "total": 21,
+        "passed": 0,
+        "failed": 21,
+        "successRate": "0.0"
+      },
+      "details": [
+        {
+          "name": "Missing authorization code handling",
+          "passed": false,
+          "message": "Network error: fetch is not a function",
+          "timestamp": "2025-07-24T10:14:18.622Z"
+        },
+        {
+          "name": "Invalid state parameter handling",
+          "passed": false,
+          "message": "Network error: fetch is not a function",
+          "timestamp": "2025-07-24T10:14:18.622Z"
+        },
+        {
+          "name": "User denied access handling",
+          "passed": false,
+          "message": "Network error: fetch is not a function",
+          "timestamp": "2025-07-24T10:14:18.622Z"
+        },
+        {
+          "name": "Invalid request error handling",
+          "passed": false,
+          "message": "Network error: fetch is not a function",
+          "timestamp": "2025-07-24T10:14:18.622Z"
+        },
+        {
+          "name": "Network connectivity test",
+          "passed": false,
+          "message": "Network error: fetch is not a function",
+          "timestamp": "2025-07-24T10:14:19.622Z"
+        },
+        {
+          "name": "Token exchange network error handling",
+          "passed": false,
+          "message": "Network error: fetch is not a function",
+          "timestamp": "2025-07-24T10:14:19.623Z"
+        },
+        {
+          "name": "OAuth rate limiting test",
+          "passed": false,
+          "message": "fetch is not a function",
+          "timestamp": "2025-07-24T10:14:20.623Z"
+        },
+        {
+          "name": "API rate limiting (unauthenticated)",
+          "passed": false,
+          "message": "Network error: fetch is not a function",
+          "timestamp": "2025-07-24T10:14:20.624Z"
+        },
+        {
+          "name": "CSRF protection validation",
+          "passed": false,
+          "message": "Network error: fetch is not a function",
+          "timestamp": "2025-07-24T10:14:21.624Z"
+        },
+        {
+          "name": "Malformed request handling",
+          "passed": false,
+          "message": "Network error: fetch is not a function",
+          "timestamp": "2025-07-24T10:14:21.625Z"
+        },
+        {
+          "name": "Session validation",
+          "passed": false,
+          "message": "Network error: fetch is not a function",
+          "timestamp": "2025-07-24T10:14:21.625Z"
+        },
+        {
+          "name": "Unauthenticated API access",
+          "passed": false,
+          "message": "Network error: fetch is not a function",
+          "timestamp": "2025-07-24T10:14:22.627Z"
+        },
+        {
+          "name": "Session validation middleware",
+          "passed": false,
+          "message": "Network error: fetch is not a function",
+          "timestamp": "2025-07-24T10:14:22.627Z"
+        },
+        {
+          "name": "Error page for access_denied",
+          "passed": false,
+          "message": "Network error: fetch is not a function",
+          "timestamp": "2025-07-24T10:14:23.629Z"
+        },
+        {
+          "name": "Error page for rate_limited",
+          "passed": false,
+          "message": "Network error: fetch is not a function",
+          "timestamp": "2025-07-24T10:14:23.629Z"
+        },
+        {
+          "name": "Error page for service_unavailable",
+          "passed": false,
+          "message": "Network error: fetch is not a function",
+          "timestamp": "2025-07-24T10:14:23.629Z"
+        },
+        {
+          "name": "Error page for server_error",
+          "passed": false,
+          "message": "Network error: fetch is not a function",
+          "timestamp": "2025-07-24T10:14:23.629Z"
+        },
+        {
+          "name": "Extremely long parameter handling",
+          "passed": false,
+          "message": "Network error: fetch is not a function",
+          "timestamp": "2025-07-24T10:14:24.631Z"
+        },
+        {
+          "name": "Special character handling",
+          "passed": false,
+          "message": "Network error: fetch is not a function",
+          "timestamp": "2025-07-24T10:14:24.631Z"
+        },
+        {
+          "name": "Concurrent request test",
+          "passed": false,
+          "message": "fetch is not a function",
+          "timestamp": "2025-07-24T10:14:24.631Z"
+        },
+        {
+          "name": "Server health after error scenarios",
+          "passed": false,
+          "message": "Network error: fetch is not a function",
+          "timestamp": "2025-07-24T10:14:24.631Z"
+        }
+      ],
+      "timestamp": "2025-07-24T10:14:25.633Z",
+      "environment": "development",
+      "testConfig": {
+        "baseUrl": "http://localhost:3000",
+        "testTimeout": 30000,
+        "rateLimitDelay": 1000
+      },
+      "duration": 7011,
+      "suiteName": "Error Handling Tests"
+    }
+  ],
+  "recommendations": [
+    {
+      "category": "Unit Tests",
+      "issue": "Component-level functionality issues detected",
+      "recommendation": "Review individual OAuth component implementations",
+      "priority": "high"
+    },
+    {
+      "category": "Security",
+      "issue": "CSRF protection vulnerabilities detected",
+      "recommendation": "Critical: Fix CSRF protection immediately",
+      "priority": "critical"
+    }
+  ],
+  "environment": {
+    "nodeVersion": "v24.4.0",
+    "platform": "darwin",
+    "environment": "development",
+    "testRunner": "OAuth Comprehensive Test Suite v1.0"
+  },
+  "timestamp": "2025-07-24T10:14:25.633Z"
+}

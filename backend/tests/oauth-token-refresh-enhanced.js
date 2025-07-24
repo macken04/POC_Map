@@ -6,7 +6,7 @@
 
 // Load environment variables
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const tokenManager = require('../services/tokenManager');
 const { refreshTokenIfNeeded } = require('../middleware/tokenRefresh');

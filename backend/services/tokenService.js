@@ -11,8 +11,17 @@ class TokenService {
     this.keyLength = 32; // 256 bits
     this.ivLength = 16;  // 128 bits
     
-    // Generate encryption key from environment
-    this.encryptionKey = this.generateEncryptionKey();
+    // Lazy initialization - key will be generated when first needed
+    this.encryptionKey = null;
+  }
+
+  /**
+   * Ensure encryption key is initialized
+   */
+  ensureKeyInitialized() {
+    if (!this.encryptionKey) {
+      this.encryptionKey = this.generateEncryptionKey();
+    }
   }
 
   /**
@@ -47,6 +56,9 @@ class TokenService {
       throw new Error('Token data is required for encryption');
     }
 
+    // Ensure encryption key is initialized
+    this.ensureKeyInitialized();
+
     try {
       // Convert token data to JSON string
       const plaintext = JSON.stringify(tokenData);
@@ -80,6 +92,9 @@ class TokenService {
     if (!encryptedData) {
       throw new Error('Encrypted data is required for decryption');
     }
+
+    // Ensure encryption key is initialized
+    this.ensureKeyInitialized();
 
     try {
       // Parse the combined data
