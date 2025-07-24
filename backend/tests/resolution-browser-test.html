@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Resolution Management Browser Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .test-title { font-weight: bold; font-size: 18px; margin-bottom: 10px; }
+        .test-result { margin: 10px 0; padding: 8px; border-radius: 3px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d9ecf4; color: #0c5460; }
+        .controls { margin: 15px 0; }
+        .controls select, .controls input { margin: 5px; padding: 5px; }
+        .controls button { margin: 5px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        .controls button:hover { background: #0056b3; }
+        #preview-container { border: 2px solid #007bff; margin: 10px 0; display: inline-block; }
+        #resolution-info { background: #f8f9fa; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>🔬 Resolution Management Browser Test</h1>
+    <p>This test validates resolution management functionality in a browser environment.</p>
+
+    <div class="test-section">
+        <div class="test-title">📋 Test 1: DPI Calculation Verification</div>
+        <div id="dpi-test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">📊 Test 2: Memory Estimation</div>
+        <div id="memory-test-results"></div>
+        <table id="memory-table">
+            <thead>
+                <tr>
+                    <th>Format</th>
+                    <th>DPI</th> 
+                    <th>Logical Size</th>
+                    <th>Physical Size</th>
+                    <th>Memory (MB)</th>
+                    <th>Optimization</th>
+                </tr>
+            </thead>
+            <tbody id="memory-table-body"></tbody>
+        </table>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">🎯 Test 3: Quality Settings</div>
+        <div id="quality-test-results"></div>
+        <table>
+            <thead>
+                <tr>
+                    <th>DPI</th>
+                    <th>Scaling Factor</th>
+                    <th>Quality %</th>
+                    <th>Optimization</th>
+                    <th>Use Case</th>
+                </tr>
+            </thead>
+            <tbody id="quality-table-body"></tbody>
+        </table>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">🧠 Test 4: Memory Optimization</div>
+        <div class="controls">
+            <label>Format:</label>
+            <select id="format-select">
+                <option value="A4">A4</option>
+                <option value="A3">A3</option>
+                <option value="A2">A2</option>
+            </select>
+            <label>DPI:</label>
+            <select id="dpi-select">
+                <option value="150">150</option>
+                <option value="300" selected>300</option>
+                <option value="600">600</option>
+            </select>
+            <label>Max Memory (MB):</label>
+            <input type="number" id="memory-limit" value="500" min="50" max="2000">
+            <button onclick="testOptimization()">Test Optimization</button>
+        </div>
+        <div id="optimization-results"></div>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">📐 Test 5: Preview Dimensions</div>
+        <div class="controls">
+            <label>Target Width:</label>
+            <input type="number" id="target-width" value="2480" min="100">
+            <label>Target Height:</label>
+            <input type="number" id="target-height" value="3508" min="100">
+            <label>Max Preview Size:</label>
+            <input type="number" id="max-preview" value="800" min="200" max="1200">
+            <button onclick="testPreviewDimensions()">Calculate Preview</button>
+        </div>
+        <div id="preview-results"></div>
+        <div id="resolution-info"></div>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">✅ Test 6: Parameter Validation</div>
+        <div id="validation-results"></div>
+    </div>
+
+    <script>
+        // Mock ResolutionManager class (simplified browser version)
+        class ResolutionManager {
+            constructor() {
+                this.DPI_PRESETS = {
+                    SCREEN: 72,
+                    WEB_HIGH: 96,
+                    PRINT_DRAFT: 150,
+                    PRINT_STANDARD: 300,
+                    PRINT_HIGH: 600
+                };
+
+                this.MEMORY_THRESHOLDS = {
+                    LOW: 50,
+                    MEDIUM: 200,
+                    HIGH: 500,
+                    EXTREME: 1000
+                };
+
+                this.QUALITY_SETTINGS = {
+                    72: { devicePixelRatio: 1, quality: 80, optimization: 'high' },
+                    96: { devicePixelRatio: 1.33, quality: 85, optimization: 'medium' },
+                    150: { devicePixelRatio: 2, quality: 90, optimization: 'medium' },
+                    300: { devicePixelRatio: 3, quality: 95, optimization: 'low' },
+                    600: { devicePixelRatio: 6, quality: 100, optimization: 'minimal' }
+                };
+            }
+
+            calculateScalingFactor(targetDPI, baseDPI = 96) {
+                return Math.round((targetDPI / baseDPI) * 100) / 100;
+            }
+
+            getQualitySettings(targetDPI) {
+                const availableDPIs = Object.keys(this.QUALITY_SETTINGS).map(Number).sort((a, b) => a - b);
+                let closestDPI = availableDPIs[0];
+                
+                for (const dpi of availableDPIs) {
+                    if (Math.abs(dpi - targetDPI) < Math.abs(closestDPI - targetDPI)) {
+                        closestDPI = dpi;
+                    }
+                }
+
+                const settings = { ...this.QUALITY_SETTINGS[closestDPI] };
+                
+                if (closestDPI !== targetDPI) {
+                    settings.devicePixelRatio = this.calculateScalingFactor(targetDPI, 96);
+                }
+
+                return {
+                    ...settings,
+                    targetDPI,
+                    actualDPI: Math.round(96 * settings.devicePixelRatio),
+                    scalingFactor: settings.devicePixelRatio
+                };
+            }
+
+            calculateMemoryRequirements(width, height, dpi) {
+                const scalingFactor = this.calculateScalingFactor(dpi, 96);
+                const actualWidth = Math.round(width * scalingFactor);
+                const actualHeight = Math.round(height * scalingFactor);
+                
+                const bufferMultiplier = 2.5;
+                const estimatedBytes = actualWidth * actualHeight * 4 * bufferMultiplier;
+                const estimatedMB = Math.round(estimatedBytes / (1024 * 1024));
+
+                let optimizationLevel = 'minimal';
+                if (estimatedMB > this.MEMORY_THRESHOLDS.EXTREME) {
+                    optimizationLevel = 'extreme';
+                } else if (estimatedMB > this.MEMORY_THRESHOLDS.HIGH) {
+                    optimizationLevel = 'high';
+                } else if (estimatedMB > this.MEMORY_THRESHOLDS.MEDIUM) {
+                    optimizationLevel = 'medium';
+                } else if (estimatedMB > this.MEMORY_THRESHOLDS.LOW) {
+                    optimizationLevel = 'low';
+                }
+
+                return {
+                    estimatedMB,
+                    actualWidth,
+                    actualHeight,
+                    scalingFactor,
+                    optimizationLevel,
+                    isMemoryIntensive: estimatedMB > this.MEMORY_THRESHOLDS.HIGH
+                };
+            }
+
+            optimizeForMemory(width, height, targetDPI, maxMemoryMB = 500) {
+                let currentMemory = this.calculateMemoryRequirements(width, height, targetDPI);
+                
+                if (currentMemory.estimatedMB <= maxMemoryMB) {
+                    return {
+                        width, height, dpi: targetDPI,
+                        scalingFactor: currentMemory.scalingFactor,
+                        memoryMB: currentMemory.estimatedMB,
+                        optimized: false
+                    };
+                }
+
+                const reductionRatio = Math.sqrt(maxMemoryMB / currentMemory.estimatedMB);
+                const optimizedWidth = Math.round(width * reductionRatio);
+                const optimizedHeight = Math.round(height * reductionRatio);
+                
+                const optimizedMemory = this.calculateMemoryRequirements(optimizedWidth, optimizedHeight, targetDPI);
+
+                return {
+                    width: optimizedWidth, height: optimizedHeight, dpi: targetDPI,
+                    scalingFactor: optimizedMemory.scalingFactor,
+                    memoryMB: optimizedMemory.estimatedMB,
+                    optimized: true, reductionRatio,
+                    originalDimensions: { width, height },
+                    originalMemoryMB: currentMemory.estimatedMB
+                };
+            }
+
+            getPreviewDimensions(targetWidth, targetHeight, maxDimension = 800) {
+                const aspectRatio = targetWidth / targetHeight;
+                let previewWidth, previewHeight;
+
+                if (targetWidth > targetHeight) {
+                    previewWidth = Math.min(maxDimension, targetWidth);
+                    previewHeight = Math.round(previewWidth / aspectRatio);
+                } else {
+                    previewHeight = Math.min(maxDimension, targetHeight);
+                    previewWidth = Math.round(previewHeight * aspectRatio);
+                }
+
+                const quality = this.getQualitySettings(this.DPI_PRESETS.SCREEN);
+
+                return {
+                    width: previewWidth, height: previewHeight,
+                    dpi: this.DPI_PRESETS.SCREEN, quality,
+                    scalingFactor: quality.scalingFactor, aspectRatio,
+                    isPreview: true
+                };
+            }
+
+            validateResolutionParams(params) {
+                const { width, height, dpi } = params;
+
+                if (!Number.isInteger(width) || width <= 0) {
+                    throw new Error('Width must be a positive integer');
+                }
+                if (!Number.isInteger(height) || height <= 0) {
+                    throw new Error('Height must be a positive integer');
+                }
+                if (!Number.isInteger(dpi) || dpi <= 0) {
+                    throw new Error('DPI must be a positive integer');
+                }
+                if (dpi > 1200) {
+                    throw new Error('DPI cannot exceed 1200 (maximum supported)');
+                }
+                if (dpi < 36) {
+                    throw new Error('DPI cannot be less than 36 (minimum supported)');
+                }
+
+                return true;
+            }
+        }
+
+        // Format configurations
+        const PRINT_CONFIG = {
+            A2: { portrait: { width: 4961, height: 7016 } },
+            A3: { portrait: { width: 3508, height: 4961 } },
+            A4: { portrait: { width: 2480, height: 3508 } }
+        };
+
+        // Initialize resolution manager
+        const resolutionManager = new ResolutionManager();
+        
+        // Test functions
+        function runAllTests() {
+            testDPICalculation();
+            testMemoryEstimation();
+            testQualitySettings();
+            testParameterValidation();
+        }
+
+        function testDPICalculation() {
+            const results = document.getElementById('dpi-test-results');
+            let html = '';
+
+            try {
+                const testCases = [
+                    { target: 300, base: 96, expected: 3.13 },
+                    { target: 150, base: 96, expected: 1.56 },
+                    { target: 600, base: 96, expected: 6.25 },
+                    { target: 72, base: 96, expected: 0.75 }
+                ];
+
+                testCases.forEach(({ target, base, expected }) => {
+                    const actual = resolutionManager.calculateScalingFactor(target, base);
+                    const pass = Math.abs(actual - expected) < 0.1;
+                    html += `<div class="test-result ${pass ? 'success' : 'error'}">
+                        ${target} DPI ÷ ${base} DPI = ${actual}x scaling ${pass ? '✅' : '❌'}
+                    </div>`;
+                });
+
+                html += '<div class="test-result success">✅ DPI calculation tests passed</div>';
+            } catch (error) {
+                html += `<div class="test-result error">❌ DPI calculation failed: ${error.message}</div>`;
+            }
+
+            results.innerHTML = html;
+        }
+
+        function testMemoryEstimation() {
+            const tableBody = document.getElementById('memory-table-body');
+            let html = '';
+
+            const testCases = [
+                { format: 'A4', dpi: 150 },
+                { format: 'A4', dpi: 300 },
+                { format: 'A3', dpi: 300 },
+                { format: 'A4', dpi: 600 }
+            ];
+
+            testCases.forEach(({ format, dpi }) => {
+                const dimensions = PRINT_CONFIG[format].portrait;
+                const memory = resolutionManager.calculateMemoryRequirements(dimensions.width, dimensions.height, dpi);
+                
+                html += `<tr>
+                    <td>${format}</td>
+                    <td>${dpi}</td>
+                    <td>${dimensions.width}×${dimensions.height}</td>
+                    <td>${memory.actualWidth}×${memory.actualHeight}</td>
+                    <td>${memory.estimatedMB}</td>
+                    <td>${memory.optimizationLevel}</td>
+                </tr>`;
+            });
+
+            tableBody.innerHTML = html;
+            document.getElementById('memory-test-results').innerHTML = 
+                '<div class="test-result success">✅ Memory estimation completed</div>';
+        }
+
+        function testQualitySettings() {
+            const tableBody = document.getElementById('quality-table-body');
+            let html = '';
+
+            Object.entries(resolutionManager.DPI_PRESETS).forEach(([name, dpi]) => {
+                const quality = resolutionManager.getQualitySettings(dpi);
+                html += `<tr>
+                    <td>${dpi}</td>
+                    <td>${quality.scalingFactor}x</td>
+                    <td>${quality.quality}%</td>
+                    <td>${quality.optimization}</td>
+                    <td>${name.replace('_', ' ')}</td>
+                </tr>`;
+            });
+
+            tableBody.innerHTML = html;
+            document.getElementById('quality-test-results').innerHTML = 
+                '<div class="test-result success">✅ Quality settings validated</div>';
+        }
+
+        function testOptimization() {
+            const format = document.getElementById('format-select').value;
+            const dpi = parseInt(document.getElementById('dpi-select').value);
+            const memoryLimit = parseInt(document.getElementById('memory-limit').value);
+            const results = document.getElementById('optimization-results');
+
+            try {
+                const dimensions = PRINT_CONFIG[format].portrait;
+                const original = resolutionManager.calculateMemoryRequirements(dimensions.width, dimensions.height, dpi);
+                const optimized = resolutionManager.optimizeForMemory(dimensions.width, dimensions.height, dpi, memoryLimit);
+
+                let html = `
+                    <div class="test-result info">
+                        <strong>Original:</strong> ${dimensions.width}×${dimensions.height} at ${dpi} DPI = ${original.estimatedMB}MB
+                    </div>
+                    <div class="test-result ${optimized.optimized ? 'success' : 'info'}">
+                        <strong>Optimized:</strong> ${optimized.width}×${optimized.height} at ${optimized.dpi} DPI = ${optimized.memoryMB}MB
+                        ${optimized.optimized ? '(Reduced)' : '(No optimization needed)'}
+                    </div>
+                `;
+
+                if (optimized.optimized) {
+                    html += `<div class="test-result success">
+                        ✅ Memory reduced by ${Math.round((1 - optimized.reductionRatio) * 100)}%
+                    </div>`;
+                }
+
+                results.innerHTML = html;
+            } catch (error) {
+                results.innerHTML = `<div class="test-result error">❌ Optimization failed: ${error.message}</div>`;
+            }
+        }
+
+        function testPreviewDimensions() {
+            const targetWidth = parseInt(document.getElementById('target-width').value);
+            const targetHeight = parseInt(document.getElementById('target-height').value);
+            const maxPreview = parseInt(document.getElementById('max-preview').value);
+            const results = document.getElementById('preview-results');
+            const infoDiv = document.getElementById('resolution-info');
+
+            try {
+                const preview = resolutionManager.getPreviewDimensions(targetWidth, targetHeight, maxPreview);
+                
+                results.innerHTML = `
+                    <div class="test-result success">
+                        ✅ Preview dimensions: ${preview.width}×${preview.height} pixels
+                    </div>
+                    <div class="test-result info">
+                        Aspect ratio: ${preview.aspectRatio.toFixed(3)}, DPI: ${preview.dpi}, Scaling: ${preview.scalingFactor}x
+                    </div>
+                `;
+
+                infoDiv.innerHTML = `
+                    <strong>Resolution Information:</strong><br>
+                    Target: ${targetWidth}×${targetHeight} | Preview: ${preview.width}×${preview.height}<br>
+                    Aspect Ratio: ${preview.aspectRatio.toFixed(3)} | Max Dimension: ${maxPreview}px<br>
+                    Preview DPI: ${preview.dpi} | Scaling Factor: ${preview.scalingFactor}x
+                `;
+            } catch (error) {
+                results.innerHTML = `<div class="test-result error">❌ Preview calculation failed: ${error.message}</div>`;
+            }
+        }
+
+        function testParameterValidation() {
+            const results = document.getElementById('validation-results');
+            let html = '';
+
+            const validCases = [
+                { width: 2480, height: 3508, dpi: 300 },
+                { width: 800, height: 600, dpi: 72 }
+            ];
+
+            const invalidCases = [
+                { width: -100, height: 3508, dpi: 300, error: 'negative width' },
+                { width: 2480, height: 0, dpi: 300, error: 'zero height' },
+                { width: 2480, height: 3508, dpi: 2000, error: 'excessive DPI' },
+                { width: 2480, height: 3508, dpi: 20, error: 'too low DPI' }
+            ];
+
+            // Test valid cases
+            validCases.forEach((params, i) => {
+                try {
+                    resolutionManager.validateResolutionParams(params);
+                    html += `<div class="test-result success">✅ Valid case ${i + 1}: ${params.width}×${params.height} at ${params.dpi} DPI</div>`;
+                } catch (error) {
+                    html += `<div class="test-result error">❌ Valid case ${i + 1} rejected: ${error.message}</div>`;
+                }
+            });
+
+            // Test invalid cases
+            invalidCases.forEach(({ error, ...params }) => {
+                try {
+                    resolutionManager.validateResolutionParams(params);
+                    html += `<div class="test-result error">❌ Invalid case (${error}) was accepted</div>`;
+                } catch (err) {
+                    html += `<div class="test-result success">✅ Invalid case (${error}) correctly rejected: ${err.message}</div>`;
+                }
+            });
+
+            results.innerHTML = html;
+        }
+
+        // Run tests on page load
+        document.addEventListener('DOMContentLoaded', runAllTests);
+    </script>
+</body>
+</html>

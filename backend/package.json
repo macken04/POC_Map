@@ -22,7 +22,8 @@
     "test:ci": "npm run test:config && npm run test:unit && npm run test:tokens && npm run test:csrf && npm run test:error-handling && npm run test:token-refresh",
     "test:mapbox": "node tests/mapbox-integration-test.js && node tests/dpi-export-validation.js && node tests/webgl-support-test.js",
     "test:security": "node tests/security-improvements-test.js",
-    "test:all": "npm run test:ci && npm run test:mapbox && npm run test:security && npm test"
+    "test:error-handling": "node tests/error-handling-service-test.js",
+    "test:all": "npm run test:ci && npm run test:mapbox && npm run test:security && npm run test:error-handling && npm test"
   },
   "keywords": [
     "shopify",
@@ -36,6 +37,8 @@
   "type": "commonjs",
   "dependencies": {
     "@mapbox/mapbox-gl-geocoder": "^5.1.0",
+    "@mapbox/polyline": "^1.1.1",
+    "@mapbox/togeojson": "^0.16.0",
     "axios": "^1.4.0",
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
@@ -46,8 +49,13 @@
     "helmet": "^8.1.0",
     "mapbox-gl": "^3.13.0",
     "morgan": "^1.10.1",
+    "multer": "^1.4.5-lts.1",
     "puppeteer": "^21.0.0",
-    "session-file-store": "^1.5.0"
+    "session-file-store": "^1.5.0",
+    "sharp": "^0.34.3",
+    "socket.io": "^4.8.1",
+    "xml2js": "^0.6.2",
+    "xmldom": "^0.6.0"
   },
   "devDependencies": {
     "concurrently": "^8.2.0",

@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const path = require('path');
 const { requireAuth } = require('./auth');
 const { refreshTokenIfNeeded } = require('../middleware/tokenRefresh');
 const rateLimitManager = require('../middleware/rateLimiting');
+const gpxTcxParser = require('../services/gpxTcxParser');
 const { 
   validateAndParseQuery, 
   filterActivities, 
@@ -11,6 +14,8 @@ const {
   getFilterSummary 
 } = require('../utils/activityFilters');
 const { cache, generateStravaKey, getCachedOrFetch } = require('../services/cacheManager');
+const stravaService = require('../services/stravaService');
+const { transformElevationForChart } = require('../utils/dataTransformers');
 
 /**
  * Strava API integration routes
@@ -59,6 +64,39 @@ const { cache, generateStravaKey, getCachedOrFetch } = require('../services/cach
  */
 
 /**
+ * Multer configuration for file uploads
+ * Supports GPX and TCX files with size limits and validation
+ */
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+    files: 1 // Single file upload
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedExtensions = ['.gpx', '.tcx'];
+    const allowedMimeTypes = [
+      'application/gpx+xml',
+      'application/tcx+xml',
+      'text/xml',
+      'application/xml',
+      'text/plain'
+    ];
+    
+    const fileExtension = path.extname(file.originalname).toLowerCase();
+    const isValidExtension = allowedExtensions.includes(fileExtension);
+    const isValidMimeType = allowedMimeTypes.includes(file.mimetype.toLowerCase());
+    
+    if (isValidExtension || isValidMimeType) {
+      cb(null, true);
+    } else {
+      cb(new Error(`Invalid file type. Only GPX and TCX files are allowed. Received: ${file.originalname} (${file.mimetype})`), false);
+    }
+  }
+});
+
+/**
  * Helper function to make authenticated requests to Strava API
  * Enhanced with rate limit tracking
  */
@@ -94,50 +132,136 @@ async function stravaApiRequest(url, accessToken) {
  */
 router.get('/athlete', rateLimitManager.createClientRateLimit(), requireAuth, refreshTokenIfNeeded, rateLimitManager.checkStravaRateLimit(), async (req, res) => {
   try {
-    // Generate cache key for this user's athlete data
-    const cacheKey = generateStravaKey(req, 'athlete');
+    const athlete = await stravaService.getAthlete(req);
+    const formattedAthlete = stravaService.formatAthleteData(athlete);
 
-    // Use cache-first strategy
-    const athlete = await getCachedOrFetch('athlete', cacheKey, async () => {
-      // INTEGRATION: req.getAccessToken() method provided by requireAuth middleware from auth.js
-      return await stravaApiRequest(
-        'https://www.strava.com/api/v3/athlete',
-        req.getAccessToken()
-      );
-    });
-
-    const response = {
+    res.json({
       success: true,
-      athlete: {
-        id: athlete.id,
-        username: athlete.username,
-        firstname: athlete.firstname,
-        lastname: athlete.lastname,
-        city: athlete.city,
-        state: athlete.state,
-        country: athlete.country,
-        profile: athlete.profile,
-        profile_medium: athlete.profile_medium,
-        created_at: athlete.created_at,
-        updated_at: athlete.updated_at
-      }
-    };
-
-    res.json(response);
+      athlete: formattedAthlete
+    });
 
   } catch (error) {
     console.error('Error fetching athlete data:', error);
+    const errorResponse = stravaService.handleStravaError(error);
+    res.status(errorResponse.status).json(errorResponse);
+  }
+});
+
+/**
+ * Upload and process GPX/TCX route files
+ * POST /api/strava/upload
+ * Accepts GPX or TCX files and processes them for map generation
+ */
+router.post('/upload', rateLimitManager.createClientRateLimit(), requireAuth, upload.single('routeFile'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        error: 'No file uploaded',
+        message: 'Please select a GPX or TCX file to upload'
+      });
+    }
+
+    const file = req.file;
+    const fileExtension = path.extname(file.originalname).toLowerCase();
     
-    if (error.status === 401) {
-      return res.status(401).json({
-        error: 'Token expired',
-        message: 'Strava access token has expired. Please re-authenticate.'
+    console.log(`Processing uploaded file: ${file.originalname} (${file.size} bytes, ${file.mimetype})`);
+
+    // Basic file validation
+    if (file.size === 0) {
+      return res.status(400).json({
+        error: 'Empty file',
+        message: 'The uploaded file appears to be empty'
+      });
+    }
+
+    // Process the file using the dedicated parser service
+    let parsedData;
+    try {
+      if (fileExtension === '.gpx') {
+        parsedData = await gpxTcxParser.parseGPXFile(file.buffer, file.originalname);
+      } else if (fileExtension === '.tcx') {
+        parsedData = await gpxTcxParser.parseTCXFile(file.buffer, file.originalname);
+      } else {
+        // Try to detect format from content
+        const content = file.buffer.toString('utf8');
+        if (gpxTcxParser.validateGPXFormat(content)) {
+          parsedData = await gpxTcxParser.parseGPXFile(file.buffer, file.originalname);
+        } else if (gpxTcxParser.validateTCXFormat(content)) {
+          parsedData = await gpxTcxParser.parseTCXFile(file.buffer, file.originalname);
+        } else {
+          throw new Error('Unable to determine file format from content');
+        }
+      }
+    } catch (parseError) {
+      console.error('Error parsing uploaded file:', parseError);
+      return res.status(400).json({
+        error: 'File parsing failed',
+        message: `Unable to parse the uploaded file: ${parseError.message}`,
+        details: 'Please ensure the file is a valid GPX or TCX format'
+      });
+    }
+
+    // Validate parsed data
+    if (!parsedData || !parsedData.coordinates || parsedData.coordinates.length === 0) {
+      return res.status(400).json({
+        error: 'No route data found',
+        message: 'The uploaded file does not contain valid route coordinates'
+      });
+    }
+
+    // Format the data for map generation
+    const formattedRoute = {
+      id: `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      name: parsedData.name || file.originalname.replace(/\.[^/.]+$/, ''),
+      description: parsedData.description || 'Uploaded route',
+      type: parsedData.type || 'Upload',
+      source: 'upload',
+      upload_date: new Date().toISOString(),
+      filename: file.originalname,
+      coordinates: parsedData.coordinates,
+      elevation: parsedData.elevation || [],
+      timestamps: parsedData.timestamps || [],
+      distance: parsedData.distance || calculateDistance(parsedData.coordinates),
+      total_elevation_gain: parsedData.total_elevation_gain || calculateElevationGain(parsedData.elevation),
+      moving_time: parsedData.moving_time || 0,
+      start_latlng: parsedData.coordinates.length > 0 ? parsedData.coordinates[0] : null,
+      end_latlng: parsedData.coordinates.length > 0 ? parsedData.coordinates[parsedData.coordinates.length - 1] : null,
+      bounds: calculateBounds(parsedData.coordinates),
+      stats: {
+        total_points: parsedData.coordinates.length,
+        has_elevation: parsedData.elevation && parsedData.elevation.length > 0,
+        has_timestamps: parsedData.timestamps && parsedData.timestamps.length > 0
+      }
+    };
+
+    console.log(`Successfully processed ${file.originalname}: ${formattedRoute.stats.total_points} points, ${formattedRoute.distance}m distance`);
+
+    res.json({
+      success: true,
+      message: 'Route file uploaded and processed successfully',
+      route: formattedRoute
+    });
+
+  } catch (error) {
+    console.error('Error processing route upload:', error);
+    
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({
+        error: 'File too large',
+        message: 'The uploaded file exceeds the 10MB size limit'
+      });
+    }
+    
+    if (error.message.includes('Invalid file type')) {
+      return res.status(400).json({
+        error: 'Invalid file type',
+        message: error.message
       });
     }
 
     res.status(500).json({
-      error: 'Failed to fetch athlete data',
-      message: 'Unable to retrieve athlete information from Strava'
+      error: 'Upload processing failed',
+      message: 'An error occurred while processing the uploaded file'
     });
   }
 });
@@ -179,39 +303,11 @@ router.get('/activities', rateLimitManager.createClientRateLimit(), requireAuth,
     // Generate cache key (without pagination for better cache hits)
     const cacheKey = generateStravaKey(req, 'activities', parsedParams);
 
-    // Fetch activities using cache-first strategy
-    const activities = await getCachedOrFetch('activities', cacheKey, async () => {
-      return await stravaApiRequest(
-        `https://www.strava.com/api/v3/athlete/activities?${stravaParams}`,
-        req.getAccessToken()
-      );
-    });
+    // Fetch activities using Strava service
+    const activities = await stravaService.getActivities(req, stravaParams, parsedParams);
 
     // Format activity data for map generation
-    const formattedActivities = activities.map(activity => ({
-      id: activity.id,
-      name: activity.name,
-      type: activity.type,
-      sport_type: activity.sport_type,
-      start_date: activity.start_date,
-      start_date_local: activity.start_date_local,
-      distance: activity.distance,
-      moving_time: activity.moving_time,
-      elapsed_time: activity.elapsed_time,
-      total_elevation_gain: activity.total_elevation_gain,
-      start_latlng: activity.start_latlng,
-      end_latlng: activity.end_latlng,
-      map: activity.map ? {
-        id: activity.map.id,
-        summary_polyline: activity.map.summary_polyline,
-        resource_state: activity.map.resource_state
-      } : null,
-      average_speed: activity.average_speed,
-      max_speed: activity.max_speed,
-      has_heartrate: activity.has_heartrate,
-      elev_high: activity.elev_high,
-      elev_low: activity.elev_low
-    }));
+    const formattedActivities = stravaService.formatActivitiesForMap(activities);
 
     // Apply client-side filtering
     const filteredActivities = filterActivities(formattedActivities, parsedParams);
@@ -246,18 +342,8 @@ router.get('/activities', rateLimitManager.createClientRateLimit(), requireAuth,
 
   } catch (error) {
     console.error('Error fetching activities:', error);
-    
-    if (error.status === 401) {
-      return res.status(401).json({
-        error: 'Token expired',
-        message: 'Strava access token has expired. Please re-authenticate.'
-      });
-    }
-
-    res.status(500).json({
-      error: 'Failed to fetch activities',
-      message: 'Unable to retrieve activities from Strava'
-    });
+    const errorResponse = stravaService.handleStravaError(error);
+    res.status(errorResponse.status).json(errorResponse);
   }
 });
 
@@ -279,45 +365,11 @@ router.get('/activities/:id', rateLimitManager.createClientRateLimit(), requireA
     // Generate cache key for this specific activity
     const cacheKey = generateStravaKey(req, `activity-${id}`, {});
 
-    // Use cache-first strategy for activity details
-    const activity = await getCachedOrFetch('activityDetails', cacheKey, async () => {
-      return await stravaApiRequest(
-        `https://www.strava.com/api/v3/activities/${id}`,
-        req.getAccessToken()
-      );
-    });
+    // Get activity details using Strava service
+    const activity = await stravaService.getActivityDetails(req, id);
 
     // Format detailed activity data
-    const detailedActivity = {
-      id: activity.id,
-      name: activity.name,
-      description: activity.description,
-      type: activity.type,
-      sport_type: activity.sport_type,
-      start_date: activity.start_date,
-      start_date_local: activity.start_date_local,
-      timezone: activity.timezone,
-      distance: activity.distance,
-      moving_time: activity.moving_time,
-      elapsed_time: activity.elapsed_time,
-      total_elevation_gain: activity.total_elevation_gain,
-      start_latlng: activity.start_latlng,
-      end_latlng: activity.end_latlng,
-      map: activity.map ? {
-        id: activity.map.id,
-        polyline: activity.map.polyline,
-        summary_polyline: activity.map.summary_polyline,
-        resource_state: activity.map.resource_state
-      } : null,
-      average_speed: activity.average_speed,
-      max_speed: activity.max_speed,
-      average_heartrate: activity.average_heartrate,
-      max_heartrate: activity.max_heartrate,
-      elev_high: activity.elev_high,
-      elev_low: activity.elev_low,
-      device_name: activity.device_name,
-      gear_id: activity.gear_id
-    };
+    const detailedActivity = stravaService.formatDetailedActivity(activity);
 
     res.json({
       success: true,
@@ -326,25 +378,8 @@ router.get('/activities/:id', rateLimitManager.createClientRateLimit(), requireA
 
   } catch (error) {
     console.error('Error fetching activity details:', error);
-    
-    if (error.status === 401) {
-      return res.status(401).json({
-        error: 'Token expired',
-        message: 'Strava access token has expired. Please re-authenticate.'
-      });
-    }
-    
-    if (error.status === 404) {
-      return res.status(404).json({
-        error: 'Activity not found',
-        message: 'The requested activity does not exist or you do not have access to it'
-      });
-    }
-
-    res.status(500).json({
-      error: 'Failed to fetch activity details',
-      message: 'Unable to retrieve activity details from Strava'
-    });
+    const errorResponse = stravaService.handleStravaError(error);
+    res.status(errorResponse.status).json(errorResponse);
   }
 });
 
@@ -367,13 +402,8 @@ router.get('/activities/:id/streams', rateLimitManager.createClientRateLimit(), 
     // Generate cache key for this activity's streams with specific types
     const cacheKey = generateStravaKey(req, `activity-${id}-streams`, { types });
 
-    // Use cache-first strategy for activity streams (longest TTL since GPS data is immutable)
-    const streams = await getCachedOrFetch('activityStreams', cacheKey, async () => {
-      return await stravaApiRequest(
-        `https://www.strava.com/api/v3/activities/${id}/streams/${types}?key_by_type=true`,
-        req.getAccessToken()
-      );
-    });
+    // Get activity streams using Strava service
+    const streams = await stravaService.getActivityStreams(req, id, types);
 
     res.json({
       success: true,
@@ -383,25 +413,82 @@ router.get('/activities/:id/streams', rateLimitManager.createClientRateLimit(), 
 
   } catch (error) {
     console.error('Error fetching activity streams:', error);
+    const errorResponse = stravaService.handleStravaError(error);
+    res.status(errorResponse.status).json(errorResponse);
+  }
+});
+
+/**
+ * Get elevation profile data for chart visualization
+ * Optimized endpoint for elevation profile charts with performance optimizations
+ */
+router.get('/activities/:id/elevation', rateLimitManager.createClientRateLimit(), requireAuth, refreshTokenIfNeeded, rateLimitManager.checkStravaRateLimit(), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      units = 'metric',
+      maxPoints = 1000,
+      includeGradient = 'true'
+    } = req.query;
     
-    if (error.status === 401) {
-      return res.status(401).json({
-        error: 'Token expired',
-        message: 'Strava access token has expired. Please re-authenticate.'
-      });
-    }
-    
-    if (error.status === 404) {
-      return res.status(404).json({
-        error: 'Activity or streams not found',
-        message: 'The requested activity streams do not exist or you do not have access to them'
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).json({
+        error: 'Invalid activity ID',
+        message: 'Activity ID must be a valid number'
       });
     }
 
-    res.status(500).json({
-      error: 'Failed to fetch activity streams',
-      message: 'Unable to retrieve activity streams from Strava'
+    // Validate parameters
+    const validUnits = ['metric', 'imperial'];
+    if (!validUnits.includes(units)) {
+      return res.status(400).json({
+        error: 'Invalid units parameter',
+        message: 'Units must be either "metric" or "imperial"'
+      });
+    }
+
+    const maxPointsNum = parseInt(maxPoints);
+    if (isNaN(maxPointsNum) || maxPointsNum < 10 || maxPointsNum > 2000) {
+      return res.status(400).json({
+        error: 'Invalid maxPoints parameter',
+        message: 'maxPoints must be a number between 10 and 2000'
+      });
+    }
+
+    // Generate cache key for elevation data
+    const cacheKey = generateStravaKey(req, `activity-${id}-elevation`, { 
+      units, 
+      maxPoints: maxPointsNum, 
+      includeGradient 
     });
+
+    // Get activity streams (we need altitude, latlng, and optionally distance/time)
+    const streams = await stravaService.getActivityStreams(req, id, 'latlng,altitude,time,distance');
+
+    // Transform elevation data for chart visualization
+    const elevationData = transformElevationForChart(streams, {
+      maxPoints: maxPointsNum,
+      includeGradient: includeGradient === 'true',
+      units: units
+    });
+
+    if (!elevationData.hasData) {
+      return res.status(404).json({
+        error: 'No elevation data found',
+        message: 'This activity does not contain elevation information'
+      });
+    }
+
+    res.json({
+      success: true,
+      activity_id: parseInt(id),
+      elevation_data: elevationData
+    });
+
+  } catch (error) {
+    console.error('Error fetching elevation data:', error);
+    const errorResponse = stravaService.handleStravaError(error);
+    res.status(errorResponse.status).json(errorResponse);
   }
 });
 
@@ -674,5 +761,250 @@ function generateCacheRecommendations(stats) {
 
   return recommendations;
 }
+
+
+
+
+/**
+ * Calculate total distance from coordinates using Haversine formula
+ * @param {Array} coordinates - Array of [lat, lng] coordinates
+ * @returns {number} - Distance in meters
+ */
+function calculateDistance(coordinates) {
+  if (!coordinates || coordinates.length < 2) return 0;
+  
+  let totalDistance = 0;
+  
+  for (let i = 1; i < coordinates.length; i++) {
+    const [lat1, lng1] = coordinates[i - 1];
+    const [lat2, lng2] = coordinates[i];
+    
+    const R = 6371000; // Earth's radius in meters
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const distance = R * c;
+    
+    totalDistance += distance;
+  }
+  
+  return Math.round(totalDistance);
+}
+
+/**
+ * Calculate total elevation gain from elevation data
+ * @param {Array} elevation - Array of elevation values in meters
+ * @returns {number} - Total elevation gain in meters
+ */
+function calculateElevationGain(elevation) {
+  if (!elevation || elevation.length < 2) return 0;
+  
+  let totalGain = 0;
+  
+  for (let i = 1; i < elevation.length; i++) {
+    const gain = elevation[i] - elevation[i - 1];
+    if (gain > 0) {
+      totalGain += gain;
+    }
+  }
+  
+  return Math.round(totalGain);
+}
+
+/**
+ * Calculate bounding box for coordinates
+ * @param {Array} coordinates - Array of [lat, lng] coordinates
+ * @returns {Object} - Bounding box with north, south, east, west values
+ */
+function calculateBounds(coordinates) {
+  if (!coordinates || coordinates.length === 0) return null;
+  
+  let north = coordinates[0][0];
+  let south = coordinates[0][0];
+  let east = coordinates[0][1];
+  let west = coordinates[0][1];
+  
+  coordinates.forEach(([lat, lng]) => {
+    north = Math.max(north, lat);
+    south = Math.min(south, lat);
+    east = Math.max(east, lng);
+    west = Math.min(west, lng);
+  });
+  
+  return { north, south, east, west };
+}
+
+/**
+ * Get GeoJSON representation of an activity route
+ * POST /strava/routes/geojson
+ * 
+ * Converts route data from various sources (Strava, GPX, TCX) to standardized GeoJSON
+ * 
+ * Body parameters:
+ * - routeData: Route data object (required)
+ * - source: Data source type ('strava', 'gpx', 'tcx', 'coordinates') (optional, will auto-detect)
+ * - options: Conversion options (optional)
+ */
+router.post('/routes/geojson', rateLimitManager.createClientRateLimit(), requireAuth, async (req, res) => {
+  try {
+    const { routeData, source, options = {} } = req.body;
+
+    if (!routeData) {
+      return res.status(400).json({
+        error: 'Missing route data',
+        message: 'routeData parameter is required in request body'
+      });
+    }
+
+    // Import the GeoJSON converter
+    const geojsonConverter = require('../services/geojsonConverter');
+
+    // Set default conversion options
+    const conversionOptions = {
+      source: source || 'unknown', // Will auto-detect if unknown
+      includeElevation: options.includeElevation !== false,
+      includeTimestamps: options.includeTimestamps !== false,
+      validateOutput: options.validateOutput !== false,
+      handleMultiSegment: options.handleMultiSegment !== false,
+      optimizeForMapbox: options.optimizeForMapbox !== false,
+      ...options
+    };
+
+    // Convert to GeoJSON
+    const geoJSON = await geojsonConverter.convertToGeoJSON(routeData, conversionOptions);
+
+    res.json({
+      success: true,
+      data: geoJSON,
+      metadata: {
+        source: conversionOptions.source,
+        conversion_time: new Date().toISOString(),
+        validation_passed: conversionOptions.validateOutput,
+        optimized_for_mapbox: conversionOptions.optimizeForMapbox
+      }
+    });
+
+  } catch (error) {
+    console.error('GeoJSON conversion error:', error);
+    
+    res.status(400).json({
+      error: 'GeoJSON conversion failed',
+      message: error.message,
+      type: 'conversion_error'
+    });
+  }
+});
+
+/**
+ * Get GeoJSON representation of a specific Strava activity
+ * GET /strava/activities/:id/geojson
+ * 
+ * Fetches activity data from Strava and converts to GeoJSON
+ */
+router.get('/activities/:id/geojson', rateLimitManager.createClientRateLimit(), requireAuth, refreshTokenIfNeeded, rateLimitManager.checkStravaRateLimit(), async (req, res) => {
+  try {
+    const activityId = req.params.id;
+
+    if (!activityId || isNaN(activityId)) {
+      return res.status(400).json({
+        error: 'Invalid activity ID',
+        message: 'Activity ID must be a valid number'
+      });
+    }
+
+    // Get access token
+    const accessToken = req.getAccessToken();
+
+    // Fetch activity details with streams
+    const streamsUrl = `https://www.strava.com/api/v3/activities/${activityId}/streams`;
+    const streamsResponse = await stravaService.stravaApiRequest(streamsUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      },
+      params: {
+        keys: 'latlng,altitude,time',
+        key_by_type: true
+      }
+    });
+
+    if (!streamsResponse.latlng || !streamsResponse.latlng.data) {
+      return res.status(404).json({
+        error: 'No GPS data found',
+        message: 'This activity does not contain GPS coordinate data'
+      });
+    }
+
+    // Also fetch activity details for metadata
+    const activityUrl = `https://www.strava.com/api/v3/activities/${activityId}`;
+    const activityResponse = await stravaService.stravaApiRequest(activityUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+
+    // Transform streams data
+    const { transformActivityStreams } = require('../utils/dataTransformers');
+    const transformedData = transformActivityStreams(streamsResponse, activityId);
+
+    // Add activity metadata
+    transformedData.name = activityResponse.name;
+    transformedData.type = activityResponse.type;
+    transformedData.distance = activityResponse.distance;
+    transformedData.total_elevation_gain = activityResponse.total_elevation_gain;
+    transformedData.moving_time = activityResponse.moving_time;
+    transformedData.elapsed_time = activityResponse.elapsed_time;
+
+    // Convert to GeoJSON
+    const geojsonConverter = require('../services/geojsonConverter');
+    const geoJSON = await geojsonConverter.convertToGeoJSON(transformedData, {
+      source: 'strava_polyline',
+      includeElevation: true,
+      includeTimestamps: true,
+      validateOutput: true,
+      optimizeForMapbox: true
+    });
+
+    res.json({
+      success: true,
+      data: geoJSON,
+      metadata: {
+        activity_id: activityId,
+        source: 'strava_api',
+        conversion_time: new Date().toISOString(),
+        has_gps_data: transformedData.has_gps_data,
+        has_elevation_data: transformedData.has_altitude_data,
+        has_time_data: transformedData.has_time_data,
+        total_points: transformedData.coordinates ? transformedData.coordinates.length : 0
+      }
+    });
+
+  } catch (error) {
+    console.error('Activity GeoJSON conversion error:', error);
+    
+    if (error.response && error.response.status === 404) {
+      res.status(404).json({
+        error: 'Activity not found',
+        message: 'The specified activity could not be found or you do not have access to it'
+      });
+    } else if (error.response && error.response.status === 401) {
+      res.status(401).json({
+        error: 'Authentication failed',
+        message: 'Your Strava authentication has expired. Please log in again.'
+      });
+    } else {
+      res.status(500).json({
+        error: 'GeoJSON conversion failed',
+        message: error.message,
+        type: 'conversion_error'
+      });
+    }
+  }
+});
 
 module.exports = router;

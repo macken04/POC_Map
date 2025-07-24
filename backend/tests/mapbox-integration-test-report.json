@@ -3,8 +3,8 @@
   "passedTests": 8,
   "failedTests": 0,
   "successRate": "100.0%",
-  "totalTime": "447ms",
-  "timestamp": "2025-07-22T14:05:02.929Z",
+  "totalTime": "445ms",
+  "timestamp": "2025-07-23T20:03:40.028Z",
   "results": [
     {
       "test": "Dependencies Installation",
@@ -16,7 +16,7 @@
           "@mapbox/mapbox-gl-geocoder"
         ]
       },
-      "timestamp": "2025-07-22T14:05:02.485Z"
+      "timestamp": "2025-07-23T20:03:39.585Z"
     },
     {
       "test": "Environment Configuration",
@@ -26,7 +26,7 @@
         "hasToken": true,
         "tokenPrefix": "pk.eyJ1I..."
       },
-      "timestamp": "2025-07-22T14:05:02.487Z"
+      "timestamp": "2025-07-23T20:03:39.586Z"
     },
     {
       "test": "File Structure",
@@ -38,7 +38,7 @@
         "../../shopify-theme/dawn/assets/mapbox-integration.js": true,
         "../../shopify-theme/dawn/layout/theme.liquid": true
       },
-      "timestamp": "2025-07-22T14:05:02.487Z"
+      "timestamp": "2025-07-23T20:03:39.587Z"
     },
     {
       "test": "MapService Initialization",
@@ -59,7 +59,7 @@
           "dark-v10"
         ]
       },
-      "timestamp": "2025-07-22T14:05:02.929Z"
+      "timestamp": "2025-07-23T20:03:40.027Z"
     },
     {
       "test": "Theme Integration",
@@ -72,7 +72,7 @@
         "integrationScript": true,
         "settingsConfig": true
       },
-      "timestamp": "2025-07-22T14:05:02.929Z"
+      "timestamp": "2025-07-23T20:03:40.027Z"
     },
     {
       "test": "Map Generation (Validation)",
@@ -91,7 +91,7 @@
           "title"
         ]
       },
-      "timestamp": "2025-07-22T14:05:02.929Z"
+      "timestamp": "2025-07-23T20:03:40.027Z"
     },
     {
       "test": "Performance Test",
@@ -102,7 +102,7 @@
         "statusCheckTime": "0ms",
         "totalTestTime": "0ms"
       },
-      "timestamp": "2025-07-22T14:05:02.929Z"
+      "timestamp": "2025-07-23T20:03:40.027Z"
     },
     {
       "test": "Browser Compatibility",
@@ -123,7 +123,7 @@
           "dark-v10"
         ]
       },
-      "timestamp": "2025-07-22T14:05:02.929Z"
+      "timestamp": "2025-07-23T20:03:40.027Z"
     }
   ]
 }

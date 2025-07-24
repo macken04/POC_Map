@@ -13,6 +13,8 @@
  * - Optimize data structures for different use cases (list view vs. detailed view)
  */
 
+const geojsonConverter = require('../services/geojsonConverter');
+
 /**
  * Transform raw Strava activity data into normalized application format
  * Optimized for activity list displays and basic filtering
@@ -213,19 +215,33 @@ function transformActivityStreams(stravaStreams, activityId) {
     result.time_series = stravaStreams.time.data;
   }
 
-  // Create GeoJSON feature for map rendering
+  // Create GeoJSON feature for map rendering using the new converter
   if (result.has_gps_data) {
-    result.geojson = {
-      type: 'Feature',
-      properties: {
-        activity_id: activityId,
-        total_points: result.coordinates.length
-      },
-      geometry: {
-        type: 'LineString',
-        coordinates: result.coordinates
-      }
-    };
+    try {
+      result.geojson = geojsonConverter.convertToGeoJSON(result, {
+        source: 'strava_polyline',
+        includeElevation: result.has_altitude_data,
+        includeTimestamps: result.has_time_data,
+        validateOutput: true,
+        optimizeForMapbox: true
+      });
+    } catch (geoJSONError) {
+      console.warn('GeoJSON conversion failed for activity streams, using fallback:', geoJSONError.message);
+      
+      // Fallback to basic GeoJSON
+      result.geojson = {
+        type: 'Feature',
+        properties: {
+          activity_id: activityId,
+          total_points: result.coordinates.length,
+          source: 'strava_streams'
+        },
+        geometry: {
+          type: 'LineString',
+          coordinates: result.coordinates
+        }
+      };
+    }
   }
 
   return result;
@@ -308,13 +324,26 @@ function transformAthleteData(stravaAthlete) {
 }
 
 /**
- * Decode Google Polyline Algorithm encoded string
+ * Decode Google Polyline Algorithm encoded string with enhanced error handling
  * 
  * @param {string} encoded - Encoded polyline string
+ * @param {Object} options - Decoding options
+ * @param {number} options.precision - Precision factor (default: 1e5)
+ * @param {boolean} options.validateCoords - Validate coordinate ranges (default: true)
  * @returns {Array} - Array of [longitude, latitude] coordinates
+ * @throws {Error} - If decoding fails or coordinates are invalid
  */
-function decodePolyline(encoded) {
-  if (!encoded || typeof encoded !== 'string') {
+function decodePolyline(encoded, options = {}) {
+  const {
+    precision = 1e5,
+    validateCoords = true
+  } = options;
+
+  if (encoded === null || encoded === undefined || typeof encoded !== 'string') {
+    throw new Error('Invalid polyline: expected string');  
+  }
+
+  if (encoded.length === 0) {
     return [];
   }
 
@@ -323,57 +352,444 @@ function decodePolyline(encoded) {
   let lat = 0;
   let lng = 0;
 
-  while (index < encoded.length) {
-    let b;
-    let shift = 0;
-    let result = 0;
-    
-    // Decode latitude
-    do {
-      b = encoded.charCodeAt(index++) - 63;
-      result |= (b & 0x1f) << shift;
-      shift += 5;
-    } while (b >= 0x20);
-    
-    const deltaLat = ((result & 1) ? ~(result >> 1) : (result >> 1));
-    lat += deltaLat;
+  try {
+    while (index < encoded.length) {
+      let b;
+      let shift = 0;
+      let result = 0;
+      
+      // Decode latitude
+      do {
+        if (index >= encoded.length) {
+          throw new Error('Unexpected end of polyline string while decoding latitude');
+        }
+        b = encoded.charCodeAt(index++) - 63;
+        if (b < 0 || b > 95) {
+          throw new Error(`Invalid character in polyline at position ${index - 1}`);
+        }
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      
+      const deltaLat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+      lat += deltaLat;
 
-    shift = 0;
-    result = 0;
-    
-    // Decode longitude
-    do {
-      b = encoded.charCodeAt(index++) - 63;
-      result |= (b & 0x1f) << shift;
-      shift += 5;
-    } while (b >= 0x20);
-    
-    const deltaLng = ((result & 1) ? ~(result >> 1) : (result >> 1));
-    lng += deltaLng;
+      shift = 0;
+      result = 0;
+      
+      // Decode longitude
+      do {
+        if (index >= encoded.length) {
+          throw new Error('Unexpected end of polyline string while decoding longitude');
+        }
+        b = encoded.charCodeAt(index++) - 63;
+        if (b < 0 || b > 95) {
+          throw new Error(`Invalid character in polyline at position ${index - 1}`);
+        }
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      
+      const deltaLng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+      lng += deltaLng;
 
-    coordinates.push([lng / 1e5, lat / 1e5]); // [longitude, latitude]
+      const longitude = lng / precision;
+      const latitude = lat / precision;
+
+      // Validate coordinate ranges if requested
+      if (validateCoords) {
+        if (latitude < -90 || latitude > 90) {
+          throw new Error(`Invalid latitude ${latitude} at coordinate ${coordinates.length}`);
+        }
+        if (longitude < -180 || longitude > 180) {
+          throw new Error(`Invalid longitude ${longitude} at coordinate ${coordinates.length}`);
+        }
+      }
+
+      coordinates.push([longitude, latitude]); // [longitude, latitude]
+    }
+
+    return coordinates;
+  } catch (error) {
+    throw new Error(`Polyline decoding failed: ${error.message}`);
   }
-
-  return coordinates;
 }
 
 /**
- * Calculate bounding box for an array of coordinates
+ * Encode coordinates to Google Polyline Algorithm format
  * 
  * @param {Array} coordinates - Array of [longitude, latitude] coordinates
+ * @param {Object} options - Encoding options
+ * @param {number} options.precision - Precision factor (default: 1e5)
+ * @returns {string} - Encoded polyline string
+ * @throws {Error} - If encoding fails
+ */
+function encodePolyline(coordinates, options = {}) {
+  const { precision = 1e5 } = options;
+
+  if (!Array.isArray(coordinates)) {
+    throw new Error('Invalid coordinates: expected array');
+  }
+
+  if (coordinates.length === 0) {
+    return '';
+  }
+
+  let encoded = '';
+  let prevLat = 0;
+  let prevLng = 0;
+
+  try {
+    for (let i = 0; i < coordinates.length; i++) {
+      const coord = coordinates[i];
+      
+      if (!Array.isArray(coord) || coord.length < 2) {
+        throw new Error(`Invalid coordinate at index ${i}: expected [lng, lat] array`);
+      }
+
+      const lng = Math.round(coord[0] * precision);
+      const lat = Math.round(coord[1] * precision);
+
+      const deltaLat = lat - prevLat;
+      const deltaLng = lng - prevLng;
+
+      encoded += encodeSignedNumber(deltaLat);
+      encoded += encodeSignedNumber(deltaLng);
+
+      prevLat = lat;
+      prevLng = lng;
+    }
+
+    return encoded;
+  } catch (error) {
+    throw new Error(`Polyline encoding failed: ${error.message}`);
+  }
+}
+
+/**
+ * Encode a signed number for polyline algorithm
+ * 
+ * @param {number} num - Number to encode
+ * @returns {string} - Encoded string
+ */
+function encodeSignedNumber(num) {
+  let sgn_num = num << 1;
+  if (num < 0) {
+    sgn_num = ~sgn_num;
+  }
+  return encodeNumber(sgn_num);
+}
+
+/**
+ * Encode a number for polyline algorithm
+ * 
+ * @param {number} num - Number to encode
+ * @returns {string} - Encoded string
+ */
+function encodeNumber(num) {
+  let encoded = '';
+  while (num >= 0x20) {
+    encoded += String.fromCharCode((0x20 | (num & 0x1f)) + 63);
+    num >>= 5;
+  }
+  encoded += String.fromCharCode(num + 63);
+  return encoded;
+}
+
+// ==================== COORDINATE TRANSFORMATION UTILITIES ====================
+
+/**
+ * Earth radius in meters (WGS84)
+ */
+const EARTH_RADIUS = 6378137;
+
+/**
+ * Maximum latitude for Web Mercator projection (approximately 85.051129°)
+ */
+const MAX_MERCATOR_LAT = 85.0511287798;
+
+/**
+ * Convert WGS84 coordinates to Web Mercator projection
+ * Used by Mapbox GL JS internally
+ * 
+ * @param {number} longitude - Longitude in decimal degrees (-180 to 180)
+ * @param {number} latitude - Latitude in decimal degrees (-85.051129 to 85.051129)
+ * @returns {Object} - {x, y} coordinates in meters
+ * @throws {Error} - If coordinates are out of valid range
+ */
+function wgs84ToWebMercator(longitude, latitude) {
+  // Validate input ranges
+  if (longitude < -180 || longitude > 180) {
+    throw new Error(`Invalid longitude ${longitude}: must be between -180 and 180`);
+  }
+  if (latitude < -MAX_MERCATOR_LAT || latitude > MAX_MERCATOR_LAT) {
+    throw new Error(`Invalid latitude ${latitude}: must be between -${MAX_MERCATOR_LAT} and ${MAX_MERCATOR_LAT}`);
+  }
+
+  // Convert to radians
+  const lonRad = longitude * Math.PI / 180;
+  const latRad = latitude * Math.PI / 180;
+
+  // Calculate Web Mercator coordinates
+  const x = EARTH_RADIUS * lonRad;
+  const y = EARTH_RADIUS * Math.log(Math.tan(Math.PI / 4 + latRad / 2));
+
+  return { x, y };
+}
+
+/**
+ * Convert Web Mercator projection to WGS84 coordinates
+ * 
+ * @param {number} x - X coordinate in meters
+ * @param {number} y - Y coordinate in meters
+ * @returns {Object} - {longitude, latitude} in decimal degrees
+ */
+function webMercatorToWgs84(x, y) {
+  // Convert from meters to radians
+  const lonRad = x / EARTH_RADIUS;
+  const latRad = 2 * (Math.atan(Math.exp(y / EARTH_RADIUS)) - Math.PI / 4);
+
+  // Convert to degrees
+  const longitude = lonRad * 180 / Math.PI;
+  const latitude = latRad * 180 / Math.PI;
+
+  // Clamp latitude to valid range
+  const clampedLat = Math.max(-MAX_MERCATOR_LAT, Math.min(MAX_MERCATOR_LAT, latitude));
+
+  return { longitude, latitude: clampedLat };
+}
+
+/**
+ * Transform coordinates array between projection systems
+ * 
+ * @param {Array} coordinates - Array of [lng, lat] coordinates  
+ * @param {string} fromProjection - Source projection ('wgs84' or 'webmercator')
+ * @param {string} toProjection - Target projection ('wgs84' or 'webmercator')
+ * @returns {Array} - Transformed coordinates array
+ * @throws {Error} - If projection types are invalid or transformation fails
+ */
+function transformCoordinates(coordinates, fromProjection, toProjection) {
+  if (!Array.isArray(coordinates)) {
+    throw new Error('Invalid coordinates: expected array');
+  }
+
+  if (fromProjection === toProjection) {
+    return coordinates; // No transformation needed
+  }
+
+  const validProjections = ['wgs84', 'webmercator'];
+  if (!validProjections.includes(fromProjection)) {
+    throw new Error(`Invalid source projection: ${fromProjection}. Valid options: ${validProjections.join(', ')}`);
+  }
+  if (!validProjections.includes(toProjection)) {
+    throw new Error(`Invalid target projection: ${toProjection}. Valid options: ${validProjections.join(', ')}`);
+  }
+
+  return coordinates.map((coord, index) => {
+    if (!Array.isArray(coord) || coord.length < 2) {
+      throw new Error(`Invalid coordinate at index ${index}: expected [lng, lat] array`);
+    }
+
+    try {
+      if (fromProjection === 'wgs84' && toProjection === 'webmercator') {
+        const { x, y } = wgs84ToWebMercator(coord[0], coord[1]);
+        return [x, y];
+      } else if (fromProjection === 'webmercator' && toProjection === 'wgs84') {
+        const { longitude, latitude } = webMercatorToWgs84(coord[0], coord[1]);
+        return [longitude, latitude];
+      }
+    } catch (error) {
+      throw new Error(`Coordinate transformation failed at index ${index}: ${error.message}`);
+    }
+  });
+}
+
+/**
+ * Handle antimeridian crossing in coordinate arrays
+ * Splits paths that cross the 180°/-180° longitude line
+ * 
+ * @param {Array} coordinates - Array of [lng, lat] coordinates
+ * @param {Object} options - Processing options
+ * @param {number} options.threshold - Longitude difference threshold to detect crossing (default: 180)
+ * @returns {Array} - Array of coordinate arrays (segments)
+ */
+function handleAntimeridianCrossing(coordinates, options = {}) {
+  const { threshold = 180 } = options;
+
+  if (!Array.isArray(coordinates) || coordinates.length < 2) {
+    return [coordinates];
+  }
+
+  const segments = [];
+  let currentSegment = [coordinates[0]];
+
+  for (let i = 1; i < coordinates.length; i++) {
+    const prevCoord = coordinates[i - 1];
+    const currentCoord = coordinates[i];
+
+    const lngDiff = Math.abs(currentCoord[0] - prevCoord[0]);
+
+    if (lngDiff > threshold) {
+      // Antimeridian crossing detected
+      segments.push([...currentSegment]);
+      currentSegment = [currentCoord];
+    } else {
+      currentSegment.push(currentCoord);
+    }
+  }
+
+  segments.push(currentSegment);
+  return segments.filter(segment => segment.length > 0);
+}
+
+/**
+ * Normalize longitude to -180 to 180 range
+ * 
+ * @param {number} longitude - Longitude in degrees
+ * @returns {number} - Normalized longitude
+ */
+function normalizeLongitude(longitude) {
+  if (typeof longitude !== 'number' || isNaN(longitude)) {
+    throw new Error('Invalid longitude: expected number');
+  }
+  
+  let normalized = longitude % 360;
+  if (normalized > 180) {
+    normalized -= 360;
+  } else if (normalized < -180) {
+    normalized += 360;
+  }
+  return normalized;
+}
+
+/**
+ * Clamp latitude to valid WGS84 range (-90 to 90)
+ * 
+ * @param {number} latitude - Latitude in degrees
+ * @returns {number} - Clamped latitude
+ */
+function clampLatitude(latitude) {
+  if (typeof latitude !== 'number' || isNaN(latitude)) {
+    throw new Error('Invalid latitude: expected number');
+  }
+  
+  return Math.max(-90, Math.min(90, latitude));
+}
+
+/**
+ * Handle polar coordinates near the poles
+ * Clamps coordinates to valid ranges and handles edge cases
+ * 
+ * @param {Array} coordinates - Array of [lng, lat] coordinates
+ * @param {Object} options - Processing options
+ * @param {number} options.polarThreshold - Latitude threshold for polar regions (default: 85)
+ * @param {boolean} options.clampToMercatorLimits - Clamp to Web Mercator limits (default: true)
+ * @returns {Array} - Processed coordinates
+ */
+function handlePolarCoordinates(coordinates, options = {}) {
+  const { 
+    polarThreshold = 85,
+    clampToMercatorLimits = true 
+  } = options;
+
+  if (!Array.isArray(coordinates)) {
+    throw new Error('Invalid coordinates: expected array');
+  }
+
+  const maxLat = clampToMercatorLimits ? MAX_MERCATOR_LAT : 90;
+  const minLat = clampToMercatorLimits ? -MAX_MERCATOR_LAT : -90;
+
+  return coordinates.map((coord, index) => {
+    if (!Array.isArray(coord) || coord.length < 2) {
+      throw new Error(`Invalid coordinate at index ${index}: expected [lng, lat] array`);
+    }
+
+    let [lng, lat] = coord;
+
+    // Normalize longitude
+    lng = normalizeLongitude(lng);
+
+    // Handle polar regions
+    if (Math.abs(lat) > polarThreshold) {
+      // Clamp latitude to valid range
+      lat = Math.max(minLat, Math.min(maxLat, lat));
+      
+      // In polar regions, longitude becomes less meaningful
+      // Optionally normalize to prevent extreme values
+      if (Math.abs(lat) > MAX_MERCATOR_LAT - 0.1) {
+        // Very close to poles - longitude is essentially meaningless
+        lng = Math.max(-180, Math.min(180, lng));
+      }
+    } else {
+      // Standard latitude clamping
+      lat = clampLatitude(lat);
+    }
+
+    return [lng, lat];
+  });
+}
+
+/**
+ * Calculate bounding box for an array of coordinates with projection awareness
+ * 
+ * @param {Array} coordinates - Array of [longitude, latitude] coordinates
+ * @param {Object} options - Calculation options
+ * @param {string} options.projection - Coordinate projection ('wgs84' or 'webmercator')
+ * @param {boolean} options.handleAntimeridian - Handle antimeridian crossing (default: true)
  * @returns {Object|null} - Bounding box object or null if no coordinates
  */
-function calculateBounds(coordinates) {
+function calculateBounds(coordinates, options = {}) {
+  const { 
+    projection = 'wgs84',
+    handleAntimeridian = true 
+  } = options;
+
   if (!coordinates || !Array.isArray(coordinates) || coordinates.length === 0) {
     return null;
   }
 
-  let minLng = coordinates[0][0];
-  let maxLng = coordinates[0][0];
-  let minLat = coordinates[0][1];
-  let maxLat = coordinates[0][1];
+  // Handle antimeridian crossing if requested and using WGS84
+  let processedCoords = coordinates;
+  if (handleAntimeridian && projection === 'wgs84') {
+    const segments = handleAntimeridianCrossing(coordinates);
+    if (segments.length > 1) {
+      // For multiple segments, calculate bounds for each and combine
+      const allBounds = segments.map(segment => calculateBounds(segment, { 
+        ...options, 
+        handleAntimeridian: false 
+      })).filter(Boolean);
+      
+      if (allBounds.length === 0) return null;
+      
+      // Combine all bounds
+      let minLng = allBounds[0].southwest[0];
+      let maxLng = allBounds[0].northeast[0];
+      let minLat = allBounds[0].southwest[1];
+      let maxLat = allBounds[0].northeast[1];
 
-  for (const coord of coordinates) {
+      for (const bounds of allBounds) {
+        minLng = Math.min(minLng, bounds.southwest[0]);
+        maxLng = Math.max(maxLng, bounds.northeast[0]);
+        minLat = Math.min(minLat, bounds.southwest[1]);
+        maxLat = Math.max(maxLat, bounds.northeast[1]);
+      }
+
+      return {
+        southwest: [minLng, minLat],
+        northeast: [maxLng, maxLat],
+        center: [(minLng + maxLng) / 2, (minLat + maxLat) / 2],
+        antimeridianCrossing: true
+      };
+    }
+  }
+
+  // Standard bounds calculation
+  let minLng = processedCoords[0][0];
+  let maxLng = processedCoords[0][0];
+  let minLat = processedCoords[0][1];
+  let maxLat = processedCoords[0][1];
+
+  for (const coord of processedCoords) {
     if (coord[0] < minLng) minLng = coord[0];
     if (coord[0] > maxLng) maxLng = coord[0];
     if (coord[1] < minLat) minLat = coord[1];
@@ -383,7 +799,8 @@ function calculateBounds(coordinates) {
   return {
     southwest: [minLng, minLat],
     northeast: [maxLng, maxLat],
-    center: [(minLng + maxLng) / 2, (minLat + maxLat) / 2]
+    center: [(minLng + maxLng) / 2, (minLat + maxLat) / 2],
+    antimeridianCrossing: false
   };
 }
 
@@ -512,16 +929,221 @@ function getActivityLineWeight(distanceMeters) {
   return 1; // Very short activities (<10km)
 }
 
+/**
+ * Transform elevation data specifically for chart visualization
+ * Processes raw elevation streams into optimized chart-ready format
+ * 
+ * @param {Object} stravaStreams - Streams data from Strava API
+ * @param {Object} options - Processing options
+ * @param {number} options.maxPoints - Maximum number of points for performance (default: 1000)
+ * @param {boolean} options.includeGradient - Calculate gradient data (default: true)
+ * @param {string} options.units - Unit system 'metric' or 'imperial' (default: 'metric')
+ * @returns {Object} - Chart-ready elevation data
+ */
+function transformElevationForChart(stravaStreams, options = {}) {
+  const {
+    maxPoints = 1000,
+    includeGradient = true,
+    units = 'metric'
+  } = options;
+
+  if (!stravaStreams || !stravaStreams.altitude || !stravaStreams.altitude.data) {
+    return {
+      elevation: [],
+      stats: null,
+      hasData: false,
+      units: units
+    };
+  }
+
+  const altitudeData = stravaStreams.altitude.data;
+  const latlngData = stravaStreams.latlng ? stravaStreams.latlng.data : null;
+  const timeData = stravaStreams.time ? stravaStreams.time.data : null;
+  const distanceData = stravaStreams.distance ? stravaStreams.distance.data : null;
+
+  // Calculate sampling interval for performance optimization
+  const totalPoints = altitudeData.length;
+  const sampleInterval = Math.max(1, Math.floor(totalPoints / maxPoints));
+
+  const elevationPoints = [];
+  let cumulativeDistance = 0;
+  let totalGain = 0;
+  let totalLoss = 0;
+  let minElevation = Infinity;
+  let maxElevation = -Infinity;
+  let elevationSum = 0;
+
+  for (let i = 0; i < totalPoints; i += sampleInterval) {
+    const elevation_meters = altitudeData[i];
+    const elevation_feet = elevation_meters * 3.28084;
+    
+    // Calculate distance
+    let distance_km = 0;
+    let distance_miles = 0;
+    
+    if (distanceData && distanceData[i]) {
+      distance_km = distanceData[i] / 1000;
+      distance_miles = distanceData[i] / 1609.34;
+    } else if (latlngData && i > 0) {
+      // Calculate cumulative distance from coordinates
+      const prevCoord = latlngData[i - sampleInterval] || latlngData[Math.max(0, i - 1)];
+      const currentCoord = latlngData[i];
+      if (prevCoord && currentCoord) {
+        const segmentDistance = calculateHaversineDistance(
+          prevCoord[0], prevCoord[1],
+          currentCoord[0], currentCoord[1]
+        );
+        cumulativeDistance += segmentDistance;
+      }
+      distance_km = cumulativeDistance / 1000;
+      distance_miles = cumulativeDistance / 1609.34;
+    } else {
+      // Fallback: estimate distance based on index and total distance
+      const estimatedTotalDistance = estimateTotalDistance(latlngData);
+      const ratio = i / (totalPoints - 1);
+      distance_km = (estimatedTotalDistance * ratio) / 1000;
+      distance_miles = (estimatedTotalDistance * ratio) / 1609.34;
+    }
+
+    // Calculate gradient if requested and possible
+    let gradient = null;
+    if (includeGradient && i > 0 && elevationPoints.length > 0) {
+      const prevPoint = elevationPoints[elevationPoints.length - 1];
+      const elevationDiff = elevation_meters - prevPoint.elevation_meters;
+      const distanceDiff = (distance_km - prevPoint.distance_km) * 1000; // Convert to meters
+      if (distanceDiff > 0) {
+        gradient = (elevationDiff / distanceDiff) * 100; // Percentage grade
+      }
+    }
+
+    // Track elevation statistics
+    if (elevation_meters < minElevation) minElevation = elevation_meters;
+    if (elevation_meters > maxElevation) maxElevation = elevation_meters;
+    elevationSum += elevation_meters;
+
+    // Calculate elevation gain/loss
+    if (elevationPoints.length > 0) {
+      const elevationChange = elevation_meters - elevationPoints[elevationPoints.length - 1].elevation_meters;
+      if (elevationChange > 0) {
+        totalGain += elevationChange;
+      } else {
+        totalLoss += Math.abs(elevationChange);
+      }
+    }
+
+    elevationPoints.push({
+      index: i,
+      elevation_meters: Math.round(elevation_meters * 10) / 10,
+      elevation_feet: Math.round(elevation_feet * 10) / 10,
+      distance_km: Math.round(distance_km * 100) / 100,
+      distance_miles: Math.round(distance_miles * 100) / 100,
+      gradient: gradient ? Math.round(gradient * 10) / 10 : null,
+      time_seconds: timeData ? timeData[i] : null
+    });
+  }
+
+  // Calculate final statistics
+  const avgElevation = elevationSum / elevationPoints.length;
+  const stats = {
+    gain: Math.round(totalGain),
+    loss: Math.round(totalLoss),
+    min: Math.round(minElevation),
+    max: Math.round(maxElevation),
+    avg: Math.round(avgElevation),
+    // Imperial conversions
+    gain_feet: Math.round(totalGain * 3.28084),
+    loss_feet: Math.round(totalLoss * 3.28084),
+    min_feet: Math.round(minElevation * 3.28084),
+    max_feet: Math.round(maxElevation * 3.28084),
+    avg_feet: Math.round(avgElevation * 3.28084),
+    // Additional metrics
+    elevation_range: Math.round(maxElevation - minElevation),
+    elevation_range_feet: Math.round((maxElevation - minElevation) * 3.28084),
+    total_distance_km: elevationPoints.length > 0 ? elevationPoints[elevationPoints.length - 1].distance_km : 0,
+    total_distance_miles: elevationPoints.length > 0 ? elevationPoints[elevationPoints.length - 1].distance_miles : 0
+  };
+
+  return {
+    elevation: elevationPoints,
+    stats: stats,
+    hasData: true,
+    units: units,
+    sampleInterval: sampleInterval,
+    originalPoints: totalPoints
+  };
+}
+
+/**
+ * Calculate Haversine distance between two points
+ * 
+ * @param {number} lat1 - Latitude of first point
+ * @param {number} lon1 - Longitude of first point  
+ * @param {number} lat2 - Latitude of second point
+ * @param {number} lon2 - Longitude of second point
+ * @returns {number} - Distance in meters
+ */
+function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371000; // Earth's radius in meters
+  const φ1 = lat1 * Math.PI / 180;
+  const φ2 = lat2 * Math.PI / 180;
+  const Δφ = (lat2 - lat1) * Math.PI / 180;
+  const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+  const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ/2) * Math.sin(Δλ/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+  return R * c;
+}
+
+/**
+ * Estimate total distance from coordinate array
+ * 
+ * @param {Array} latlngData - Array of [lat, lng] coordinates
+ * @returns {number} - Estimated total distance in meters
+ */
+function estimateTotalDistance(latlngData) {
+  if (!latlngData || latlngData.length < 2) return 0;
+  
+  let totalDistance = 0;
+  for (let i = 1; i < latlngData.length; i++) {
+    const prev = latlngData[i - 1];
+    const current = latlngData[i];
+    totalDistance += calculateHaversineDistance(prev[0], prev[1], current[0], current[1]);
+  }
+  
+  return totalDistance;
+}
+
 module.exports = {
+  // Activity transformation functions
   transformActivitySummary,
   transformActivityDetails,
   transformActivityStreams,
   transformAthleteData,
   transformForMapGeneration,
-  decodePolyline,
-  calculateBounds,
-  formatDuration,
+  transformElevationForChart,
   normalizeActivityData,
   getActivityColorCategory,
-  getActivityLineWeight
+  getActivityLineWeight,
+  formatDuration,
+  calculateHaversineDistance,
+  estimateTotalDistance,
+  
+  // Polyline encoding/decoding functions
+  decodePolyline,
+  encodePolyline,
+  
+  // Coordinate transformation functions
+  wgs84ToWebMercator,
+  webMercatorToWgs84,
+  transformCoordinates,
+  
+  // Coordinate utility functions
+  handleAntimeridianCrossing,
+  handlePolarCoordinates,
+  normalizeLongitude,
+  clampLatitude,
+  calculateBounds
 };

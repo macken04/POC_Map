@@ -8,6 +8,7 @@ const compression = require('compression');
 const cookieParser = require('cookie-parser');
 const config = require('./config');
 const sessionSecurity = require('./middleware/sessionSecurity');
+const ProgressService = require('./services/progressService');
 
 const app = express();
 const appConfig = config.getConfig();
@@ -440,12 +441,46 @@ app.use((err, req, res, next) => {
 });
 
 // Start server with graceful shutdown
-const server = app.listen(appConfig.port, () => {
+const server = app.listen(appConfig.port, async () => {
   console.log(`Server running on port ${appConfig.port} in ${appConfig.env} mode`);
   console.log(`Configuration loaded successfully`);
+  
+  // Initialize progress service with WebSocket support
+  const progressService = new ProgressService();
+  progressService.initialize(server);
+  
+  // Make progress service available globally
+  app.locals.progressService = progressService;
   console.log(`Health check available at: http://localhost:${appConfig.port}/health`);
   
-  // Create storage directory if it doesn't exist
+  // Initialize file storage service
+  try {
+    const fileStorageService = require('./services/fileStorageService');
+    await fileStorageService.initialize();
+    console.log('File storage service initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize file storage service:', error);
+  }
+  
+  // Initialize file cleanup service
+  try {
+    const fileCleanupService = require('./services/fileCleanupService');
+    await fileCleanupService.initialize();
+    console.log('File cleanup service initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize file cleanup service:', error);
+  }
+  
+  // Initialize file monitoring service
+  try {
+    const fileMonitoringService = require('./services/fileMonitoringService');
+    await fileMonitoringService.initialize();
+    console.log('File monitoring service initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize file monitoring service:', error);
+  }
+  
+  // Create storage directory if it doesn't exist (fallback)
   const fs = require('fs');
   if (!fs.existsSync(appConfig.storage.generatedMapsDir)) {
     fs.mkdirSync(appConfig.storage.generatedMapsDir, { recursive: true });
@@ -454,10 +489,10 @@ const server = app.listen(appConfig.port, () => {
 });
 
 // Graceful shutdown handling
-const gracefulShutdown = (signal) => {
+const gracefulShutdown = async (signal) => {
   console.log(`\nReceived ${signal}. Starting graceful shutdown...`);
   
-  server.close((err) => {
+  server.close(async (err) => {
     if (err) {
       console.error('Error during server shutdown:', err);
       process.exit(1);
@@ -465,18 +500,50 @@ const gracefulShutdown = (signal) => {
     
     console.log('Server closed successfully');
     
-    // Clean up any resources here
-    // Close database connections, clear timers, etc.
+    // Shutdown progress service
+    try {
+      if (app.locals.progressService) {
+        app.locals.progressService.shutdown();
+        console.log('Progress service shut down successfully');
+      }
+    } catch (error) {
+      console.error('Error shutting down progress service:', error);
+    }
+    
+    // Clean up file services
+    try {
+      const fileCleanupService = require('./services/fileCleanupService');
+      await fileCleanupService.shutdown();
+      console.log('File cleanup service shut down successfully');
+    } catch (error) {
+      console.error('Error shutting down file cleanup service:', error);
+    }
+    
+    try {
+      const fileMonitoringService = require('./services/fileMonitoringService');
+      await fileMonitoringService.shutdown();
+      console.log('File monitoring service shut down successfully');
+    } catch (error) {
+      console.error('Error shutting down file monitoring service:', error);
+    }
+    
+    try {
+      const mapService = require('./services/mapService');
+      await mapService.cleanup();
+      console.log('Map service cleaned up successfully');
+    } catch (error) {
+      console.error('Error cleaning up map service:', error);
+    }
     
     console.log('Graceful shutdown completed');
     process.exit(0);
   });
   
-  // Force close server after 10 seconds
+  // Force close server after 15 seconds (increased timeout for cleanup)
   setTimeout(() => {
     console.error('Could not close connections in time, forcefully shutting down');
     process.exit(1);
-  }, 10000);
+  }, 15000);
 };
 
 // Handle shutdown signals
