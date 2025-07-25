@@ -1,7 +1,7 @@
 {
   "overview": {
-    "testDate": "2025-07-24T10:14:18.561Z",
-    "totalDuration": 7072,
+    "testDate": "2025-07-25T09:45:37.148Z",
+    "totalDuration": 7110,
     "totalSuites": 5,
     "totalTests": 58,
     "totalPassed": 28,
@@ -22,221 +22,221 @@
           "name": "Token validation accepts valid data",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.563Z"
+          "timestamp": "2025-07-25T09:45:37.151Z"
         },
         {
           "name": "Token validation rejects invalid data",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.564Z"
+          "timestamp": "2025-07-25T09:45:37.152Z"
         },
         {
           "name": "Token validation rejects missing access token",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.564Z"
+          "timestamp": "2025-07-25T09:45:37.152Z"
         },
         {
           "name": "Token encryption produces non-empty string",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.598Z"
+          "timestamp": "2025-07-25T09:45:37.178Z"
         },
         {
           "name": "Token encryption is not reversible without key",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.598Z"
+          "timestamp": "2025-07-25T09:45:37.178Z"
         },
         {
           "name": "Token decryption recovers original data",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.598Z"
+          "timestamp": "2025-07-25T09:45:37.179Z"
         },
         {
           "name": "Invalid encrypted data throws error",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.598Z"
+          "timestamp": "2025-07-25T09:45:37.179Z"
         },
         {
           "name": "Non-expired tokens detected correctly",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.598Z"
+          "timestamp": "2025-07-25T09:45:37.179Z"
         },
         {
           "name": "Expired tokens detected correctly",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.598Z"
+          "timestamp": "2025-07-25T09:45:37.179Z"
         },
         {
           "name": "Token sanitization removes sensitive data",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.598Z"
+          "timestamp": "2025-07-25T09:45:37.179Z"
         },
         {
           "name": "Secure token generation produces valid tokens",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.598Z"
+          "timestamp": "2025-07-25T09:45:37.179Z"
         },
         {
           "name": "Token data clearing works",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.598Z"
+          "timestamp": "2025-07-25T09:45:37.179Z"
         },
         {
           "name": "Token storage stores tokens securely",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.599Z"
+          "timestamp": "2025-07-25T09:45:37.180Z"
         },
         {
           "name": "Token retrieval returns stored tokens",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.599Z"
+          "timestamp": "2025-07-25T09:45:37.180Z"
         },
         {
           "name": "Authentication status detection works",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.599Z"
+          "timestamp": "2025-07-25T09:45:37.180Z"
         },
         {
           "name": "Auth status provides correct details",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.599Z"
+          "timestamp": "2025-07-25T09:45:37.180Z"
         },
         {
           "name": "Access token retrieval works",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.599Z"
+          "timestamp": "2025-07-25T09:45:37.180Z"
         },
         {
           "name": "Refresh token retrieval works",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.599Z"
+          "timestamp": "2025-07-25T09:45:37.180Z"
         },
         {
           "name": "Session validation works for valid sessions",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.599Z"
+          "timestamp": "2025-07-25T09:45:37.180Z"
         },
         {
           "name": "Session validation fails for invalid sessions",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.599Z"
+          "timestamp": "2025-07-25T09:45:37.180Z"
         },
         {
           "name": "Token clearing removes all tokens",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.599Z"
+          "timestamp": "2025-07-25T09:45:37.180Z"
         },
         {
           "name": "Cleared tokens show not authenticated",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.599Z"
+          "timestamp": "2025-07-25T09:45:37.180Z"
         },
         {
           "name": "Token update preserves existing data",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.599Z"
+          "timestamp": "2025-07-25T09:45:37.181Z"
         },
         {
           "name": "Session ID mismatch clears tokens",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.599Z"
+          "timestamp": "2025-07-25T09:45:37.181Z"
         },
         {
           "name": "Session validation middleware exists",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.600Z"
+          "timestamp": "2025-07-25T09:45:37.181Z"
         },
         {
           "name": "Security headers middleware exists",
           "passed": false,
           "message": "sessionSecurity.securityHeaders is not a function",
-          "timestamp": "2025-07-24T10:14:18.600Z"
+          "timestamp": "2025-07-25T09:45:37.181Z"
         },
         {
           "name": "Auth requirement middleware exists",
           "passed": false,
           "message": "Test assertion failed",
-          "timestamp": "2025-07-24T10:14:18.600Z"
+          "timestamp": "2025-07-25T09:45:37.181Z"
         },
         {
           "name": "Async wrapper function exists",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.600Z"
+          "timestamp": "2025-07-25T09:45:37.181Z"
         },
         {
           "name": "Error categorization works",
           "passed": false,
           "message": "Test assertion failed",
-          "timestamp": "2025-07-24T10:14:18.600Z"
+          "timestamp": "2025-07-25T09:45:37.181Z"
         },
         {
           "name": "OAuth error categorization works",
           "passed": false,
           "message": "Test assertion failed",
-          "timestamp": "2025-07-24T10:14:18.600Z"
+          "timestamp": "2025-07-25T09:45:37.181Z"
         },
         {
           "name": "Error response formatting works",
           "passed": false,
           "message": "errorHandler.formatErrorResponse is not a function",
-          "timestamp": "2025-07-24T10:14:18.600Z"
+          "timestamp": "2025-07-25T09:45:37.181Z"
         },
         {
           "name": "User-friendly error messages generated",
           "passed": false,
           "message": "errorHandler.getUserFriendlyMessage is not a function",
-          "timestamp": "2025-07-24T10:14:18.600Z"
+          "timestamp": "2025-07-25T09:45:37.181Z"
         },
         {
           "name": "OAuth rate limit middleware created",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.600Z"
+          "timestamp": "2025-07-25T09:45:37.181Z"
         },
         {
           "name": "API rate limit middleware created",
           "passed": false,
           "message": "rateLimiting.createAPIRateLimit is not a function",
-          "timestamp": "2025-07-24T10:14:18.600Z"
+          "timestamp": "2025-07-25T09:45:37.181Z"
         },
         {
           "name": "Strava rate limit tracking functions exist",
           "passed": true,
           "message": "Test passed",
-          "timestamp": "2025-07-24T10:14:18.600Z"
+          "timestamp": "2025-07-25T09:45:37.181Z"
         },
         {
           "name": "Rate limit info extraction works",
           "passed": false,
           "message": "rateLimiting.extractRateLimitInfo is not a function",
-          "timestamp": "2025-07-24T10:14:18.600Z"
+          "timestamp": "2025-07-25T09:45:37.181Z"
         }
       ],
-      "timestamp": "2025-07-24T10:14:18.600Z",
-      "duration": 37,
+      "timestamp": "2025-07-25T09:45:37.181Z",
+      "duration": 31,
       "suiteName": "Unit Tests"
     },
     {
@@ -248,10 +248,10 @@
         "successRate": 0
       },
       "details": [],
-      "timestamp": "2025-07-24T10:14:18.620Z",
+      "timestamp": "2025-07-25T09:45:37.212Z",
       "environment": "development",
       "baseUrl": "http://localhost:3000",
-      "duration": 20,
+      "duration": 30,
       "suiteName": "Integration Tests"
     },
     {
@@ -263,7 +263,7 @@
         "failed": 1
       },
       "error": "Invalid token data structure",
-      "timestamp": "2025-07-24T10:14:18.621Z"
+      "timestamp": "2025-07-25T09:45:37.213Z"
     },
     {
       "type": "csrf_protection_tests",
@@ -278,10 +278,10 @@
           "name": "Server availability",
           "passed": false,
           "message": "Server not running for CSRF tests",
-          "timestamp": "2025-07-24T10:14:18.622Z"
+          "timestamp": "2025-07-25T09:45:37.213Z"
         }
       ],
-      "timestamp": "2025-07-24T10:14:18.622Z",
+      "timestamp": "2025-07-25T09:45:37.213Z",
       "environment": "development",
       "baseUrl": "http://localhost:3000",
       "duration": 0,
@@ -299,137 +299,137 @@
           "name": "Missing authorization code handling",
           "passed": false,
           "message": "Network error: fetch is not a function",
-          "timestamp": "2025-07-24T10:14:18.622Z"
+          "timestamp": "2025-07-25T09:45:37.214Z"
         },
         {
           "name": "Invalid state parameter handling",
           "passed": false,
           "message": "Network error: fetch is not a function",
-          "timestamp": "2025-07-24T10:14:18.622Z"
+          "timestamp": "2025-07-25T09:45:37.214Z"
         },
         {
           "name": "User denied access handling",
           "passed": false,
           "message": "Network error: fetch is not a function",
-          "timestamp": "2025-07-24T10:14:18.622Z"
+          "timestamp": "2025-07-25T09:45:37.214Z"
         },
         {
           "name": "Invalid request error handling",
           "passed": false,
           "message": "Network error: fetch is not a function",
-          "timestamp": "2025-07-24T10:14:18.622Z"
+          "timestamp": "2025-07-25T09:45:37.214Z"
         },
         {
           "name": "Network connectivity test",
           "passed": false,
           "message": "Network error: fetch is not a function",
-          "timestamp": "2025-07-24T10:14:19.622Z"
+          "timestamp": "2025-07-25T09:45:38.217Z"
         },
         {
           "name": "Token exchange network error handling",
           "passed": false,
           "message": "Network error: fetch is not a function",
-          "timestamp": "2025-07-24T10:14:19.623Z"
+          "timestamp": "2025-07-25T09:45:38.218Z"
         },
         {
           "name": "OAuth rate limiting test",
           "passed": false,
           "message": "fetch is not a function",
-          "timestamp": "2025-07-24T10:14:20.623Z"
+          "timestamp": "2025-07-25T09:45:39.241Z"
         },
         {
           "name": "API rate limiting (unauthenticated)",
           "passed": false,
           "message": "Network error: fetch is not a function",
-          "timestamp": "2025-07-24T10:14:20.624Z"
+          "timestamp": "2025-07-25T09:45:39.241Z"
         },
         {
           "name": "CSRF protection validation",
           "passed": false,
           "message": "Network error: fetch is not a function",
-          "timestamp": "2025-07-24T10:14:21.624Z"
+          "timestamp": "2025-07-25T09:45:40.244Z"
         },
         {
           "name": "Malformed request handling",
           "passed": false,
           "message": "Network error: fetch is not a function",
-          "timestamp": "2025-07-24T10:14:21.625Z"
+          "timestamp": "2025-07-25T09:45:40.245Z"
         },
         {
           "name": "Session validation",
           "passed": false,
           "message": "Network error: fetch is not a function",
-          "timestamp": "2025-07-24T10:14:21.625Z"
+          "timestamp": "2025-07-25T09:45:40.245Z"
         },
         {
           "name": "Unauthenticated API access",
           "passed": false,
           "message": "Network error: fetch is not a function",
-          "timestamp": "2025-07-24T10:14:22.627Z"
+          "timestamp": "2025-07-25T09:45:41.247Z"
         },
         {
           "name": "Session validation middleware",
           "passed": false,
           "message": "Network error: fetch is not a function",
-          "timestamp": "2025-07-24T10:14:22.627Z"
+          "timestamp": "2025-07-25T09:45:41.247Z"
         },
         {
           "name": "Error page for access_denied",
           "passed": false,
           "message": "Network error: fetch is not a function",
-          "timestamp": "2025-07-24T10:14:23.629Z"
+          "timestamp": "2025-07-25T09:45:42.252Z"
         },
         {
           "name": "Error page for rate_limited",
           "passed": false,
           "message": "Network error: fetch is not a function",
-          "timestamp": "2025-07-24T10:14:23.629Z"
+          "timestamp": "2025-07-25T09:45:42.253Z"
         },
         {
           "name": "Error page for service_unavailable",
           "passed": false,
           "message": "Network error: fetch is not a function",
-          "timestamp": "2025-07-24T10:14:23.629Z"
+          "timestamp": "2025-07-25T09:45:42.253Z"
         },
         {
           "name": "Error page for server_error",
           "passed": false,
           "message": "Network error: fetch is not a function",
-          "timestamp": "2025-07-24T10:14:23.629Z"
+          "timestamp": "2025-07-25T09:45:42.253Z"
         },
         {
           "name": "Extremely long parameter handling",
           "passed": false,
           "message": "Network error: fetch is not a function",
-          "timestamp": "2025-07-24T10:14:24.631Z"
+          "timestamp": "2025-07-25T09:45:43.255Z"
         },
         {
           "name": "Special character handling",
           "passed": false,
           "message": "Network error: fetch is not a function",
-          "timestamp": "2025-07-24T10:14:24.631Z"
+          "timestamp": "2025-07-25T09:45:43.255Z"
         },
         {
           "name": "Concurrent request test",
           "passed": false,
           "message": "fetch is not a function",
-          "timestamp": "2025-07-24T10:14:24.631Z"
+          "timestamp": "2025-07-25T09:45:43.255Z"
         },
         {
           "name": "Server health after error scenarios",
           "passed": false,
           "message": "Network error: fetch is not a function",
-          "timestamp": "2025-07-24T10:14:24.631Z"
+          "timestamp": "2025-07-25T09:45:43.255Z"
         }
       ],
-      "timestamp": "2025-07-24T10:14:25.633Z",
+      "timestamp": "2025-07-25T09:45:44.257Z",
       "environment": "development",
       "testConfig": {
         "baseUrl": "http://localhost:3000",
         "testTimeout": 30000,
         "rateLimitDelay": 1000
       },
-      "duration": 7011,
+      "duration": 7043,
       "suiteName": "Error Handling Tests"
     }
   ],
@@ -448,10 +448,10 @@
     }
   ],
   "environment": {
-    "nodeVersion": "v24.4.0",
+    "nodeVersion": "v24.2.0",
     "platform": "darwin",
     "environment": "development",
     "testRunner": "OAuth Comprehensive Test Suite v1.0"
   },
-  "timestamp": "2025-07-24T10:14:25.633Z"
+  "timestamp": "2025-07-25T09:45:44.258Z"
 }
