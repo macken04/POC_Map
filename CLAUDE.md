@@ -1,10 +1,20 @@
 # Shopify Custom Map Printing Platform - Claude Code Integration Guide
 
+## 🛍️ SHOPIFY-FIRST PROJECT CONTEXT
+
+**THIS IS A SHOPIFY STORE THEME PROJECT - NOT A STANDALONE WEB APPLICATION**
+
+- **Primary Environment**: Shopify Dawn Theme running on print-my-ride-version-5.myshopify.com
+- **Testing Method**: Use `shopify theme dev` command and test in browser at Shopify URLs
+- **Deployment**: Shopify Theme (NOT traditional web hosting)
+- **Frontend Location**: All frontend code lives in `shopify-theme/dawn/` directory
+- **Backend Role**: Supporting microservice that runs locally and connects via ngrok
+
 ## Project Tech Stack
 
 ### Core Technologies
-- **Frontend**: Shopify Dawn theme with custom JavaScript components
-- **Backend**: Local Node.js/Express server with session-based authentication
+- **Frontend**: Shopify Dawn theme with custom JavaScript components (SHOPIFY LIQUID + JS)
+- **Backend**: Local Node.js/Express server with session-based authentication (SUPPORTING SERVICE)
 - **Maps**: Mapbox GL JS for both interactive display and high-resolution export
 - **High-Resolution Export**: Mapbox GL JS Canvas Export + Puppeteer for 300 DPI print-quality maps
 - **APIs**: Strava API v3 for OAuth authentication and activity data
@@ -567,6 +577,29 @@ shopify theme push --theme=183192945024  # Development theme ID
 ```
 
 ## Development Rules & Guidelines
+
+### 🛍️ SHOPIFY DEVELOPMENT RULES - READ FIRST
+
+**THIS IS A SHOPIFY THEME PROJECT - NEVER FORGET THIS CONTEXT**
+
+1. **TESTING APPROACH**: 
+   - ❌ NEVER create local HTML test files outside Shopify theme
+   - ❌ NEVER test with standalone local servers
+   - ✅ ALWAYS test using `shopify theme dev` command
+   - ✅ ALWAYS test in browser at Shopify store URLs
+   - ✅ Use existing `debug-frontend.html` for debugging if needed
+
+2. **FRONTEND DEVELOPMENT**:
+   - ❌ NEVER create standalone web pages
+   - ❌ NEVER assume standard web hosting environment
+   - ✅ ALL frontend code goes in `shopify-theme/dawn/` directory
+   - ✅ Use Shopify Liquid templating system
+   - ✅ Follow Shopify theme structure and conventions
+
+3. **BACKEND ROLE**:
+   - Backend is a SUPPORTING microservice, not the main application
+   - Backend runs locally and connects via ngrok
+   - Primary app is the Shopify store theme
 
 ### Tech Stack Context Rules
 

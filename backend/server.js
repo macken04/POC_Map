@@ -267,6 +267,44 @@ app.get('/api/ngrok-url', (req, res) => {
   }
 });
 
+// Frontend connectivity test endpoint
+app.get('/api/test-frontend', (req, res) => {
+  try {
+    const origin = req.get('Origin') || req.get('Referer');
+    const userAgent = req.get('User-Agent');
+    
+    res.json({
+      success: true,
+      message: 'Frontend connectivity test successful',
+      timestamp: new Date().toISOString(),
+      request: {
+        origin: origin,
+        userAgent: userAgent,
+        method: req.method,
+        headers: req.headers
+      },
+      server: {
+        environment: appConfig.env,
+        port: appConfig.port,
+        uptime: process.uptime()
+      },
+      cors: {
+        allowedOrigins: appConfig.cors.allowedOrigins,
+        corsEnabled: true
+      }
+    });
+    
+  } catch (error) {
+    console.error('Frontend test endpoint error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Frontend connectivity test failed',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Shopify integration test endpoint
 app.get('/api/test-shopify', (req, res) => {
   try {

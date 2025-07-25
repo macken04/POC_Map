@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Debug Tool</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Frontend Debug Tool</h1>
+    <p>This tool will help diagnose frontend connectivity issues.</p>
+    
+    <div id="results"></div>
+    
+    <button onclick="runAllTests()">Run All Tests</button>
+    <button onclick="testBackendHealth()">Test Backend Health</button>
+    <button onclick="testCORS()">Test CORS</button>
+    <button onclick="testMapboxConfig()">Test Mapbox Config</button>
+    <button onclick="testStravaAuth()">Test Strava Auth Status</button>
+
+    <script>
+        const BACKEND_URL = 'https://boss-hog-freely.ngrok-free.app';
+        const results = document.getElementById('results');
+
+        function addResult(title, status, message, details = null) {
+            const div = document.createElement('div');
+            div.className = `test-result ${status}`;
+            div.innerHTML = `
+                <h3>${title}</h3>
+                <p>${message}</p>
+                ${details ? `<pre>${JSON.stringify(details, null, 2)}</pre>` : ''}
+            `;
+            results.appendChild(div);
+        }
+
+        async function testBackendHealth() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'ngrok-skip-browser-warning': 'true'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('Backend Health', 'success', 'Backend is healthy', data);
+                } else {
+                    addResult('Backend Health', 'error', `Backend returned ${response.status}`, await response.text());
+                }
+            } catch (error) {
+                addResult('Backend Health', 'error', 'Failed to connect to backend', error.message);
+            }
+        }
+
+        async function testCORS() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/mapbox-config`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'ngrok-skip-browser-warning': 'true'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('CORS Test', 'success', 'CORS is working correctly', data);
+                } else {
+                    addResult('CORS Test', 'error', `CORS failed with ${response.status}`, await response.text());
+                }
+            } catch (error) {
+                addResult('CORS Test', 'error', 'CORS request failed', error.message);
+            }
+        }
+
+        async function testMapboxConfig() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/mapbox-config`, {
+                    method: 'GET',
+                    headers: {
+                        'ngrok-skip-browser-warning': 'true'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('Mapbox Config', 'success', 'Mapbox configuration loaded', data);
+                } else {
+                    addResult('Mapbox Config', 'error', `Failed to load Mapbox config: ${response.status}`, await response.text());
+                }
+            } catch (error) {
+                addResult('Mapbox Config', 'error', 'Failed to fetch Mapbox config', error.message);
+            }
+        }
+
+        async function testStravaAuth() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/auth/status`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'ngrok-skip-browser-warning': 'true'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('Strava Auth Status', 'success', 'Auth status retrieved', data);
+                } else {
+                    addResult('Strava Auth Status', 'warning', `Auth status: ${response.status}`, await response.text());
+                }
+            } catch (error) {
+                addResult('Strava Auth Status', 'error', 'Failed to check auth status', error.message);
+            }
+        }
+
+        async function runAllTests() {
+            results.innerHTML = '<h2>Running Tests...</h2>';
+            
+            await testBackendHealth();
+            await testCORS();
+            await testMapboxConfig();
+            await testStravaAuth();
+            
+            addResult('All Tests', 'success', 'All tests completed. Check results above.', null);
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(runAllTests, 1000);
+        });
+    </script>
+</body>
+</html>
