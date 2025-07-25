@@ -1872,4 +1872,322 @@ router.get('/system/health', requireAuth, async (req, res) => {
   }
 });
 
+/**
+ * Print Size Configuration Endpoints
+ * Provides comprehensive print size information for the frontend
+ */
+
+/**
+ * Get all available print sizes for selection UI
+ * GET /api/maps/print-sizes
+ */
+router.get('/print-sizes', requireAuth, async (req, res) => {
+  try {
+    const mapService = require('../services/mapService');
+    
+    // Get all available print sizes
+    const availableSizes = mapService.getAvailablePrintSizes();
+    
+    // Get comparison data for UI
+    const comparison = mapService.getPrintSizeComparison();
+    
+    res.json({
+      success: true,
+      printSizes: {
+        available: availableSizes,
+        comparison: comparison,
+        defaultSize: 'A4',
+        defaultOrientation: 'portrait'
+      },
+      metadata: {
+        dpi: 300,
+        qualityDescription: 'Professional print quality',
+        supportedOrientations: ['portrait', 'landscape'],
+        timestamp: new Date().toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('Error getting print sizes:', error);
+    res.status(500).json({
+      error: 'Failed to get print sizes',
+      message: 'Unable to retrieve print size configuration'
+    });
+  }
+});
+
+/**
+ * Get specific print size dimensions
+ * GET /api/maps/print-sizes/:format/:orientation?
+ */
+router.get('/print-sizes/:format/:orientation?', requireAuth, async (req, res) => {
+  try {
+    const { format, orientation = 'portrait' } = req.params;
+    const mapService = require('../services/mapService');
+    
+    // Validate format
+    if (!['A3', 'A4'].includes(format.toUpperCase())) {
+      return res.status(400).json({
+        error: 'Invalid format',
+        message: 'Only A3 and A4 formats are currently available',
+        availableFormats: ['A3', 'A4']
+      });
+    }
+    
+    // Validate orientation
+    if (!['portrait', 'landscape'].includes(orientation.toLowerCase())) {
+      return res.status(400).json({
+        error: 'Invalid orientation',
+        message: 'Orientation must be portrait or landscape',
+        availableOrientations: ['portrait', 'landscape']
+      });
+    }
+    
+    // Get dimensions for specified format and orientation
+    const dimensions = mapService.getPrintDimensions(format, orientation);
+    
+    res.json({
+      success: true,
+      printSize: dimensions,
+      alternativeOrientations: {
+        portrait: format.toUpperCase() === dimensions.format ? 
+          mapService.getPrintDimensions(format, 'portrait') : null,
+        landscape: format.toUpperCase() === dimensions.format ? 
+          mapService.getPrintDimensions(format, 'landscape') : null
+      }
+    });
+
+  } catch (error) {
+    console.error('Error getting print size dimensions:', error);
+    
+    if (error.message.includes('Unsupported format') || error.message.includes('Unsupported orientation')) {
+      return res.status(400).json({
+        error: 'Invalid parameters',
+        message: error.message
+      });
+    }
+    
+    res.status(500).json({
+      error: 'Failed to get print dimensions',
+      message: 'Unable to retrieve print size dimensions'
+    });
+  }
+});
+
+/**
+ * Get print size recommendations based on map content
+ * POST /api/maps/print-size-recommendations
+ */
+router.post('/print-size-recommendations', requireAuth, async (req, res) => {
+  try {
+    const { 
+      mapBounds, 
+      intendedUse = 'general',
+      currentSize,
+      currentOrientation
+    } = req.body;
+    
+    // Validate required parameters
+    if (!mapBounds || !mapBounds.north || !mapBounds.south || !mapBounds.east || !mapBounds.west) {
+      return res.status(400).json({
+        error: 'Invalid map bounds',
+        message: 'Map bounds must include north, south, east, and west coordinates'
+      });
+    }
+    
+    const mapService = require('../services/mapService');
+    
+    // Get recommendations
+    const recommendations = mapService.getRecommendedPrintSize(mapBounds, intendedUse);
+    
+    // Calculate current selection score if provided
+    let currentSelectionInfo = null;
+    if (currentSize && currentOrientation) {
+      try {
+        const currentDimensions = mapService.getPrintDimensions(currentSize, currentOrientation);
+        const currentRec = recommendations.find(r => 
+          r.format === currentSize.toUpperCase() && r.orientation === currentOrientation.toLowerCase()
+        );
+        
+        currentSelectionInfo = {
+          ...currentDimensions,
+          score: currentRec ? currentRec.score : 0,
+          reasons: currentRec ? currentRec.reasons : ['Current selection'],
+          rank: recommendations.findIndex(r => 
+            r.format === currentSize.toUpperCase() && r.orientation === currentOrientation.toLowerCase()
+          ) + 1
+        };
+      } catch (error) {
+        console.warn('Could not analyze current selection:', error.message);
+      }
+    }
+    
+    // Calculate content analysis
+    const boundsWidth = Math.abs(mapBounds.east - mapBounds.west);
+    const boundsHeight = Math.abs(mapBounds.north - mapBounds.south);
+    const contentAspectRatio = boundsWidth / boundsHeight;
+    
+    res.json({
+      success: true,
+      recommendations: recommendations,
+      currentSelection: currentSelectionInfo,
+      contentAnalysis: {
+        aspectRatio: Math.round(contentAspectRatio * 1000) / 1000,
+        isWide: contentAspectRatio > 1.2,
+        isTall: contentAspectRatio < 0.8,
+        isSquarish: contentAspectRatio >= 0.8 && contentAspectRatio <= 1.2,
+        boundsSize: {
+          width: boundsWidth,
+          height: boundsHeight
+        }
+      },
+      intendedUse: intendedUse
+    });
+
+  } catch (error) {
+    console.error('Error getting print size recommendations:', error);
+    res.status(500).json({
+      error: 'Failed to get recommendations',
+      message: 'Unable to generate print size recommendations'
+    });
+  }
+});
+
+/**
+ * Validate print configuration for export
+ * POST /api/maps/validate-print-config
+ */
+router.post('/validate-print-config', requireAuth, async (req, res) => {
+  try {
+    const { 
+      format, 
+      orientation, 
+      mapBounds,
+      quality = 'print',
+      deviceCapabilities = {}
+    } = req.body;
+    
+    // Validate required parameters
+    if (!format || !orientation) {
+      return res.status(400).json({
+        error: 'Missing parameters',
+        message: 'Format and orientation are required'
+      });
+    }
+    
+    if (!mapBounds) {
+      return res.status(400).json({
+        error: 'Missing map bounds',
+        message: 'Map bounds are required for validation'
+      });
+    }
+    
+    const mapService = require('../services/mapService');
+    const dpiManager = require('../services/mapService'); // We'll need to import actual DPI manager
+    
+    try {
+      // Get print dimensions
+      const printDimensions = mapService.getPrintDimensions(format, orientation);
+      
+      // Calculate memory requirements
+      const memoryRequirements = mapService.calculateMemoryRequirements(
+        printDimensions.width, 
+        printDimensions.height, 
+        printDimensions.dpi
+      );
+      
+      // Determine if configuration is valid
+      const warnings = [];
+      const errors = [];
+      
+      // Memory validation
+      if (memoryRequirements.estimatedMB > 200) {
+        warnings.push({
+          type: 'memory',
+          message: `High memory usage expected: ${memoryRequirements.estimatedMB}MB`,
+          recommendation: 'Consider using progressive rendering or reducing quality'
+        });
+      }
+      
+      if (memoryRequirements.estimatedMB > 500) {
+        warnings.push({
+          type: 'memory',
+          severity: 'high',
+          message: `Very high memory usage: ${memoryRequirements.estimatedMB}MB`,
+          recommendation: 'This may cause performance issues or failures on some devices'
+        });
+      }
+      
+      // Device capability validation
+      if (deviceCapabilities.deviceMemory && deviceCapabilities.deviceMemory < 4 && memoryRequirements.estimatedMB > 150) {
+        warnings.push({
+          type: 'device',
+          message: 'Your device has limited memory. Large exports may be slow or fail.',
+          recommendation: 'Consider using A4 size or draft quality'
+        });
+      }
+      
+      // Content aspect ratio validation
+      if (mapBounds) {
+        const boundsWidth = Math.abs(mapBounds.east - mapBounds.west);
+        const boundsHeight = Math.abs(mapBounds.north - mapBounds.south);
+        const contentAspectRatio = boundsWidth / boundsHeight;
+        const printAspectRatio = printDimensions.aspectRatio;
+        
+        const aspectRatioDiff = Math.abs(contentAspectRatio - printAspectRatio);
+        if (aspectRatioDiff > 0.5) {
+          warnings.push({
+            type: 'aspect-ratio',
+            message: 'Map content may not fit well in selected print size',
+            recommendation: `Consider ${contentAspectRatio > printAspectRatio ? 'landscape' : 'portrait'} orientation`,
+            details: {
+              contentAspectRatio: Math.round(contentAspectRatio * 100) / 100,
+              printAspectRatio: Math.round(printAspectRatio * 100) / 100
+            }
+          });
+        }
+      }
+      
+      const isValid = errors.length === 0;
+      
+      res.json({
+        success: true,
+        valid: isValid,
+        printConfiguration: {
+          format: printDimensions.format,
+          orientation: printDimensions.orientation,
+          dimensions: {
+            pixels: { width: printDimensions.width, height: printDimensions.height },
+            inches: { width: printDimensions.widthInches, height: printDimensions.heightInches },
+            physical: printDimensions.physicalSize
+          },
+          dpi: printDimensions.dpi,
+          pricing: printDimensions.pricing,
+          memoryEstimate: memoryRequirements.estimatedMB
+        },
+        warnings: warnings,
+        errors: errors,
+        recommendations: warnings.length > 0 ? [
+          'Test print preview before final export',
+          'Ensure stable internet connection for large exports',
+          'Close other applications to free up memory'
+        ] : []
+      });
+      
+    } catch (dimensionError) {
+      return res.status(400).json({
+        error: 'Invalid print configuration',
+        message: dimensionError.message
+      });
+    }
+
+  } catch (error) {
+    console.error('Error validating print configuration:', error);
+    res.status(500).json({
+      error: 'Validation failed',
+      message: 'Unable to validate print configuration'
+    });
+  }
+});
+
 module.exports = router;

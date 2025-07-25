@@ -566,52 +566,180 @@ class MapService {
   }
 
   /**
-   * Print dimensions configuration at 300 DPI
-   * All dimensions in pixels at 300 DPI resolution
+   * Enhanced Print dimensions configuration at 300 DPI
+   * Comprehensive specifications including physical dimensions, pricing, and metadata
    */
   static PRINT_CONFIG = {
     // Standard ISO 216 paper sizes at 300 DPI
     A0: {
-      portrait: { width: 9933, height: 14043 },  // 33.11" x 46.81" at 300 DPI
-      landscape: { width: 14043, height: 9933 }
+      name: 'A0',
+      description: 'Extra Large Professional Print',
+      physicalSize: { width: 841, height: 1189, unit: 'mm' }, // ISO 216 standard
+      portrait: { 
+        width: 9933, height: 14043,
+        widthInches: 33.11, heightInches: 46.81,
+        aspectRatio: 0.707
+      },
+      landscape: { 
+        width: 14043, height: 9933,
+        widthInches: 46.81, heightInches: 33.11,
+        aspectRatio: 1.414
+      },
+      pricing: { portrait: 19999, landscape: 19999 }, // $199.99 in cents
+      memoryEstimateMB: { portrait: 560, landscape: 560 },
+      recommendedViewingDistance: '6 feet',
+      useCase: 'Architectural plans, large venue displays',
+      available: false // Not commonly offered
     },
     A1: {
-      portrait: { width: 7016, height: 9933 },   // 23.39" x 33.11" at 300 DPI  
-      landscape: { width: 9933, height: 7016 }
+      name: 'A1',
+      description: 'Large Professional Print',
+      physicalSize: { width: 594, height: 841, unit: 'mm' },
+      portrait: { 
+        width: 7016, height: 9933,
+        widthInches: 23.39, heightInches: 33.11,
+        aspectRatio: 0.707
+      },
+      landscape: { 
+        width: 9933, height: 7016,
+        widthInches: 33.11, heightInches: 23.39,
+        aspectRatio: 1.414
+      },
+      pricing: { portrait: 12999, landscape: 12999 }, // $129.99 in cents
+      memoryEstimateMB: { portrait: 280, landscape: 280 },
+      recommendedViewingDistance: '4 feet',
+      useCase: 'Engineering drawings, presentation displays',
+      available: false // Not commonly offered
     },
     A2: {
-      portrait: { width: 4961, height: 7016 },   // 16.54" x 23.39" at 300 DPI
-      landscape: { width: 7016, height: 4961 }
+      name: 'A2',
+      description: 'Medium-Large Professional Print',
+      physicalSize: { width: 420, height: 594, unit: 'mm' },
+      portrait: { 
+        width: 4961, height: 7016,
+        widthInches: 16.54, heightInches: 23.39,
+        aspectRatio: 0.707
+      },
+      landscape: { 
+        width: 7016, height: 4961,
+        widthInches: 23.39, heightInches: 16.54,
+        aspectRatio: 1.414
+      },
+      pricing: { portrait: 7999, landscape: 7999 }, // $79.99 in cents
+      memoryEstimateMB: { portrait: 140, landscape: 140 },
+      recommendedViewingDistance: '3 feet',
+      useCase: 'Posters, wall art, detailed maps',
+      available: false // Not commonly offered
     },
     A3: {
-      portrait: { width: 3508, height: 4961 },   // 11.69" x 16.54" at 300 DPI
-      landscape: { width: 4961, height: 3508 }
+      name: 'A3',
+      description: 'Large Premium Print',
+      physicalSize: { width: 297, height: 420, unit: 'mm' },
+      portrait: { 
+        width: 3508, height: 4961,
+        widthInches: 11.69, heightInches: 16.54,
+        aspectRatio: 0.707
+      },
+      landscape: { 
+        width: 4961, height: 3508,
+        widthInches: 16.54, heightInches: 11.69,
+        aspectRatio: 1.414
+      },
+      pricing: { portrait: 4999, landscape: 4999 }, // $49.99 in cents
+      memoryEstimateMB: { portrait: 70, landscape: 70 },
+      recommendedViewingDistance: '2 feet',
+      useCase: 'Wall art, detailed route maps, office display',
+      available: true,
+      popular: true
     },
     A4: {
-      portrait: { width: 2480, height: 3508 },   // 8.27" x 11.69" at 300 DPI
-      landscape: { width: 3508, height: 2480 }
+      name: 'A4',
+      description: 'Standard Premium Print',
+      physicalSize: { width: 210, height: 297, unit: 'mm' },
+      portrait: { 
+        width: 2480, height: 3508,
+        widthInches: 8.27, heightInches: 11.69,
+        aspectRatio: 0.707
+      },
+      landscape: { 
+        width: 3508, height: 2480,
+        widthInches: 11.69, heightInches: 8.27,
+        aspectRatio: 1.414
+      },
+      pricing: { portrait: 2999, landscape: 2999 }, // $29.99 in cents
+      memoryEstimateMB: { portrait: 35, landscape: 35 },
+      recommendedViewingDistance: '1.5 feet',
+      useCase: 'Desk display, framing, personal keepsake',
+      available: true,
+      popular: true,
+      default: true
     },
-    // Common aspect ratios for custom prints
+    // Extended formats for future use
+    A5: {
+      name: 'A5',
+      description: 'Small Premium Print',
+      physicalSize: { width: 148, height: 210, unit: 'mm' },
+      portrait: { 
+        width: 1748, height: 2480,
+        widthInches: 5.83, heightInches: 8.27,
+        aspectRatio: 0.707
+      },
+      landscape: { 
+        width: 2480, height: 1748,
+        widthInches: 8.27, heightInches: 5.83,
+        aspectRatio: 1.414
+      },
+      pricing: { portrait: 1999, landscape: 1999 }, // $19.99 in cents
+      memoryEstimateMB: { portrait: 17, landscape: 17 },
+      recommendedViewingDistance: '1 foot',
+      useCase: 'Compact display, travel memento',
+      available: false // Future offering
+    },
+    // Custom aspect ratios for specialized use cases
     SQUARE_SMALL: {
-      portrait: { width: 3000, height: 3000 },   // 10" x 10" at 300 DPI
-      landscape: { width: 3000, height: 3000 }
+      name: 'Square Small',
+      description: 'Compact Square Print',
+      physicalSize: { width: 254, height: 254, unit: 'mm' }, // 10" x 10"
+      portrait: { 
+        width: 3000, height: 3000,
+        widthInches: 10, heightInches: 10,
+        aspectRatio: 1.0
+      },
+      landscape: { 
+        width: 3000, height: 3000,
+        widthInches: 10, heightInches: 10,
+        aspectRatio: 1.0
+      },
+      pricing: { portrait: 3499, landscape: 3499 }, // $34.99 in cents
+      memoryEstimateMB: { portrait: 36, landscape: 36 },
+      recommendedViewingDistance: '1.5 feet',
+      useCase: 'Instagram-style display, social media prints',
+      available: false // Custom offering
     },
     SQUARE_LARGE: {
-      portrait: { width: 4500, height: 4500 },   // 15" x 15" at 300 DPI
-      landscape: { width: 4500, height: 4500 }
-    },
-    WIDESCREEN_16_9: {
-      portrait: { width: 2667, height: 4740 },   // 8.89" x 15.8" at 300 DPI
-      landscape: { width: 4740, height: 2667 }
-    },
-    WIDESCREEN_4_3: {
-      portrait: { width: 3000, height: 4000 },   // 10" x 13.33" at 300 DPI
-      landscape: { width: 4000, height: 3000 }
+      name: 'Square Large',
+      description: 'Large Square Print',
+      physicalSize: { width: 381, height: 381, unit: 'mm' }, // 15" x 15"
+      portrait: { 
+        width: 4500, height: 4500,
+        widthInches: 15, heightInches: 15,
+        aspectRatio: 1.0
+      },
+      landscape: { 
+        width: 4500, height: 4500,
+        widthInches: 15, heightInches: 15,
+        aspectRatio: 1.0
+      },
+      pricing: { portrait: 5999, landscape: 5999 }, // $59.99 in cents
+      memoryEstimateMB: { portrait: 81, landscape: 81 },
+      recommendedViewingDistance: '2.5 feet',
+      useCase: 'Gallery wall, statement piece',
+      available: false // Custom offering
     }
   };
 
   /**
-   * Get print dimensions for specific format and orientation
+   * Get enhanced print dimensions for specific format and orientation
    */
   getPrintDimensions(format, orientation = 'portrait') {
     const formatKey = format.toUpperCase();
@@ -626,18 +754,194 @@ class MapService {
       throw new Error(`Unsupported orientation: ${orientation}. Supported orientations: portrait, landscape`);
     }
 
-    const dimensions = this.constructor.PRINT_CONFIG[formatKey][orientationKey];
+    const config = this.constructor.PRINT_CONFIG[formatKey];
+    const dimensions = config[orientationKey];
     
-    // Add metadata for debugging and validation
+    // Return comprehensive print information
     return {
-      ...dimensions,
+      // Basic dimensions
+      width: dimensions.width,
+      height: dimensions.height,
       format: formatKey,
       orientation: orientationKey,
       dpi: 300,
+      
+      // Physical dimensions
+      widthInches: dimensions.widthInches,
+      heightInches: dimensions.heightInches,
+      physicalSize: config.physicalSize,
+      aspectRatio: dimensions.aspectRatio,
+      
+      // Metadata
+      name: config.name,
+      description: config.description,
+      useCase: config.useCase,
+      recommendedViewingDistance: config.recommendedViewingDistance,
+      
+      // Commercial information
+      pricing: config.pricing[orientationKey],
+      available: config.available || false,
+      popular: config.popular || false,
+      default: config.default || false,
+      
+      // Technical information
+      memoryEstimateMB: config.memoryEstimateMB[orientationKey],
+      totalPixels: dimensions.width * dimensions.height,
+      
+      // Legacy compatibility
       widthInches: (dimensions.width / 300).toFixed(2),
-      heightInches: (dimensions.height / 300).toFixed(2),
-      aspectRatio: (dimensions.width / dimensions.height).toFixed(3)
+      heightInches: (dimensions.height / 300).toFixed(2)
     };
+  }
+
+  /**
+   * Get all available print sizes (only those marked as available)
+   */
+  getAvailablePrintSizes() {
+    const availableSizes = {};
+    
+    Object.entries(this.constructor.PRINT_CONFIG).forEach(([key, config]) => {
+      if (config.available) {
+        availableSizes[key] = {
+          name: config.name,
+          description: config.description,
+          physicalSize: config.physicalSize,
+          useCase: config.useCase,
+          popular: config.popular || false,
+          default: config.default || false,
+          pricing: config.pricing,
+          memoryEstimateMB: config.memoryEstimateMB,
+          portrait: {
+            ...config.portrait,
+            totalPixels: config.portrait.width * config.portrait.height
+          },
+          landscape: {
+            ...config.landscape,
+            totalPixels: config.landscape.width * config.landscape.height
+          }
+        };
+      }
+    });
+    
+    return availableSizes;
+  }
+
+  /**
+   * Get print size comparison data for UI
+   */
+  getPrintSizeComparison() {
+    const availableSizes = this.getAvailablePrintSizes();
+    const comparison = [];
+    
+    Object.entries(availableSizes).forEach(([key, config]) => {
+      comparison.push({
+        id: key,
+        name: config.name,
+        description: config.description,
+        physicalSize: config.physicalSize,
+        useCase: config.useCase,
+        popular: config.popular,
+        default: config.default,
+        pricing: config.pricing,
+        dimensions: {
+          portrait: {
+            width: config.portrait.width,
+            height: config.portrait.height,
+            widthInches: config.portrait.widthInches,
+            heightInches: config.portrait.heightInches,
+            aspectRatio: config.portrait.aspectRatio,
+            memoryMB: config.memoryEstimateMB.portrait
+          },
+          landscape: {
+            width: config.landscape.width,
+            height: config.landscape.height,
+            widthInches: config.landscape.widthInches,
+            heightInches: config.landscape.heightInches,
+            aspectRatio: config.landscape.aspectRatio,
+            memoryMB: config.memoryEstimateMB.landscape
+          }
+        }
+      });
+    });
+    
+    // Sort by popularity and size (A4 first, then A3)
+    comparison.sort((a, b) => {
+      if (a.default) return -1;
+      if (b.default) return 1;
+      if (a.popular && !b.popular) return -1;
+      if (b.popular && !a.popular) return 1;
+      return a.name.localeCompare(b.name);
+    });
+    
+    return comparison;
+  }
+
+  /**
+   * Calculate print size recommendations based on content and usage
+   */
+  getRecommendedPrintSize(mapBounds, intendedUse = 'general') {
+    const recommendations = [];
+    const availableSizes = this.getAvailablePrintSizes();
+    
+    // Calculate content complexity (simplified)
+    const boundsWidth = Math.abs(mapBounds.east - mapBounds.west);
+    const boundsHeight = Math.abs(mapBounds.north - mapBounds.south);
+    const contentAspectRatio = boundsWidth / boundsHeight;
+    
+    Object.entries(availableSizes).forEach(([key, config]) => {
+      ['portrait', 'landscape'].forEach(orientation => {
+        const dims = config[orientation];
+        const printAspectRatio = dims.aspectRatio;
+        const aspectRatioMatch = Math.abs(contentAspectRatio - printAspectRatio) < 0.3;
+        
+        let score = 0;
+        let reasons = [];
+        
+        // Aspect ratio matching
+        if (aspectRatioMatch) {
+          score += 30;
+          reasons.push('Good aspect ratio match');
+        }
+        
+        // Default and popular sizes get bonuses
+        if (config.default) {
+          score += 20;
+          reasons.push('Most popular size');
+        }
+        if (config.popular) {
+          score += 10;
+          reasons.push('Popular choice');
+        }
+        
+        // Use case matching
+        if (intendedUse === 'wall-art' && key === 'A3') {
+          score += 15;
+          reasons.push('Ideal for wall display');
+        } else if (intendedUse === 'desk' && key === 'A4') {
+          score += 15;
+          reasons.push('Perfect for desk display');
+        }
+        
+        // Memory considerations
+        if (dims.memoryMB < 50) {
+          score += 5;
+          reasons.push('Memory efficient');
+        }
+        
+        recommendations.push({
+          format: key,
+          orientation,
+          score,
+          reasons,
+          ...this.getPrintDimensions(key, orientation)
+        });
+      });
+    });
+    
+    // Sort by score (highest first)
+    recommendations.sort((a, b) => b.score - a.score);
+    
+    return recommendations.slice(0, 4); // Return top 4 recommendations
   }
 
   /**
