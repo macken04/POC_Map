@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapbox Modular Architecture Validation Test</title>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v3.13.0/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        #test-results {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .test-item {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        .test-pass {
+            color: green;
+        }
+        .test-fail {
+            color: red;
+        }
+        .test-warning {
+            color: orange;
+        }
+        #map {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mapbox Modular Architecture Validation</h1>
+    
+    <div id="test-results">
+        <h3>Module Loading Tests</h3>
+        <div id="module-tests"></div>
+        
+        <h3>Integration Tests</h3>
+        <div id="integration-tests"></div>
+        
+        <h3>API Compatibility Tests</h3>
+        <div id="api-tests"></div>
+    </div>
+    
+    <div id="map"></div>
+
+    <!-- Load Mapbox GL JS -->
+    <script src='https://api.mapbox.com/mapbox-gl-js/v3.13.0/mapbox-gl.js'></script>
+    
+    <!-- Mock MapboxConfig for testing -->
+    <script>
+        window.shopifyMapboxSettings = {
+            accessToken: 'pk.test',
+            defaultStyle: 'mapbox://styles/mapbox/outdoors-v11'
+        };
+        
+        class MapboxConfig {
+            static async init() {
+                return new MapboxConfig();
+            }
+            
+            static validateDependencies() {
+                return true;
+            }
+            
+            getOptimizedMapOptions(options) {
+                return options;
+            }
+            
+            getStyleUrl(style) {
+                return `mapbox://styles/mapbox/${style}-v11`;
+            }
+            
+            getAvailableStyles() {
+                return {
+                    streets: { name: 'Streets', previewColor: '#f8f8f8' },
+                    outdoors: { name: 'Outdoors', previewColor: '#e8f5e8' },
+                    light: { name: 'Light', previewColor: '#f0f0f0' },
+                    dark: { name: 'Dark', previewColor: '#2c2c2c' },
+                    satellite: { name: 'Satellite', previewColor: '#4a6741' }
+                };
+            }
+            
+            getDPIManager() {
+                return {
+                    getCurrentState: () => ({}),
+                    setDPI: async (dpi) => {},
+                    restoreState: async (state) => {}
+                };
+            }
+        }
+        
+        window.MapboxConfig = MapboxConfig;
+    </script>
+    
+    <!-- Load Mapbox modules in correct order -->
+    <script src="shopify-theme/dawn/assets/MapboxCore.js"></script>
+    <script src="shopify-theme/dawn/assets/mapbox-event-system.js"></script>
+    <script src="shopify-theme/dawn/assets/MapboxResponsive.js"></script>
+    <script src="shopify-theme/dawn/assets/MapboxExport.js"></script>
+    <script src="shopify-theme/dawn/assets/MapboxRoutes.js"></script>
+    <script src="shopify-theme/dawn/assets/MapboxControls.js"></script>
+    <script src="shopify-theme/dawn/assets/MapboxCustomization.js"></script>
+    <script src="shopify-theme/dawn/assets/MapboxPerformance.js"></script>
+    <script src="shopify-theme/dawn/assets/mapbox-integration.js"></script>
+
+    <script>
+        // Test runner
+        class ModularValidationTest {
+            constructor() {
+                this.results = {
+                    moduleTests: [],
+                    integrationTests: [],
+                    apiTests: []
+                };
+            }
+
+            addResult(category, name, passed, message) {
+                this.results[category].push({
+                    name,
+                    passed,
+                    message: message || (passed ? 'PASS' : 'FAIL')
+                });
+            }
+
+            runModuleTests() {
+                console.log('Running module loading tests...');
+                
+                // Test module availability
+                this.addResult('moduleTests', 'MapboxCore available', typeof MapboxCore !== 'undefined');
+                this.addResult('moduleTests', 'MapboxEventSystem available', typeof MapboxEventSystem !== 'undefined');
+                this.addResult('moduleTests', 'MapboxResponsive available', typeof MapboxResponsive !== 'undefined');
+                this.addResult('moduleTests', 'MapboxExport available', typeof MapboxExport !== 'undefined');
+                this.addResult('moduleTests', 'MapboxRoutes available', typeof MapboxRoutes !== 'undefined');
+                this.addResult('moduleTests', 'MapboxControls available', typeof MapboxControls !== 'undefined');
+                this.addResult('moduleTests', 'MapboxCustomization available', typeof MapboxCustomization !== 'undefined');
+                this.addResult('moduleTests', 'MapboxPerformance available', typeof MapboxPerformance !== 'undefined');
+                this.addResult('moduleTests', 'MapboxIntegration available', typeof MapboxIntegration !== 'undefined');
+            }
+
+            runIntegrationTests() {
+                console.log('Running integration tests...');
+                
+                try {
+                    // Test MapboxIntegration instantiation
+                    const integration = new MapboxIntegration('map');
+                    this.addResult('integrationTests', 'MapboxIntegration instantiation', true);
+                    
+                    // Test module initialization
+                    const hasCore = !!integration.core;
+                    this.addResult('integrationTests', 'Core module initialized', hasCore);
+                    
+                    const hasRoutes = !!integration.routes;
+                    this.addResult('integrationTests', 'Routes module initialized', hasRoutes);
+                    
+                    const hasControls = !!integration.controls;
+                    this.addResult('integrationTests', 'Controls module initialized', hasControls);
+                    
+                    // Test debug info
+                    const debugInfo = integration.getDebugInfo();
+                    this.addResult('integrationTests', 'Debug info available', !!debugInfo && typeof debugInfo === 'object');
+                    
+                } catch (error) {
+                    this.addResult('integrationTests', 'MapboxIntegration instantiation', false, error.message);
+                }
+            }
+
+            runAPICompatibilityTests() {
+                console.log('Running API compatibility tests...');
+                
+                try {
+                    const integration = new MapboxIntegration('map');
+                    
+                    // Test essential methods exist
+                    this.addResult('apiTests', 'init method exists', typeof integration.init === 'function');
+                    this.addResult('apiTests', 'renderRouteMap method exists', typeof integration.renderRouteMap === 'function');
+                    this.addResult('apiTests', 'exportHighResolution method exists', typeof integration.exportHighResolution === 'function');
+                    this.addResult('apiTests', 'clearRoute method exists', typeof integration.clearRoute === 'function');
+                    this.addResult('apiTests', 'cleanup method exists', typeof integration.cleanup === 'function');
+                    
+                    // Test event API
+                    this.addResult('apiTests', 'on method exists', typeof integration.on === 'function');
+                    this.addResult('apiTests', 'off method exists', typeof integration.off === 'function');
+                    this.addResult('apiTests', 'emit method exists', typeof integration.emit === 'function');
+                    
+                    // Test responsive API
+                    this.addResult('apiTests', 'getCurrentBreakpoint method exists', typeof integration.getCurrentBreakpoint === 'function');
+                    this.addResult('apiTests', 'isMobile method exists', typeof integration.isMobile === 'function');
+                    this.addResult('apiTests', 'isDesktop method exists', typeof integration.isDesktop === 'function');
+                    
+                    // Test animation API
+                    this.addResult('apiTests', 'startRouteAnimation method exists', typeof integration.startRouteAnimation === 'function');
+                    this.addResult('apiTests', 'pauseRouteAnimation method exists', typeof integration.pauseRouteAnimation === 'function');
+                    this.addResult('apiTests', 'stopRouteAnimation method exists', typeof integration.stopRouteAnimation === 'function');
+                    
+                } catch (error) {
+                    this.addResult('apiTests', 'API compatibility test setup', false, error.message);
+                }
+            }
+
+            displayResults() {
+                console.log('Displaying test results...');
+                
+                // Display module tests
+                const moduleTestsDiv = document.getElementById('module-tests');
+                moduleTestsDiv.innerHTML = this.results.moduleTests.map(test => 
+                    `<div class="test-item test-${test.passed ? 'pass' : 'fail'}">
+                        ✓ ${test.name}: ${test.message}
+                    </div>`
+                ).join('');
+
+                // Display integration tests
+                const integrationTestsDiv = document.getElementById('integration-tests');
+                integrationTestsDiv.innerHTML = this.results.integrationTests.map(test => 
+                    `<div class="test-item test-${test.passed ? 'pass' : 'fail'}">
+                        ${test.passed ? '✓' : '✗'} ${test.name}: ${test.message}
+                    </div>`
+                ).join('');
+
+                // Display API tests
+                const apiTestsDiv = document.getElementById('api-tests');
+                apiTestsDiv.innerHTML = this.results.apiTests.map(test => 
+                    `<div class="test-item test-${test.passed ? 'pass' : 'fail'}">
+                        ${test.passed ? '✓' : '✗'} ${test.name}: ${test.message}
+                    </div>`
+                ).join('');
+
+                // Summary
+                const totalTests = Object.values(this.results).flat().length;
+                const passedTests = Object.values(this.results).flat().filter(test => test.passed).length;
+                const failedTests = totalTests - passedTests;
+
+                console.log(`Test Results Summary:
+                    Total Tests: ${totalTests}
+                    Passed: ${passedTests}
+                    Failed: ${failedTests}
+                    Success Rate: ${((passedTests / totalTests) * 100).toFixed(1)}%`);
+            }
+
+            async runAllTests() {
+                console.log('Starting Mapbox Modular Architecture Validation Tests...');
+                
+                this.runModuleTests();
+                this.runIntegrationTests();
+                this.runAPICompatibilityTests();
+                this.displayResults();
+                
+                console.log('All tests completed.');
+            }
+        }
+
+        // Run tests when page loads
+        window.addEventListener('load', () => {
+            const tester = new ModularValidationTest();
+            tester.runAllTests();
+        });
+    </script>
+</body>
+</html>

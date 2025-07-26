@@ -192,11 +192,11 @@ function transformActivityStreams(stravaStreams, activityId) {
     bounds: null
   };
 
-  // Process coordinate data
+  // Process coordinate data - keep in original Strava [lat, lng] format
   if (stravaStreams.latlng && stravaStreams.latlng.data) {
     result.has_gps_data = true;
-    result.coordinates = stravaStreams.latlng.data.map(coord => [coord[1], coord[0]]); // Convert to [lng, lat] for Mapbox
-    result.bounds = calculateBounds(result.coordinates);
+    result.coordinates = stravaStreams.latlng.data; // Keep original [lat, lng] format from Strava
+    result.bounds = calculateBounds(result.coordinates, { projection: 'wgs84', handleAntimeridian: true });
   }
 
   // Process altitude data
@@ -228,7 +228,7 @@ function transformActivityStreams(stravaStreams, activityId) {
     } catch (geoJSONError) {
       console.warn('GeoJSON conversion failed for activity streams, using fallback:', geoJSONError.message);
       
-      // Fallback to basic GeoJSON
+      // Fallback to basic GeoJSON - convert [lat, lng] to [lng, lat] for GeoJSON
       result.geojson = {
         type: 'Feature',
         properties: {
@@ -238,7 +238,7 @@ function transformActivityStreams(stravaStreams, activityId) {
         },
         geometry: {
           type: 'LineString',
-          coordinates: result.coordinates
+          coordinates: result.coordinates.map(coord => [coord[1], coord[0]]) // Convert [lat, lng] to [lng, lat] for GeoJSON
         }
       };
     }
