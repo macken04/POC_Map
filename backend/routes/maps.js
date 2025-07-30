@@ -103,12 +103,46 @@ router.post('/preview', requireAuth, async (req, res) => {
       polyline,
       coordinates,
       style = 'outdoors-v12',
-      width = 800,
-      height = 600,
+      format = 'A4',
+      orientation = 'portrait',
       showStartEnd = true,
       lineColor = '#ff4444',
       lineWidth = 3
     } = req.body;
+
+    // Define poster dimensions for preview (scaled from print dimensions)
+    const posterDimensions = {
+      A4: {
+        portrait: { width: 595, height: 842 },  // A4 ratio scaled for preview
+        landscape: { width: 842, height: 595 }
+      },
+      A3: {
+        portrait: { width: 842, height: 1191 }, // A3 ratio scaled for preview
+        landscape: { width: 1191, height: 842 }
+      }
+    };
+
+    // Get dimensions based on format and orientation
+    const selectedFormat = format.toUpperCase();
+    const selectedOrientation = orientation.toLowerCase();
+    
+    if (!posterDimensions[selectedFormat]) {
+      return res.status(400).json({
+        error: 'Invalid format',
+        message: 'Format must be A4 or A3'
+      });
+    }
+
+    if (!posterDimensions[selectedFormat][selectedOrientation]) {
+      return res.status(400).json({
+        error: 'Invalid orientation',
+        message: 'Orientation must be portrait or landscape'
+      });
+    }
+
+    const dimensions = posterDimensions[selectedFormat][selectedOrientation];
+    const width = dimensions.width;
+    const height = dimensions.height;
 
     if (!activityId && !polyline && !coordinates) {
       return res.status(400).json({
@@ -168,6 +202,8 @@ router.post('/preview', requireAuth, async (req, res) => {
       style: `mapbox://styles/mapbox/${style}`,
       width: parseInt(width),
       height: parseInt(height),
+      format: selectedFormat,
+      orientation: selectedOrientation,
       route: {
         coordinates: routeCoordinates,
         color: lineColor,

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Preservation Test</title>
+    
+    <!-- Mapbox GL JS -->
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        
+        #map-container {
+            width: 100%;
+            height: 500px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+        }
+        
+        .controls {
+            margin-bottom: 20px;
+        }
+        
+        .controls button {
+            margin-right: 10px;
+            padding: 10px 15px;
+            background: #007cbf;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .controls button:hover {
+            background: #005a8b;
+        }
+        
+        .controls button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            background: #f0f0f0;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Route Preservation Test</h1>
+    
+    <div class="controls">
+        <button id="load-route">Load Test Route</button>
+        <button id="change-style-outdoors">Change to Outdoors</button>
+        <button id="change-style-streets">Change to Streets</button>
+        <button id="change-style-satellite">Change to Satellite</button>
+        <button id="change-style-grey">Change to Grey</button>
+        <button id="run-tests" disabled>Run Full Test Suite</button>
+        <button id="quick-test" disabled>Quick Test</button>
+        <button id="clear-log">Clear Log</button>
+    </div>
+    
+    <div id="status" class="status">Ready to test route preservation</div>
+    
+    <div id="map-container"></div>
+    
+    <div>
+        <h3>Test Log:</h3>
+        <div id="log" class="log"></div>
+    </div>
+
+    <!-- Load our map modules -->
+    <script src="shopify-theme/dawn/assets/mapbox-config.js"></script>
+    <script src="shopify-theme/dawn/assets/MapboxCore.js"></script>
+    <script src="shopify-theme/dawn/assets/mapbox-event-system.js"></script>
+    <script src="shopify-theme/dawn/assets/MapboxResponsive.js"></script>
+    <script src="shopify-theme/dawn/assets/MapboxExport.js"></script>
+    <script src="shopify-theme/dawn/assets/MapboxRoutes.js"></script>
+    <script src="shopify-theme/dawn/assets/MapboxControls.js"></script>
+    <script src="shopify-theme/dawn/assets/MapboxCustomization.js"></script>
+    <script src="shopify-theme/dawn/assets/MapboxPerformance.js"></script>
+    <script src="shopify-theme/dawn/assets/mapbox-integration.js"></script>
+    <script src="shopify-theme/dawn/assets/map-error-recovery.js"></script>
+    <script src="shopify-theme/dawn/assets/route-preservation-test.js"></script>
+
+    <script>
+        // Global variables
+        let mapIntegration = null;
+        let testSuite = null;
+        
+        // Test route data for Dublin
+        const testRouteData = {
+            coordinates: [
+                [-6.2603, 53.3498], // Dublin city center
+                [-6.2588, 53.3495], // Trinity College
+                [-6.2575, 53.3481], // St. Stephen's Green
+                [-6.2547, 53.3472], // Grafton Street area
+                [-6.2518, 53.3463], // Dublin Castle area
+                [-6.2489, 53.3454], // Christ Church Cathedral
+                [-6.2467, 53.3445], // Dublin Bay area
+            ],
+            stats: {
+                distance: 1200,
+                duration: 900,
+                elevationGain: 50
+            },
+            metadata: {
+                name: 'Dublin City Test Route',
+                activity: 'walking'
+            }
+        };
+
+        // Logging function
+        function log(message, type = 'info') {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            logElement.textContent += logEntry;
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            // Also log to console
+            console.log(message);
+        }
+
+        // Update status
+        function updateStatus(message, type = 'info') {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+            log(message, type);
+        }
+
+        // Initialize the map
+        async function initializeMap() {
+            try {
+                log('Initializing map integration...');
+                mapIntegration = new MapboxIntegration('map-container');
+                await mapIntegration.init();
+                
+                testSuite = new RoutePreservationTest();
+                await testSuite.initializeTest();
+                
+                updateStatus('Map initialized successfully', 'success');
+                
+                // Enable buttons
+                document.getElementById('run-tests').disabled = false;
+                document.getElementById('quick-test').disabled = false;
+                
+                return true;
+            } catch (error) {
+                updateStatus(`Failed to initialize map: ${error.message}`, 'error');
+                log(`Error: ${error.stack}`);
+                return false;
+            }
+        }
+
+        // Load test route
+        async function loadTestRoute() {
+            if (!mapIntegration) {
+                updateStatus('Map not initialized', 'error');
+                return;
+            }
+
+            try {
+                log('Loading test route...');
+                await mapIntegration.renderRouteMap(testRouteData, {
+                    routeColor: '#FF0000',
+                    routeWidth: 4,
+                    showStartEndMarkers: true
+                });
+                
+                updateStatus('Test route loaded successfully', 'success');
+                
+                // Check route state
+                const routeState = mapIntegration.getCurrentRouteState();
+                log(`Route state: ${routeState ? routeState.coordinates.length + ' coordinates' : 'No route state'}`);
+                
+            } catch (error) {
+                updateStatus(`Failed to load route: ${error.message}`, 'error');
+                log(`Error: ${error.stack}`);
+            }
+        }
+
+        // Change map style
+        async function changeStyle(styleName) {
+            if (!mapIntegration) {
+                updateStatus('Map not initialized', 'error');
+                return;
+            }
+
+            try {
+                log(`Changing map style to: ${styleName}`);
+                const startTime = Date.now();
+                
+                await mapIntegration.setStyle(styleName);
+                
+                const duration = Date.now() - startTime;
+                updateStatus(`Style changed to ${styleName} in ${duration}ms`, 'success');
+                
+                // Check if route was preserved
+                setTimeout(() => {
+                    const routeState = mapIntegration.getCurrentRouteState();
+                    if (routeState && routeState.hasRoute) {
+                        log(`✅ Route preserved after style change: ${routeState.coordinates.length} coordinates`);
+                    } else {
+                        log(`❌ Route was lost during style change to ${styleName}`);
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                updateStatus(`Failed to change style: ${error.message}`, 'error');
+                log(`Error: ${error.stack}`);
+            }
+        }
+
+        // Run full test suite
+        async function runFullTests() {
+            if (!testSuite) {
+                updateStatus('Test suite not initialized', 'error');
+                return;
+            }
+
+            try {
+                updateStatus('Running full test suite...', 'info');
+                log('======= STARTING FULL TEST SUITE =======');
+                
+                await testSuite.runAllTests();
+                
+                updateStatus('Test suite completed - check log for results', 'success');
+                
+            } catch (error) {
+                updateStatus(`Test suite failed: ${error.message}`, 'error');
+                log(`Error: ${error.stack}`);
+            }
+        }
+
+        // Run quick test
+        async function runQuickTest() {
+            if (!testSuite) {
+                updateStatus('Test suite not initialized', 'error');
+                return;
+            }
+
+            try {
+                updateStatus('Running quick test...', 'info');
+                log('======= STARTING QUICK TEST =======');
+                
+                await testSuite.quickTest();
+                
+                updateStatus('Quick test completed - check log for results', 'success');
+                
+            } catch (error) {
+                updateStatus(`Quick test failed: ${error.message}`, 'error');
+                log(`Error: ${error.stack}`);
+            }
+        }
+
+        // Clear log
+        function clearLog() {
+            document.getElementById('log').textContent = '';
+            updateStatus('Log cleared', 'info');
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Set up button event listeners
+            document.getElementById('load-route').addEventListener('click', loadTestRoute);
+            document.getElementById('change-style-outdoors').addEventListener('click', () => changeStyle('outdoors'));
+            document.getElementById('change-style-streets').addEventListener('click', () => changeStyle('streets'));
+            document.getElementById('change-style-satellite').addEventListener('click', () => changeStyle('satellite'));
+            document.getElementById('change-style-grey').addEventListener('click', () => changeStyle('grey'));
+            document.getElementById('run-tests').addEventListener('click', runFullTests);
+            document.getElementById('quick-test').addEventListener('click', runQuickTest);
+            document.getElementById('clear-log').addEventListener('click', clearLog);
+
+            // Initialize map
+            log('Page loaded, initializing map...');
+            await initializeMap();
+        });
+
+        // Override console.log to also show in our log
+        const originalConsoleLog = console.log;
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            
+            // Only log to UI if it's from our test code
+            if (message.includes('MapboxIntegration') || 
+                message.includes('MapboxRoutes') || 
+                message.includes('RoutePreservationTest') ||
+                message.includes('✅') || 
+                message.includes('❌')) {
+                const logElement = document.getElementById('log');
+                if (logElement) {
+                    const timestamp = new Date().toLocaleTimeString();
+                    logElement.textContent += `[${timestamp}] ${message}\n`;
+                    logElement.scrollTop = logElement.scrollHeight;
+                }
+            }
+        };
+    </script>
+</body>
+</html>

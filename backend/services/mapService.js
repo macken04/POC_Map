@@ -463,10 +463,15 @@ class MapService {
         deviceScaleFactor: qualitySettings.scalingFactor
       });
 
+      // Calculate poster bounds for proper framing BEFORE generating HTML
+      const posterBounds = this.calculatePosterBounds(bounds, format, orientation, 15);
+      console.log(`MapService: Original bounds:`, bounds);
+      console.log(`MapService: Poster bounds:`, posterBounds);
+
       // Generate HTML for map rendering with resolution settings
       const mapHTML = this.generateMapHTML({
         routeCoordinates,
-        bounds,
+        bounds: posterBounds, // Use poster bounds instead of tight route bounds
         center,
         style,
         routeColor,
@@ -1073,6 +1078,68 @@ class MapService {
   }
 
   /**
+   * Calculate poster bounds that center the route within the poster aspect ratio
+   * @param {Object} routeBounds - Original route bounds {north, south, east, west}
+   * @param {string} format - Print format (A4, A3, etc.)
+   * @param {string} orientation - Portrait or landscape
+   * @param {number} marginPercent - Margin percentage (default: 15%)
+   * @returns {Object} Expanded bounds for poster framing
+   */
+  calculatePosterBounds(routeBounds, format = 'A4', orientation = 'portrait', marginPercent = 15) {
+    // Get poster aspect ratio
+    const dimensions = this.getPrintDimensions(format, orientation);
+    const posterAspectRatio = dimensions.width / dimensions.height; // width/height ratio
+    
+    // Calculate route center and extent
+    const routeCenter = {
+      lat: (routeBounds.north + routeBounds.south) / 2,
+      lng: (routeBounds.east + routeBounds.west) / 2
+    };
+    
+    const routeExtent = {
+      latSpan: Math.abs(routeBounds.north - routeBounds.south),
+      lngSpan: Math.abs(routeBounds.east - routeBounds.west)
+    };
+    
+    // Calculate current route aspect ratio (lng/lat)
+    const routeAspectRatio = routeExtent.lngSpan / routeExtent.latSpan;
+    
+    console.log(`MapService: Route aspect ratio: ${routeAspectRatio.toFixed(3)}, Poster aspect ratio: ${posterAspectRatio.toFixed(3)}`);
+    
+    // Determine which dimension needs to be expanded to match poster aspect ratio
+    let finalLngSpan, finalLatSpan;
+    
+    if (routeAspectRatio > posterAspectRatio) {
+      // Route is wider than poster ratio - expand latitude
+      finalLngSpan = routeExtent.lngSpan;
+      finalLatSpan = finalLngSpan / posterAspectRatio;
+    } else {
+      // Route is taller than poster ratio - expand longitude  
+      finalLatSpan = routeExtent.latSpan;
+      finalLngSpan = finalLatSpan * posterAspectRatio;
+    }
+    
+    // Apply margin padding (expand further by marginPercent)
+    const marginMultiplier = 1 + (marginPercent / 100);
+    finalLngSpan *= marginMultiplier;
+    finalLatSpan *= marginMultiplier;
+    
+    // Calculate final poster bounds centered on route
+    const posterBounds = {
+      north: routeCenter.lat + (finalLatSpan / 2),
+      south: routeCenter.lat - (finalLatSpan / 2),
+      east: routeCenter.lng + (finalLngSpan / 2),
+      west: routeCenter.lng - (finalLngSpan / 2)
+    };
+    
+    console.log(`MapService: Original route bounds:`, routeBounds);
+    console.log(`MapService: Calculated poster bounds:`, posterBounds);
+    console.log(`MapService: Expansion - Lng: ${(finalLngSpan / routeExtent.lngSpan).toFixed(2)}x, Lat: ${(finalLatSpan / routeExtent.latSpan).toFixed(2)}x`);
+    
+    return posterBounds;
+  }
+
+  /**
    * Generate HTML content for map rendering with resolution management
    */
   generateMapHTML(options) {
@@ -1208,8 +1275,16 @@ class MapService {
             .addTo(map);
             ` : ''}
 
-            // Fit to bounds with padding (scaled for target DPI)
-            const boundsPadding = Math.round(50 * scalingFactor); // Scaled padding
+            // Fit to poster bounds with minimal padding (scaled for target DPI)
+            // Bounds are already calculated as poster bounds in the backend
+            const boundsPadding = Math.round(20 * scalingFactor); // Minimal padding since bounds are already expanded
+            console.log('Fitting map to pre-calculated poster bounds:', {
+                north: ${bounds.north},
+                south: ${bounds.south},
+                east: ${bounds.east},
+                west: ${bounds.west}
+            });
+            
             map.fitBounds([
                 [${bounds.west}, ${bounds.south}],
                 [${bounds.east}, ${bounds.north}]
