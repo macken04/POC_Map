@@ -3,8 +3,8 @@
   "errors": {},
   "performance": {},
   "storage": {
-    "totalFiles": 0,
-    "totalSize": 0,
+    "totalFiles": 2,
+    "totalSize": 32108,
     "directories": {
       "permanent": {
         "files": 0,
@@ -12,8 +12,8 @@
         "path": "/Users/davedev/Desktop/dev/map_site_vibe/backend/generated-maps/permanent"
       },
       "temporary": {
-        "files": 0,
-        "size": 0,
+        "files": 2,
+        "size": 32108,
         "path": "/Users/davedev/Desktop/dev/map_site_vibe/backend/generated-maps/temporary"
       },
       "processing": {
@@ -27,10 +27,10 @@
         "path": "/Users/davedev/Desktop/dev/map_site_vibe/backend/generated-maps/metadata"
       }
     },
-    "lastUpdated": "2025-07-30T20:14:22.214Z",
+    "lastUpdated": "2025-08-01T16:42:56.124Z",
     "compressionSavings": 0
   },
   "hourlyStats": {},
   "dailyStats": {},
-  "lastPersisted": "2025-07-30T20:14:22.215Z"
+  "lastPersisted": "2025-08-01T16:45:30.501Z"
 }

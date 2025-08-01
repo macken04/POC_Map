@@ -7,6 +7,7 @@
 const puppeteer = require('puppeteer');
 const path = require('path');
 const fs = require('fs').promises;
+const fetch = require('node-fetch');
 const config = require('../config');
 
 /**
@@ -290,7 +291,7 @@ class MapService {
   }
 
   /**
-   * Initialize Puppeteer browser instance
+   * Initialize Puppeteer browser instance with macOS ARM64 optimizations
    */
   async initialize() {
     if (this.isInitialized && this.browser && this.browser.isConnected()) {
@@ -308,67 +309,421 @@ class MapService {
       this.isInitialized = false;
     }
 
-    try {
-      console.log('MapService: Initializing Puppeteer browser...');
-      
-      // Try to launch with minimal configuration first
-      const launchOptions = {
-        headless: true,
-        timeout: 60000,
-        defaultViewport: null,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-gpu',
-          '--no-first-run',
-          '--disable-default-apps',
-          '--disable-features=VizDisplayCompositor'
-        ]
-      };
+    const maxRetries = 3;
+    let lastError;
 
-      // Try to use system Chrome if available (better compatibility on macOS)
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        // First try with executablePath detection
-        this.browser = await puppeteer.launch(launchOptions);
-      } catch (firstError) {
-        console.log('MapService: First launch attempt failed, trying with different configuration...');
+        console.log(`MapService: Browser launch attempt ${attempt}/${maxRetries}...`);
         
-        // Try with old headless mode
-        launchOptions.headless = 'old';
-        try {
-          this.browser = await puppeteer.launch(launchOptions);
-        } catch (secondError) {
-          console.log('MapService: Second launch attempt failed, trying with pipe transport...');
-          
-          // Try with pipe transport (sometimes more stable)
-          launchOptions.pipe = true;
-          launchOptions.headless = true;
-          delete launchOptions.args; // Remove all args for minimal config
-          this.browser = await puppeteer.launch(launchOptions);
+        const browser = await this.launchBrowserWithRetry(attempt);
+        if (browser) {
+          this.browser = browser;
+          this.isInitialized = true;
+          console.log('MapService: Browser initialized successfully');
+          return this;
+        }
+      } catch (error) {
+        lastError = error;
+        console.log(`MapService: Launch attempt ${attempt} failed:`, error.message);
+        
+        if (attempt < maxRetries) {
+          const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
+          console.log(`MapService: Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
         }
       }
+    }
 
-      // Test connection with a simple operation
-      const pages = await this.browser.pages();
-      if (pages.length === 0) {
-        await this.browser.newPage();
+    console.error('MapService: All browser launch attempts failed');
+    this.browser = null;
+    this.isInitialized = false;
+    throw lastError || new Error('Failed to initialize browser after multiple attempts');
+  }
+
+  /**
+   * Launch browser with platform-specific optimizations and retry logic
+   */
+  async launchBrowserWithRetry(attempt) {
+    const platform = process.platform;
+    const arch = process.arch;
+    
+    console.log(`MapService: Platform detected: ${platform} ${arch}`);
+
+    // Try platform-specific configuration first
+    let launchConfig = this.getPlatformLaunchConfig(platform, arch, attempt);
+    
+    // If this is the final attempt and on macOS, try system Chrome as last resort
+    if (attempt >= 3 && platform === 'darwin') {
+      const systemChromeConfig = this.getSystemChromeConfig(launchConfig);
+      if (systemChromeConfig) {
+        console.log('MapService: Using system Chrome as last resort fallback');
+        launchConfig = systemChromeConfig;
       }
+    }
+    
+    console.log(`MapService: Using launch config for attempt ${attempt}:`, {
+      headless: launchConfig.headless,
+      pipe: launchConfig.pipe || false,
+      dumpio: launchConfig.dumpio || false,
+      executablePath: launchConfig.executablePath ? 'system Chrome' : 'bundled Chrome',
+      argsCount: launchConfig.args.length,
+      timeout: launchConfig.timeout
+    });
 
-      this.isInitialized = true;
-      console.log('MapService: Browser initialized successfully');
-      return this;
-
+    try {
+      const browser = await puppeteer.launch(launchConfig);
+      
+      // Verify browser connection with comprehensive health check
+      const isHealthy = await this.verifyBrowserHealth(browser);
+      if (!isHealthy) {
+        await browser.close();
+        throw new Error('Browser failed health check');
+      }
+      
+      console.log('MapService: Browser launched and verified successfully');
+      return browser;
+      
     } catch (error) {
-      console.error('MapService: Failed to initialize browser:', error);
-      this.browser = null;
-      this.isInitialized = false;
+      console.error(`MapService: Launch configuration failed:`, error.message);
+      
+      // Log Chrome process output if dumpio was enabled
+      if (launchConfig.dumpio && error.message.includes('socket hang up')) {
+        console.error('MapService: Socket hang up detected - Chrome process may have crashed during startup');
+      }
+      
       throw error;
     }
   }
 
   /**
-   * Generate high-resolution map image with resolution management
+   * Get platform-specific launch configuration
+   */
+  getPlatformLaunchConfig(platform, arch, attempt) {
+    const baseConfig = {
+      timeout: 45000,
+      defaultViewport: null,
+      ignoreDefaultArgs: false
+    };
+
+    // macOS ARM64 (Apple Silicon) optimizations
+    if (platform === 'darwin' && arch === 'arm64') {
+      return this.getMacOSARM64Config(baseConfig, attempt);
+    }
+    
+    // macOS Intel optimizations
+    if (platform === 'darwin' && arch === 'x64') {
+      return this.getMacOSIntelConfig(baseConfig, attempt);
+    }
+    
+    // Linux optimizations
+    if (platform === 'linux') {
+      return this.getLinuxConfig(baseConfig, attempt);
+    }
+    
+    // Windows optimizations
+    if (platform === 'win32') {
+      return this.getWindowsConfig(baseConfig, attempt);
+    }
+    
+    // Generic fallback
+    return this.getGenericConfig(baseConfig, attempt);
+  }
+
+  /**
+   * macOS Apple Silicon (ARM64) specific configuration
+   */
+  getMacOSARM64Config(baseConfig, attempt) {
+    const configs = [
+      // Attempt 1: ARM64 optimized with pipe connection
+      {
+        ...baseConfig,
+        headless: 'new',
+        pipe: true,
+        dumpio: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-web-security',
+          '--disable-extensions',
+          '--no-first-run',
+          '--disable-default-apps',
+          '--disable-sync',
+          '--disable-background-timer-throttling'
+        ]
+      },
+      // Attempt 2: WebSocket connection with minimal flags
+      {
+        ...baseConfig,
+        headless: 'new',
+        dumpio: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--no-first-run'
+        ]
+      },
+      // Attempt 3: Maximum compatibility mode with pipe fallback
+      {
+        ...baseConfig,
+        headless: 'new',
+        pipe: true,
+        dumpio: true,
+        ignoreDefaultArgs: ['--disable-extensions'],
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox'
+        ]
+      }
+    ];
+
+    return configs[Math.min(attempt - 1, configs.length - 1)];
+  }
+
+  /**
+   * macOS Intel specific configuration
+   */
+  getMacOSIntelConfig(baseConfig, attempt) {
+    const configs = [
+      // Attempt 1: WebGL enabled for Intel Macs
+      {
+        ...baseConfig,
+        headless: false,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--enable-webgl',
+          '--enable-gpu',
+          '--window-size=1200,800',
+          '--disable-infobars'
+        ]
+      },
+      // Attempt 2: Headless with WebGL
+      {
+        ...baseConfig,
+        headless: 'new',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--enable-webgl'
+        ]
+      },
+      // Attempt 3: Basic compatibility
+      {
+        ...baseConfig,
+        headless: 'new',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage'
+        ]
+      }
+    ];
+
+    return configs[Math.min(attempt - 1, configs.length - 1)];
+  }
+
+  /**
+   * Linux specific configuration
+   */
+  getLinuxConfig(baseConfig, attempt) {
+    const configs = [
+      {
+        ...baseConfig,
+        headless: 'new',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--no-first-run'
+        ]
+      },
+      {
+        ...baseConfig,
+        headless: 'new',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox'
+        ]
+      }
+    ];
+
+    return configs[Math.min(attempt - 1, configs.length - 1)];
+  }
+
+  /**
+   * Windows specific configuration
+   */
+  getWindowsConfig(baseConfig, attempt) {
+    const configs = [
+      {
+        ...baseConfig,
+        headless: 'new',
+        args: [
+          '--no-sandbox',
+          '--disable-dev-shm-usage',
+          '--enable-webgl',
+          '--no-first-run'
+        ]
+      },
+      {
+        ...baseConfig,
+        headless: 'new',
+        args: [
+          '--no-sandbox',
+          '--disable-dev-shm-usage'
+        ]
+      }
+    ];
+
+    return configs[Math.min(attempt - 1, configs.length - 1)];
+  }
+
+  /**
+   * Generic fallback configuration
+   */
+  getGenericConfig(baseConfig, attempt) {
+    return {
+      ...baseConfig,
+      headless: 'new',
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage'
+      ]
+    };
+  }
+
+  /**
+   * Get system Chrome executable path for macOS as last resort
+   */
+  getSystemChromePath() {
+    const chromePaths = [
+      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      '/Applications/Chromium.app/Contents/MacOS/Chromium',
+      '/usr/bin/google-chrome-stable',
+      '/usr/bin/google-chrome',
+      '/usr/bin/chromium-browser',
+      '/usr/bin/chromium'
+    ];
+
+    for (const chromePath of chromePaths) {
+      try {
+        if (require('fs').existsSync(chromePath)) {
+          console.log(`MapService: Found system Chrome at: ${chromePath}`);
+          return chromePath;
+        }
+      } catch (error) {
+        // Ignore errors, try next path
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Create system Chrome fallback configuration
+   */
+  getSystemChromeConfig(baseConfig) {
+    const executablePath = this.getSystemChromePath();
+    if (!executablePath) {
+      return null;
+    }
+
+    return {
+      ...baseConfig,
+      executablePath,
+      headless: 'new',
+      pipe: true,
+      dumpio: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--no-first-run'
+      ]
+    };
+  }
+
+  /**
+   * Comprehensive browser health verification
+   */
+  async verifyBrowserHealth(browser) {
+    const healthCheckTimeout = 10000; // 10 seconds
+    
+    try {
+      // Wrap health check in timeout
+      return await Promise.race([
+        this.performHealthCheck(browser),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Health check timeout')), healthCheckTimeout)
+        )
+      ]);
+    } catch (error) {
+      console.log('MapService: Health check failed with error:', error.message);
+      return false;
+    }
+  }
+
+  async performHealthCheck(browser) {
+    try {
+      // Test 1: Basic connection and version info
+      console.log('MapService: Health check - testing connection...');
+      const version = await browser.version();
+      if (!version) {
+        console.log('MapService: Health check failed - no version info');
+        return false;
+      }
+      console.log('MapService: Health check - connection OK, version:', version);
+
+      // Test 2: Page creation and basic navigation
+      console.log('MapService: Health check - testing page creation...');
+      const page = await browser.newPage();
+      
+      try {
+        await page.goto('data:text/html,<html><head><title>Health Check</title></head><body>Test</body></html>', {
+          waitUntil: 'domcontentloaded',
+          timeout: 5000
+        });
+        
+        // Test 3: JavaScript execution and DOM access
+        console.log('MapService: Health check - testing JavaScript execution...');
+        const result = await page.evaluate(() => {
+          return {
+            hasWindow: typeof window !== 'undefined',
+            hasDocument: typeof document !== 'undefined',
+            hasCanvas: typeof HTMLCanvasElement !== 'undefined',
+            title: document.title
+          };
+        });
+        
+        await page.close();
+        
+        if (!result.hasWindow || !result.hasDocument || !result.hasCanvas) {
+          console.log('MapService: Health check failed - missing essential browser APIs:', result);
+          return false;
+        }
+
+        console.log('MapService: Browser health check passed - all tests OK');
+        return true;
+        
+      } catch (pageError) {
+        await page.close().catch(() => {});
+        throw pageError;
+      }
+
+    } catch (error) {
+      console.log('MapService: Health check component failed:', error.message);
+      return false;
+    }
+  }
+
+  /**
+   * Generate high-resolution map image with enhanced error handling and fallbacks
    */
   async generateMap(mapOptions) {
     const {
@@ -378,7 +733,7 @@ class MapService {
       format = 'A4',
       orientation = 'portrait',
       dpi = 300,
-      style = 'outdoors-v11',
+      style = 'streets-v12',
       routeColor = '#FF4444',
       routeWidth = 4,
       showStartEnd = true,
@@ -394,22 +749,87 @@ class MapService {
       jpegBackgroundColor = '#ffffff'
     } = mapOptions;
 
+    console.log('MapService: Starting map generation with options:', {
+      format,
+      orientation,
+      dpi,
+      style,
+      exportFormat,
+      qualityLevel,
+      routeCoordinatesCount: routeCoordinates?.length,
+      hasBounds: !!bounds,
+      hasCenter: !!center
+    });
+
     // Validate map options
     this.validateMapOptions(mapOptions);
 
-    // Ensure browser is initialized and connected
-    if (!this.browser || !this.browser.isConnected()) {
-      await this.initialize();
+    // Try browser-based generation first, then fallbacks
+    try {
+      return await this.generateMapWithBrowser(mapOptions);
+    } catch (browserError) {
+      console.warn('MapService: Browser-based generation failed:', browserError.message);
+      console.log('MapService: Attempting Canvas fallback...');
+      
+      try {
+        return await this.generateCanvasMapFallback(this.convertOptionsForFallback(mapOptions));
+      } catch (canvasError) {
+        console.warn('MapService: Canvas fallback failed:', canvasError.message);
+        console.log('MapService: Attempting Static Images API fallback...');
+        
+        return await this.generateStaticMapFallback(this.convertOptionsForFallback(mapOptions));
+      }
     }
+  }
+
+  /**
+   * Generate map using browser (Puppeteer + WebGL)
+   */
+  async generateMapWithBrowser(mapOptions) {
+    const {
+      routeCoordinates,
+      bounds,
+      center,
+      format = 'A4',
+      orientation = 'portrait',
+      dpi = 300,
+      style = 'streets-v12',
+      routeColor = '#FF4444',
+      routeWidth = 4,
+      showStartEnd = true,
+      title = '',
+      outputPath,
+      memoryOptimization = true,
+      maxMemoryMB = 500,
+      exportFormat = 'png',
+      qualityLevel = 'high',
+      antiAliasing = true,
+      optimizeText = true,
+      jpegBackgroundColor = '#ffffff'
+    } = mapOptions;
+
+    // Ensure browser is initialized with retry logic
+    await this.ensureBrowserReady();
 
     let page;
-    try {
-      page = await this.browser.newPage();
-    } catch (error) {
-      // If newPage fails, try reinitializing
-      console.log('MapService: Failed to create new page, reinitializing browser...');
-      await this.initialize();
-      page = await this.browser.newPage();
+    const maxPageRetries = 2;
+    
+    for (let pageAttempt = 1; pageAttempt <= maxPageRetries; pageAttempt++) {
+      try {
+        page = await this.browser.newPage();
+        console.log(`MapService: Page created successfully (attempt ${pageAttempt})`);
+        break;
+      } catch (pageError) {
+        console.log(`MapService: Page creation failed (attempt ${pageAttempt}):`, pageError.message);
+        
+        if (pageAttempt === maxPageRetries) {
+          throw new Error(`Failed to create browser page after ${maxPageRetries} attempts: ${pageError.message}`);
+        }
+        
+        // Try reinitializing browser
+        console.log('MapService: Reinitializing browser for page creation...');
+        await this.initialize();
+      }
     }
 
     try {
@@ -495,10 +915,15 @@ class MapService {
         timeout: 45000 // Increased timeout for high-res renders
       });
 
-      // Wait for map to be fully loaded
-      await page.waitForFunction(() => {
-        return window.mapLoaded === true;
-      }, { timeout: 45000 });
+      // Wait for map to be fully loaded with enhanced error handling
+      try {
+        await page.waitForFunction(() => {
+          return window.mapLoaded === true;
+        }, { timeout: 45000 });
+      } catch (loadError) {
+        console.error('MapService: Map loading timeout or error:', loadError.message);
+        throw new Error(`Map failed to load within timeout: ${loadError.message}`);
+      }
 
       // Configure format-specific quality settings
       const formatQualitySettings = this.getFormatQualitySettings(exportFormat, qualityLevel);
@@ -563,11 +988,65 @@ class MapService {
       };
 
     } catch (error) {
-      console.error('MapService: Map generation failed:', error);
+      console.error('MapService: Browser-based map generation failed:', error);
       throw error;
     } finally {
-      await page.close();
+      if (page) {
+        await page.close();
+      }
     }
+  }
+
+  /**
+   * Ensure browser is ready and healthy
+   */
+  async ensureBrowserReady() {
+    if (!this.browser || !this.browser.isConnected()) {
+      console.log('MapService: Browser not ready, initializing...');
+      await this.initialize();
+      return;
+    }
+
+    // Test browser health
+    try {
+      await this.browser.version();
+      console.log('MapService: Browser is ready and healthy');
+    } catch (error) {
+      console.log('MapService: Browser health check failed, reinitializing...');
+      await this.initialize();
+    }
+  }
+
+  /**
+   * Convert options for fallback methods
+   */
+  convertOptionsForFallback(mapOptions) {
+    return {
+      id: mapOptions.id || `fallback_${Date.now()}`,
+      routeCoordinates: mapOptions.routeCoordinates,
+      route: {
+        coordinates: mapOptions.routeCoordinates,
+        color: mapOptions.routeColor || '#ff4444',
+        width: mapOptions.routeWidth || 4
+      },
+      bounds: mapOptions.bounds,
+      center: mapOptions.center,
+      style: mapOptions.style || 'streets-v12',
+      format: mapOptions.format || 'A4',
+      orientation: mapOptions.orientation || 'portrait',
+      dpi: mapOptions.dpi || 300,
+      width: mapOptions.width,
+      height: mapOptions.height,
+      markers: mapOptions.showStartEnd ? {
+        start: mapOptions.routeCoordinates?.[0],
+        end: mapOptions.routeCoordinates?.[mapOptions.routeCoordinates.length - 1]
+      } : null,
+      settings: {
+        mainTitle: mapOptions.title,
+        titleColor: '#1f2937',
+        subtitleColor: '#6b7280'
+      }
+    };
   }
 
   /**
@@ -1554,7 +2033,7 @@ class MapService {
       supportedOrientations: ['portrait', 'landscape'],
       supportedStyles: [
         'streets-v11',
-        'outdoors-v11',
+        'streets-v12',
         'satellite-v9',
         'light-v10',
         'dark-v10'
@@ -1568,6 +2047,1243 @@ class MapService {
         supportedQualityLevels: Object.keys(this.resolutionManager.QUALITY_SETTINGS)
       }
     };
+  }
+
+  /**
+   * Generate high-resolution map from validated preview configuration
+   * This optimized method reuses a successful preview configuration,
+   * skipping validation and normalization steps for better performance
+   */
+  async generateHighResFromPreviewConfig(highResConfig) {
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+
+    console.log('MapService: Generating high-res map from preview config:', {
+      id: highResConfig.id,
+      dimensions: `${highResConfig.width}x${highResConfig.height}`,
+      dpi: highResConfig.dpi,
+      style: highResConfig.style,
+      sourcePreview: 'reused_validated_config'
+    });
+
+    const browser = await this.getBrowser();
+    const page = await browser.newPage();
+
+    try {
+      // Calculate device scale factor for 300 DPI
+      const scaleFactor = highResConfig.dpi / 96; // 96 DPI is standard web DPI
+      
+      // Set high-resolution viewport
+      await page.setViewport({
+        width: Math.round(highResConfig.width / scaleFactor),
+        height: Math.round(highResConfig.height / scaleFactor),
+        deviceScaleFactor: scaleFactor
+      });
+
+      // Create HTML for map rendering using validated config
+      const mapHTML = this.generateMapHTML(highResConfig);
+      
+      // Set page content and wait for map to load
+      await page.setContent(mapHTML, { waitUntil: 'networkidle2' });
+      
+      // Wait for Mapbox to finish loading (reuse same validation that worked for preview)
+      await page.waitForFunction(() => {
+        if (window.mapError) {
+          throw new Error(window.mapError);
+        }
+        return window.mapboxgl && window.map && window.mapLoaded === true;
+      }, { timeout: 60000 });
+
+      // Take screenshot at high resolution
+      const timestamp = Date.now();
+      const randomString = Math.random().toString(36).substr(2, 9);
+      const filename = `map_${highResConfig.format.toLowerCase()}_${highResConfig.orientation}_${timestamp}_${randomString}.png`;
+      const filePath = path.join(this.appConfig.generatedMapsPath, filename);
+
+      await page.screenshot({
+        path: filePath,
+        fullPage: true,
+        type: 'png'
+      });
+
+      // Get file stats
+      const stats = fs.statSync(filePath);
+      const { width: actualWidth, height: actualHeight } = await sharp(filePath).metadata();
+
+      console.log('MapService: High-res map generated successfully:', {
+        filePath,
+        fileSize: Math.round(stats.size / 1024) + ' KB',
+        dimensions: `${actualWidth}x${actualHeight}`,
+        dpi: highResConfig.dpi,
+        sourceConfig: 'preview_reused'
+      });
+
+      return filePath;
+
+    } catch (error) {
+      console.error('MapService: Error generating high-res map from preview config:', error);
+      
+      // Try Canvas fallback if WebGL fails
+      if (error.message?.includes('WebGL') || error.message?.includes('Map initialization failed')) {
+        console.log('MapService: WebGL failed for high-res, trying Canvas-based fallback...');
+        try {
+          return await this.generateCanvasMapFallback(highResConfig);
+        } catch (fallbackError) {
+          console.error('MapService: Canvas fallback also failed:', fallbackError);
+          throw new Error(`High-res generation failed: ${error.message}, Canvas fallback: ${fallbackError.message}`);
+        }
+      }
+      
+      throw new Error(`High-res generation failed: ${error.message}`);
+    } finally {
+      try {
+        if (!page.isClosed()) {
+          await page.close();
+        }
+      } catch (closeError) {
+        console.warn('MapService: Page was already closed:', closeError.message);
+      }
+    }
+  }
+
+  /**
+   * Generate preview image for web-quality display
+   * Optimized for fast generation and smaller file sizes
+   */
+  async generatePreviewImage(previewConfig) {
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+
+    console.log('MapService: Generating preview image with config:', {
+      id: previewConfig.id,
+      format: previewConfig.format,
+      dimensions: `${previewConfig.width}x${previewConfig.height}`,
+      dpi: previewConfig.dpi
+    });
+
+    const page = await this.browser.newPage();
+    
+    try {
+      // Set viewport for preview (web quality)
+      await page.setViewport({
+        width: previewConfig.width,
+        height: previewConfig.height,
+        deviceScaleFactor: 1 // Web quality, no scaling
+      });
+
+      // Create HTML for map rendering
+      const mapHTML = this.generateMapHTML(previewConfig);
+      
+      // Set page content and wait for map to load
+      await page.setContent(mapHTML, { waitUntil: 'networkidle2' });
+      
+      // Wait for Mapbox to finish loading
+      try {
+        await page.waitForFunction(
+          () => {
+            if (window.mapError) {
+              throw new Error(window.mapError);
+            }
+            return window.mapboxgl && window.map && window.mapLoaded === true;
+          },
+          { timeout: 60000 }
+        );
+      } catch (error) {
+        console.log('MapService: WebGL rendering failed, trying Canvas-based fallback...');
+        console.log('WebGL error details:', error.message);
+        await page.close();
+        
+        // Use Canvas-based fallback with proper config
+        try {
+          return await this.generateCanvasMapFallback(previewConfig);
+        } catch (canvasError) {
+          console.log('MapService: Canvas fallback also failed, trying Static Images API...');
+          return await this.generateStaticMapFallback(previewConfig);
+        }
+      }
+
+      // Additional wait for map to settle
+      await page.waitForTimeout(2000);
+
+      // Create preview directory if it doesn't exist
+      const previewDir = path.join(this.appConfig.storage.generatedMapsDir, 'previews');
+      await this.ensureDirectoryExists(previewDir);
+
+      // Generate filename and save image
+      const filename = `${previewConfig.id}.jpg`;
+      const filePath = path.join(previewDir, filename);
+      
+      await page.screenshot({
+        path: filePath,
+        type: 'jpeg',
+        quality: 85, // Good quality for web preview
+        fullPage: false
+      });
+
+      console.log('MapService: Preview image generated successfully:', filePath);
+      return filePath;
+
+    } catch (error) {
+      console.error('MapService: Error generating preview image:', error);
+      throw new Error(`Preview generation failed: ${error.message}`);
+    } finally {
+      try {
+        if (!page.isClosed()) {
+          await page.close();
+        }
+      } catch (closeError) {
+        console.warn('MapService: Page was already closed:', closeError.message);
+      }
+    }
+  }
+
+  /**
+   * Generate HTML content for map rendering
+   */
+  generateMapHTML(config) {
+    const routeGeoJSON = {
+      type: 'Feature',
+      geometry: {
+        type: 'LineString',
+        coordinates: config.route.coordinates // Already in [lng, lat] format from decodePolyline
+      },
+      properties: {}
+    };
+
+    const markersGeoJSON = config.markers ? {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: config.markers.start // Already in [lng, lat] format
+          },
+          properties: { type: 'start' }
+        },
+        {
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: config.markers.end // Already in [lng, lat] format
+          },
+          properties: { type: 'end' }
+        }
+      ]
+    } : null;
+
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Map Preview</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            width: ${config.width}px;
+            height: ${config.height}px;
+            overflow: hidden;
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        mapboxgl.accessToken = '${this.appConfig.mapbox.accessToken}';
+        
+        // Map configuration with enhanced WebGL error handling
+        let mapOptions = {
+            container: 'map',
+            style: '${config.style}',
+            center: [${config.center[1]}, ${config.center[0]}],
+            bounds: [
+                [${config.bounds.west}, ${config.bounds.south}],
+                [${config.bounds.east}, ${config.bounds.north}]
+            ],
+            fitBoundsOptions: {
+                padding: 40
+            },
+            attributionControl: false,
+            antialias: false,
+            failIfMajorPerformanceCaveat: false
+        };
+
+        window.map = null;
+        window.mapLoaded = false;
+        window.mapError = null;
+
+        // Check WebGL support before initializing map
+        function checkWebGLSupport() {
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                return !!gl;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // Initialize map with enhanced error handling
+        try {
+            if (!checkWebGLSupport()) {
+                console.warn('WebGL not supported, map may have limited functionality');
+            }
+            
+            const map = new mapboxgl.Map(mapOptions);
+            window.map = map;
+
+            // Enhanced error handling
+            map.on('error', function(e) {
+                console.error('Mapbox error:', e);
+                const errorMsg = e.error?.message || e.message || 'Map initialization failed';
+                window.mapError = errorMsg;
+                
+                // Try to provide more specific error information
+                if (errorMsg.includes('WebGL')) {
+                    window.mapError = 'Failed to initialize WebGL. Browser may not support WebGL or GPU acceleration is disabled.';
+                }
+            });
+
+            map.on('load', function() {
+            window.mapLoaded = true;
+            // Add route source and layer
+            map.addSource('route', {
+                type: 'geojson',
+                data: ${JSON.stringify(routeGeoJSON)}
+            });
+
+            map.addLayer({
+                id: 'route',
+                type: 'line',
+                source: 'route',
+                layout: {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                paint: {
+                    'line-color': '${config.route.color}',
+                    'line-width': ${config.route.width}
+                }
+            });
+
+            ${config.markers ? `
+            // Add markers
+            map.addSource('markers', {
+                type: 'geojson',
+                data: ${JSON.stringify(markersGeoJSON)}
+            });
+
+            map.addLayer({
+                id: 'start-marker',
+                type: 'circle',
+                source: 'markers',
+                filter: ['==', ['get', 'type'], 'start'],
+                paint: {
+                    'circle-radius': 8,
+                    'circle-color': '#00ff00',
+                    'circle-stroke-color': '#ffffff',
+                    'circle-stroke-width': 2
+                }
+            });
+
+            map.addLayer({
+                id: 'end-marker',
+                type: 'circle',
+                source: 'markers',
+                filter: ['==', ['get', 'type'], 'end'],
+                paint: {
+                    'circle-radius': 8,
+                    'circle-color': '#ff0000',
+                    'circle-stroke-color': '#ffffff',
+                    'circle-stroke-width': 2
+                }
+            });
+            ` : ''}
+            });
+
+        } catch (initError) {
+            console.error('Map initialization error:', initError);
+            window.mapError = 'Failed to create map instance: ' + initError.message;
+        }
+    </script>
+</body>
+</html>`;
+  }
+
+  /**
+   * Generate map using Mapbox Static Images API as fallback
+   * Supports higher resolution with proper coordinate handling
+   */
+  async generateStaticMapFallback(config) {
+    console.log('MapService: Using Static Images API fallback');
+    
+    try {
+      const polyline = require('@mapbox/polyline');
+      
+      // Extract and validate route coordinates with improved detection
+      const coordinates = this.extractAndValidateCoordinates(config);
+      if (!coordinates || coordinates.length === 0) {
+        throw new Error('No valid route coordinates found for static map generation');
+      }
+      
+      console.log('MapService: Processing coordinates for static map:', {
+        count: coordinates.length,
+        first: coordinates[0],
+        last: coordinates[coordinates.length - 1]
+      });
+      
+      // Convert coordinates to [lat, lng] format for polyline encoding
+      const polylineCoords = this.convertToPolylineFormat(coordinates);
+      const routePolyline = polyline.encode(polylineCoords);
+      
+      console.log('MapService: Generated polyline with length:', routePolyline.length);
+      
+      // Build Static API URL with proper dimensions
+      const dimensions = this.getStaticMapDimensions(config);
+      const retina = dimensions.retina ? '@2x' : '';
+      
+      // Get route styling
+      const routeStyle = this.getRouteStyleString(config);
+      
+      // Calculate bounds with padding
+      const bounds = this.calculateStaticMapBounds(config.bounds || this.calculateRouteBounds(coordinates));
+      const boundsString = `[${bounds.west},${bounds.south},${bounds.east},${bounds.north}]`;
+      
+      // Handle style format
+      const styleId = this.normalizeStyleId(config.style || 'streets-v12');
+      
+      // Construct Static API URL
+      const staticUrl = `https://api.mapbox.com/styles/v1/mapbox/${styleId}/static/` +
+        `path${routeStyle}(${encodeURIComponent(routePolyline)})/` +
+        `${boundsString}/${dimensions.width}x${dimensions.height}${retina}` +
+        `?access_token=${this.appConfig.mapbox.accessToken}`;
+      
+      console.log('MapService: Static API URL constructed:', {
+        style: styleId,
+        dimensions: `${dimensions.width}x${dimensions.height}${retina}`,
+        boundsString,
+        polylineLength: routePolyline.length
+      });
+      
+      // Fetch with timeout and proper error handling
+      const response = await this.fetchWithTimeout(staticUrl, 30000);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('MapService: Static API error response:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText
+        });
+        throw new Error(`Static API failed: ${response.status} - ${errorText}`);
+      }
+      
+      const imageBuffer = await response.buffer();
+      
+      // Ensure output directory exists
+      const outputDir = path.join(this.appConfig.storage.generatedMapsDir, 'temporary');
+      await this.ensureDirectoryExists(outputDir);
+      
+      // Save to file
+      const filename = `${config.id || 'static_map'}.png`;
+      const filePath = path.join(outputDir, filename);
+      
+      await fs.writeFile(filePath, imageBuffer);
+      
+      console.log('MapService: Static map fallback generated successfully:', {
+        filePath,
+        fileSize: imageBuffer.length,
+        dimensions: `${dimensions.width}x${dimensions.height}${retina}`
+      });
+      
+      return filePath;
+      
+    } catch (error) {
+      console.error('MapService: Static API fallback failed:', error);
+      throw new Error(`Static map generation failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Extract and validate coordinates from various config structures
+   */
+  extractAndValidateCoordinates(config) {
+    let coordinates = [];
+    
+    // Try different possible coordinate sources
+    if (config.route?.coordinates) {
+      coordinates = config.route.coordinates;
+    } else if (config.routeCoordinates) {
+      coordinates = config.routeCoordinates;
+    } else if (config.coordinates) {
+      coordinates = config.coordinates;
+    } else if (config.route?.geometry?.coordinates) {
+      coordinates = config.route.geometry.coordinates;
+    }
+    
+    if (!coordinates || !Array.isArray(coordinates) || coordinates.length === 0) {
+      console.error('MapService: No coordinates found in config:', {
+        hasRoute: !!config.route,
+        hasRouteCoordinates: !!config.route?.coordinates,
+        hasDirectRouteCoordinates: !!config.routeCoordinates,
+        hasDirectCoordinates: !!config.coordinates,
+        hasGeometry: !!config.route?.geometry?.coordinates
+      });
+      return null;
+    }
+    
+    // Validate coordinate format
+    if (!Array.isArray(coordinates[0]) || coordinates[0].length < 2) {
+      console.error('MapService: Invalid coordinate format:', coordinates[0]);
+      return null;
+    }
+    
+    return coordinates;
+  }
+
+  /**
+   * Convert coordinates to [lat, lng] format for polyline encoding
+   */
+  convertToPolylineFormat(coordinates) {
+    if (!coordinates || coordinates.length === 0) {
+      return [];
+    }
+    
+    const firstCoord = coordinates[0];
+    
+    // Detect coordinate format: [lat, lng] vs [lng, lat]
+    // Latitude is typically smaller in absolute value and within [-90, 90]
+    // Longitude is within [-180, 180]
+    const isLngLat = Math.abs(firstCoord[0]) > Math.abs(firstCoord[1]) && 
+                     Math.abs(firstCoord[0]) <= 180 && 
+                     Math.abs(firstCoord[1]) <= 90;
+    
+    if (isLngLat) {
+      // Convert [lng, lat] to [lat, lng]
+      console.log('MapService: Converting [lng, lat] to [lat, lng] for polyline');
+      return coordinates.map(coord => [coord[1], coord[0]]);
+    } else {
+      // Already in [lat, lng] format
+      console.log('MapService: Using coordinates in [lat, lng] format');
+      return coordinates.map(coord => [coord[0], coord[1]]);
+    }
+  }
+
+  /**
+   * Get appropriate dimensions for static map based on config
+   */
+  getStaticMapDimensions(config) {
+    let width = config.width || 800;
+    let height = config.height || 600;
+    let retina = false;
+    
+    // For high-DPI requests, use retina and adjust dimensions
+    if (config.dpi && config.dpi > 96) {
+      retina = true;
+      // Static API @2x gives us double resolution
+      // So we can request half the size and get the target resolution
+      width = Math.round(width / 2);
+      height = Math.round(height / 2);
+    }
+    
+    // Ensure dimensions are within Static API limits
+    width = Math.min(Math.max(width, 1), 1280);
+    height = Math.min(Math.max(height, 1), 1280);
+    
+    return { width, height, retina };
+  }
+
+  /**
+   * Get route style string for Static API
+   */
+  getRouteStyleString(config) {
+    const color = (config.route?.color || config.routeColor || '#ff4444').replace('#', '');
+    const width = config.route?.width || config.routeWidth || 3;
+    
+    return `-${width}+${color}`;
+  }
+
+  /**
+   * Calculate appropriate bounds for static map with padding
+   */
+  calculateStaticMapBounds(bounds) {
+    // Add padding to bounds (10% of the range)
+    const latRange = bounds.north - bounds.south;
+    const lngRange = bounds.east - bounds.west;
+    const latPadding = latRange * 0.1;
+    const lngPadding = lngRange * 0.1;
+    
+    return {
+      north: Math.min(85, bounds.north + latPadding), // Clamp to valid lat range
+      south: Math.max(-85, bounds.south - latPadding),
+      east: Math.min(180, bounds.east + lngPadding), // Clamp to valid lng range
+      west: Math.max(-180, bounds.west - lngPadding)
+    };
+  }
+
+  /**
+   * Normalize style ID for Static API
+   */
+  normalizeStyleId(style) {
+    if (!style) return 'streets-v12';
+    
+    // Remove mapbox:// prefix if present
+    if (style.startsWith('mapbox://styles/mapbox/')) {
+      return style.replace('mapbox://styles/mapbox/', '');
+    }
+    
+    // Handle custom styles - for now, fall back to standard style
+    if (style.includes('/')) {
+      console.log('MapService: Custom style detected, using streets-v12 for Static API');
+      return 'streets-v12';
+    }
+    
+    // Add versioning to standard Mapbox styles if not present
+    const styleVersionMap = {
+      'streets': 'streets-v12',
+      'outdoors': 'outdoors-v12', 
+      'light': 'light-v11',
+      'dark': 'dark-v11',
+      'satellite': 'satellite-v9',
+      'satellite-streets': 'satellite-streets-v12',
+      'navigation-day': 'navigation-day-v1',
+      'navigation-night': 'navigation-night-v1'
+    };
+    
+    // If style has no version and matches a known style, add version
+    if (styleVersionMap[style]) {
+      console.log(`MapService: Adding version to style '${style}' -> '${styleVersionMap[style]}'`);
+      return styleVersionMap[style];
+    }
+    
+    return style;
+  }
+
+  /**
+   * Fetch with timeout support
+   */
+  async fetchWithTimeout(url, timeout = 30000) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    
+    try {
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'PrintMyRide/1.0 MapService'
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error(`Request timeout after ${timeout}ms`);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Advanced Canvas-based fallback for 300 DPI map generation
+   * Uses node-canvas when WebGL fails in browser environment
+   */
+  async generateCanvasMapFallback(config) {
+    console.log('MapService: Using server-side Canvas fallback for 300 DPI generation');
+    
+    try {
+      // Check if we have node-canvas available
+      let Canvas, createCanvas, loadImage;
+      try {
+        const canvas = require('canvas');
+        Canvas = canvas.Canvas;
+        createCanvas = canvas.createCanvas;
+        loadImage = canvas.loadImage;
+        
+        console.log('MapService: node-canvas available, proceeding with Canvas fallback');
+      } catch (canvasError) {
+        console.warn('MapService: node-canvas not available, falling back to Static Images API:', canvasError.message);
+        return await this.generateStaticMapFallback(config);
+      }
+
+      // Extract and validate coordinates
+      const coordinates = this.extractAndValidateCoordinates(config);
+      if (!coordinates || coordinates.length === 0) {
+        throw new Error('No valid coordinates found for Canvas map generation');
+      }
+      
+      console.log('MapService: Canvas fallback using coordinates:', {
+        count: coordinates.length,
+        first: coordinates[0],
+        last: coordinates[coordinates.length - 1]
+      });
+      
+      // Calculate bounds for the route
+      const bounds = config.bounds || this.calculateRouteBounds(coordinates);
+      console.log('MapService: Using bounds for Canvas rendering:', bounds);
+      
+      // Get high-resolution dimensions
+      const dimensions = this.getCanvasDimensions(config);
+      console.log('MapService: Canvas dimensions:', dimensions);
+      
+      // Create high-resolution canvas
+      const canvas = createCanvas(dimensions.width, dimensions.height);
+      const ctx = canvas.getContext('2d');
+      
+      // Set high-quality rendering
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      
+      // Fill with background color
+      ctx.fillStyle = config.backgroundColor || '#f8f9fa';
+      ctx.fillRect(0, 0, dimensions.width, dimensions.height);
+      
+      // Get optimal zoom and tile configuration
+      const zoom = this.calculateOptimalZoom(bounds, dimensions.width, dimensions.height);
+      console.log('MapService: Using zoom level:', zoom);
+      
+      // Draw map background using raster tiles
+      await this.drawMapTilesOnCanvas(ctx, bounds, dimensions, zoom, config);
+      
+      // Draw route on top of map tiles
+      await this.drawRouteOnCanvas(ctx, coordinates, bounds, dimensions.width, dimensions.height, config);
+      
+      // Add title and customizations
+      await this.addMapDecorations(ctx, config, dimensions.width, dimensions.height);
+      
+      // Save high-resolution image
+      const filePath = await this.saveCanvasImage(canvas, config, dimensions);
+      
+      console.log('MapService: High-resolution Canvas map generated successfully:', filePath);
+      return filePath;
+      
+    } catch (error) {
+      console.error('MapService: Canvas fallback failed:', error);
+      console.log('MapService: Attempting Static Images API as final fallback...');
+      return await this.generateStaticMapFallback(config);
+    }
+  }
+
+  /**
+   * Get appropriate dimensions for Canvas rendering
+   */
+  getCanvasDimensions(config) {
+    if (config.width && config.height) {
+      return {
+        width: config.width,
+        height: config.height,
+        dpi: config.dpi || 300
+      };
+    }
+    
+    // Use print dimensions if format is specified
+    if (config.format) {
+      const printDims = this.getDimensionsForFormat(config.format, config.orientation);
+      return printDims;
+    }
+    
+    // Default high-resolution dimensions
+    return {
+      width: 2480, // A4 portrait width at 300 DPI
+      height: 3508, // A4 portrait height at 300 DPI
+      dpi: 300
+    };
+  }
+
+  /**
+   * Draw map tiles on canvas background
+   */
+  async drawMapTilesOnCanvas(ctx, bounds, dimensions, zoom, config) {
+    try {
+      const styleId = this.normalizeStyleId(config.style || 'streets-v12');
+      const tileSize = 512;
+      
+      // Calculate tile grid
+      const tiles = this.calculateTileGrid(bounds, zoom, dimensions.width, dimensions.height, tileSize);
+      console.log(`MapService: Loading ${tiles.length} tiles for Canvas rendering`);
+      
+      // Load tiles with proper error handling
+      let tilesLoaded = 0;
+      const maxConcurrent = 5; // Limit concurrent tile requests
+      
+      for (let i = 0; i < tiles.length; i += maxConcurrent) {
+        const batch = tiles.slice(i, i + maxConcurrent);
+        
+        await Promise.allSettled(batch.map(async (tile) => {
+          try {
+            await this.loadAndDrawTile(ctx, tile, styleId, tileSize);
+            tilesLoaded++;
+          } catch (tileError) {
+            console.warn(`MapService: Failed to load tile ${tile.x},${tile.y}:`, tileError.message);
+          }
+        }));
+      }
+      
+      console.log(`MapService: Successfully loaded ${tilesLoaded}/${tiles.length} tiles`);
+      
+    } catch (error) {
+      console.error('MapService: Error drawing map tiles:', error);
+      // Continue without tiles - route will still be drawn
+    }
+  }
+
+  /**
+   * Load and draw a single tile
+   */
+  async loadAndDrawTile(ctx, tile, styleId, tileSize) {
+    const canvas = require('canvas');
+    const axios = require('axios');
+    
+    const tileUrl = `https://api.mapbox.com/styles/v1/mapbox/${styleId}/tiles/${tileSize}/${tile.z}/${tile.x}/${tile.y}@2x?access_token=${this.appConfig.mapbox.accessToken}`;
+    
+    const response = await axios.get(tileUrl, { 
+      responseType: 'arraybuffer',
+      timeout: 10000 // 10 second timeout per tile
+    });
+    
+    const tileImage = await canvas.loadImage(Buffer.from(response.data));
+    
+    // Draw tile at correct position
+    ctx.drawImage(
+      tileImage,
+      tile.pixelX,
+      tile.pixelY,
+      tileSize,
+      tileSize
+    );
+  }
+
+  /**
+   * Save canvas image to file
+   */
+  async saveCanvasImage(canvas, config, dimensions) {
+    // Determine output directory
+    const outputDir = config.dpi && config.dpi >= 300 
+      ? path.join(this.appConfig.storage.generatedMapsDir, 'print-ready')
+      : path.join(this.appConfig.storage.generatedMapsDir, 'temporary');
+      
+    await this.ensureDirectoryExists(outputDir);
+    
+    const filename = `${config.id || 'canvas_map'}.png`;
+    const filePath = path.join(outputDir, filename);
+    
+    // Generate PNG with appropriate quality settings
+    const quality = dimensions.dpi >= 300 ? 1.0 : 0.9;
+    const compressionLevel = dimensions.dpi >= 300 ? 0 : 3; // Less compression for print quality
+    
+    const buffer = canvas.toBuffer('image/png', { 
+      compressionLevel, 
+      quality 
+    });
+    
+    await fs.writeFile(filePath, buffer);
+    
+    console.log('MapService: Canvas image saved:', {
+      filePath,
+      fileSize: buffer.length,
+      dimensions: `${dimensions.width}x${dimensions.height}`,
+      dpi: dimensions.dpi
+    });
+    
+    return filePath;
+  }
+
+  /**
+   * Calculate optimal zoom level for given bounds and dimensions
+   */
+  calculateOptimalZoom(bounds, width, height) {
+    const latDiff = bounds.north - bounds.south;
+    const lngDiff = bounds.east - bounds.west;
+    
+    // Calculate zoom to fit bounds in viewport
+    const latZoom = Math.log2(360 / latDiff);
+    const lngZoom = Math.log2(360 / lngDiff);
+    
+    // Use the more restrictive zoom and add some padding
+    const zoom = Math.floor(Math.min(latZoom, lngZoom)) - 1;
+    return Math.max(1, Math.min(18, zoom)); // Clamp between 1-18
+  }
+
+  /**
+   * Calculate which map tiles are needed for the given bounds
+   */
+  calculateTileGrid(bounds, zoom, width, height, tileSize) {
+    const tiles = [];
+    
+    // Convert bounds to tile coordinates
+    const nwTile = this.latLngToTile(bounds.north, bounds.west, zoom);
+    const seTile = this.latLngToTile(bounds.south, bounds.east, zoom);
+    
+    // Calculate pixel offsets
+    const nwPixel = this.tileToPixel(nwTile.x, nwTile.y, zoom);
+    
+    for (let x = Math.floor(nwTile.x); x <= Math.ceil(seTile.x); x++) {
+      for (let y = Math.floor(nwTile.y); y <= Math.ceil(seTile.y); y++) {
+        const tilePixel = this.tileToPixel(x, y, zoom);
+        
+        tiles.push({
+          x: x,
+          y: y,
+          z: zoom,
+          pixelX: tilePixel.x - nwPixel.x,
+          pixelY: tilePixel.y - nwPixel.y
+        });
+      }
+    }
+    
+    return tiles;
+  }
+
+  /**
+   * Convert lat/lng to tile coordinates
+   */
+  latLngToTile(lat, lng, zoom) {
+    const scale = Math.pow(2, zoom);
+    const x = ((lng + 180) / 360) * scale;
+    const y = ((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2) * scale;
+    
+    return { x, y };
+  }
+
+  /**
+   * Convert tile coordinates to pixel coordinates
+   */
+  tileToPixel(tileX, tileY, zoom) {
+    const tileSize = 512;
+    return {
+      x: tileX * tileSize,
+      y: tileY * tileSize
+    };
+  }
+
+  /**
+   * Draw route path on canvas
+   */
+  async drawRouteOnCanvas(ctx, coordinates, bounds, width, height, config) {
+    if (!coordinates || coordinates.length === 0) return;
+    
+    // Determine coordinate format
+    const firstCoord = coordinates[0];
+    const isLngLat = Math.abs(firstCoord[0]) > Math.abs(firstCoord[1]) && Math.abs(firstCoord[0]) <= 180;
+    
+    // Convert coordinates to canvas pixels
+    const pixelCoords = coordinates.map(coord => {
+      let lng, lat;
+      if (isLngLat) {
+        lng = coord[0];
+        lat = coord[1];
+      } else {
+        lat = coord[0];
+        lng = coord[1];
+      }
+      
+      const x = ((lng - bounds.west) / (bounds.east - bounds.west)) * width;
+      const y = ((bounds.north - lat) / (bounds.north - bounds.south)) * height;
+      return [x, y];
+    });
+    
+    // Draw route path
+    ctx.strokeStyle = config.route?.color || '#ff4444';
+    ctx.lineWidth = Math.max(4, width / 800); // Scale line width with resolution
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    ctx.beginPath();
+    ctx.moveTo(pixelCoords[0][0], pixelCoords[0][1]);
+    
+    for (let i = 1; i < pixelCoords.length; i++) {
+      ctx.lineTo(pixelCoords[i][0], pixelCoords[i][1]);
+    }
+    
+    ctx.stroke();
+    
+    // Draw start/end markers
+    if (pixelCoords.length > 1) {
+      // Start marker (green)
+      ctx.fillStyle = '#22c55e';
+      ctx.beginPath();
+      ctx.arc(pixelCoords[0][0], pixelCoords[0][1], Math.max(8, width / 400), 0, 2 * Math.PI);
+      ctx.fill();
+      
+      // End marker (red)
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      const lastPoint = pixelCoords[pixelCoords.length - 1];
+      ctx.arc(lastPoint[0], lastPoint[1], Math.max(8, width / 400), 0, 2 * Math.PI);
+      ctx.fill();
+    }
+  }
+
+  /**
+   * Add title, subtitle and other decorations to canvas
+   */
+  async addMapDecorations(ctx, config, width, height) {
+    const settings = config.settings || {};
+    
+    // Calculate font sizes based on resolution
+    const titleFontSize = Math.max(36, width / 50);
+    const subtitleFontSize = Math.max(24, width / 80);
+    
+    // Draw title
+    if (settings.mainTitle) {
+      ctx.fillStyle = settings.titleColor || '#1f2937';
+      ctx.font = `bold ${titleFontSize}px Arial, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      
+      const titleY = height * 0.05; // 5% from top
+      ctx.fillText(settings.mainTitle, width / 2, titleY);
+    }
+    
+    // Draw subtitle
+    if (settings.subtitle) {
+      ctx.fillStyle = settings.subtitleColor || '#6b7280';
+      ctx.font = `${subtitleFontSize}px Arial, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      
+      const subtitleY = height * 0.1; // 10% from top
+      ctx.fillText(settings.subtitle, width / 2, subtitleY);
+    }
+  }
+
+  /**
+   * Calculate route bounds from coordinates
+   * Handles both [lng, lat] and [lat, lng] coordinate formats
+   */
+  calculateRouteBounds(coordinates) {
+    if (!coordinates || coordinates.length === 0) {
+      throw new Error('No coordinates provided for bounds calculation');
+    }
+    
+    // Determine coordinate format based on typical latitude/longitude ranges
+    // Latitude: -90 to 90, Longitude: -180 to 180
+    const firstCoord = coordinates[0];
+    const isLngLat = Math.abs(firstCoord[0]) > Math.abs(firstCoord[1]) && Math.abs(firstCoord[0]) <= 180;
+    
+    let north, south, east, west;
+    
+    if (isLngLat) {
+      // Coordinates are [lng, lat]
+      west = coordinates[0][0];
+      east = coordinates[0][0];
+      south = coordinates[0][1];
+      north = coordinates[0][1];
+      
+      for (const coord of coordinates) {
+        west = Math.min(west, coord[0]);
+        east = Math.max(east, coord[0]);
+        south = Math.min(south, coord[1]);
+        north = Math.max(north, coord[1]);
+      }
+    } else {
+      // Coordinates are [lat, lng]
+      north = coordinates[0][0];
+      south = coordinates[0][0];
+      east = coordinates[0][1];
+      west = coordinates[0][1];
+      
+      for (const coord of coordinates) {
+        north = Math.max(north, coord[0]);
+        south = Math.min(south, coord[0]);
+        east = Math.max(east, coord[1]);
+        west = Math.min(west, coord[1]);
+      }
+    }
+    
+    // Add some padding (5% of the range)
+    const latRange = north - south;
+    const lngRange = east - west;
+    const latPadding = latRange * 0.05;
+    const lngPadding = lngRange * 0.05;
+    
+    return {
+      north: north + latPadding,
+      south: south - latPadding,
+      east: east + lngPadding,
+      west: west - lngPadding
+    };
+  }
+
+  /**
+   * Get dimensions for specific format and orientation
+   * Helper method for Canvas fallback
+   */
+  getDimensionsForFormat(format, orientation) {
+    return this.getPrintDimensions(format || 'A4', orientation || 'portrait');
+  }
+
+  /**
+   * Generate high-resolution image for print quality (300 DPI)
+   * Used for paid orders to create print-ready files
+   */
+  async generateHighResolutionImage(highResConfig) {
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+
+    console.log('MapService: Generating high-resolution image with config:', {
+      id: highResConfig.id,
+      format: highResConfig.format,
+      dimensions: `${highResConfig.width}x${highResConfig.height}`,
+      dpi: highResConfig.dpi
+    });
+
+    const page = await this.browser.newPage();
+    
+    try {
+      // Set viewport for high-resolution (300 DPI)
+      const scaleFactor = highResConfig.dpi / 96; // Scale factor for 300 DPI
+      
+      await page.setViewport({
+        width: Math.round(highResConfig.width / scaleFactor),
+        height: Math.round(highResConfig.height / scaleFactor),
+        deviceScaleFactor: scaleFactor
+      });
+
+      // Create HTML for map rendering
+      const mapHTML = this.generateMapHTML(highResConfig);
+      
+      // Set page content and wait for map to load
+      await page.setContent(mapHTML, { waitUntil: 'networkidle2' });
+      
+      // Wait for Mapbox to finish loading
+      try {
+        await page.waitForFunction(
+          () => {
+            if (window.mapError) {
+              throw new Error(window.mapError);
+            }
+            return window.mapboxgl && window.map && window.mapLoaded === true;
+          },
+          { timeout: 60000 } // Longer timeout for high-res
+        );
+      } catch (error) {
+        console.log('MapService: WebGL rendering failed for high-res, using Canvas fallback...');
+        await page.close();
+        
+        // Use Canvas-based fallback for true 300 DPI generation
+        return await this.generateCanvasMapFallback(highResConfig);
+      }
+
+      // Additional wait for map to settle (longer for high-res)
+      await page.waitForTimeout(5000);
+
+      // Create print-ready directory if it doesn't exist
+      const printDir = path.join(this.appConfig.storage.generatedMapsDir, 'print-ready');
+      await this.ensureDirectoryExists(printDir);
+
+      // Generate filename and save high-resolution image
+      const filename = `${highResConfig.id}.png`;
+      const filePath = path.join(printDir, filename);
+      
+      await page.screenshot({
+        path: filePath,
+        type: 'png',
+        quality: 100, // Maximum quality for print
+        fullPage: false
+      });
+
+      console.log('MapService: High-resolution image generated successfully:', filePath);
+      return filePath;
+
+    } catch (error) {
+      console.error('MapService: Error generating high-resolution image:', error);
+      throw new Error(`High-resolution generation failed: ${error.message}`);
+    } finally {
+      await page.close();
+    }
+  }
+
+  /**
+   * Generate high-resolution map from existing preview data
+   * Retrieves map configuration from session storage
+   */
+  async generateHighResFromPreview(previewId, purchaseId, sessionData) {
+    try {
+      // Retrieve preview configuration from session data
+      const preview = sessionData.mapPreviews?.[previewId];
+      if (!preview) {
+        throw new Error(`Preview ${previewId} not found in session data`);
+      }
+
+      // Convert preview config to high-resolution config
+      const printSize = preview.config.format.toUpperCase();
+      const orientation = preview.config.orientation.toLowerCase();
+
+      // Define high-resolution dimensions (300 DPI)
+      const highResDimensions = {
+        A4: {
+          portrait: { width: 2480, height: 3508 },
+          landscape: { width: 3508, height: 2480 }
+        },
+        A3: {
+          portrait: { width: 3508, height: 4961 },
+          landscape: { width: 4961, height: 3508 }
+        }
+      };
+
+      const dimensions = highResDimensions[printSize]?.[orientation];
+      if (!dimensions) {
+        throw new Error(`Invalid print size or orientation: ${printSize} ${orientation}`);
+      }
+
+      const highResConfig = {
+        id: `highres_${purchaseId}`,
+        width: dimensions.width,
+        height: dimensions.height,
+        dpi: 300,
+        format: printSize,
+        orientation: orientation,
+        style: preview.config.style,
+        route: preview.config.route,
+        markers: preview.config.markers,
+        center: preview.config.center,
+        bounds: preview.config.bounds,
+        customization: preview.config.customization || {}
+      };
+
+      console.log('MapService: Converting preview to high-resolution:', {
+        previewId,
+        purchaseId,
+        printSize,
+        orientation
+      });
+
+      return await this.generateHighResolutionImage(highResConfig);
+
+    } catch (error) {
+      console.error('MapService: Error generating high-res from preview:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Ensure directory exists, create if it doesn't
+   */
+  async ensureDirectoryExists(dirPath) {
+    try {
+      await fs.access(dirPath);
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        await fs.mkdir(dirPath, { recursive: true });
+        console.log('MapService: Created directory:', dirPath);
+      } else {
+        throw error;
+      }
+    }
   }
 
   /**

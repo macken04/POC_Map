@@ -224,8 +224,8 @@ app.get('/api/mapbox-config', (req, res) => {
         accessToken: appConfig.mapbox.accessToken
       },
       styles: {
-        default: 'outdoors',
-        available: ['streets', 'outdoors', 'satellite', 'light', 'dark']
+        default: 'streets-v12',
+        available: ['streets-v12', 'outdoors-v12', 'satellite-v9', 'light-v11', 'dark-v11']
       }
     });
   } catch (error) {

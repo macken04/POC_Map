@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Pagination Button</title>
+    <style>
+        /* Copy pagination styles from strava-pages.css */
+        .activities-pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            background: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+
+        .pagination-info {
+            font-size: 0.875rem;
+            color: rgba(0, 0, 0, 0.65);
+        }
+
+        .strava-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            line-height: 1;
+        }
+
+        .strava-btn-secondary {
+            background: #6B7280;
+            color: white;
+            box-shadow: 0 2px 4px rgba(107, 114, 128, 0.2);
+        }
+
+        .strava-btn-secondary:hover {
+            background: #4B5563;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(107, 114, 128, 0.3);
+        }
+
+        .test-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Pagination Button Visibility Test</h1>
+        
+        <h2>1. Direct HTML Test (should be visible)</h2>
+        <div class="activities-pagination">
+            <div class="pagination-info">
+                <span>30</span> activities loaded
+                <span style="margin-left: 10px; color: #666;">(more available)</span>
+            </div>
+            <button type="button" class="strava-btn strava-btn-secondary">
+                Load More Activities
+            </button>
+        </div>
+
+        <h2>2. Hidden by Default (should be hidden)</h2>
+        <div class="activities-pagination" id="hidden-test" style="display: none;">
+            <div class="pagination-info">
+                <span>30</span> activities loaded
+                <span style="margin-left: 10px; color: #666;">(more available)</span>
+            </div>
+            <button type="button" class="strava-btn strava-btn-secondary">
+                Load More Activities
+            </button>
+        </div>
+
+        <h2>3. JavaScript Show Test</h2>
+        <div class="activities-pagination" id="js-test" style="display: none;">
+            <div class="pagination-info">
+                <span id="js-count">0</span> activities loaded
+                <span id="js-status" style="margin-left: 10px; color: #666;"></span>
+            </div>
+            <button type="button" class="strava-btn strava-btn-secondary" id="js-btn">
+                Load More Activities
+            </button>
+        </div>
+
+        <button onclick="testJavaScript()">Test JavaScript Show/Hide</button>
+        
+        <h2>4. Element Query Test</h2>
+        <div id="element-test-results"></div>
+    </div>
+
+    <script>
+        function testJavaScript() {
+            const element = document.getElementById('js-test');
+            const count = document.getElementById('js-count');
+            const status = document.getElementById('js-status');
+            
+            if (element) {
+                element.style.display = 'flex';
+                count.textContent = '25';
+                status.textContent = '(more available)';
+                console.log('✅ JavaScript test - element shown');
+            } else {
+                console.error('❌ JavaScript test - element not found');
+            }
+        }
+
+        // Test element queries
+        function testElementQueries() {
+            const results = document.getElementById('element-test-results');
+            const tests = [
+                'activities-pagination (should find 3)',
+                'load-more-btn (should find 0 - not in this test)',
+                'activities-count (should find 0 - not in this test)',
+                'pagination-status (should find 0 - not in this test)'
+            ];
+            
+            let html = '<h3>Element Query Results:</h3><ul>';
+            
+            html += `<li>activities-pagination: ${document.querySelectorAll('.activities-pagination').length} found</li>`;
+            html += `<li>load-more-btn: ${document.getElementById('load-more-btn') ? '1' : '0'} found</li>`;
+            html += `<li>activities-count: ${document.getElementById('activities-count') ? '1' : '0'} found</li>`;
+            html += `<li>pagination-status: ${document.getElementById('pagination-status') ? '1' : '0'} found</li>`;
+            
+            html += '</ul>';
+            results.innerHTML = html;
+        }
+
+        // Run tests on load
+        window.addEventListener('DOMContentLoaded', function() {
+            testElementQueries();
+            console.log('🧪 Debug page loaded - test pagination visibility');
+        });
+    </script>
+</body>
+</html>

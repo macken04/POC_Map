@@ -271,6 +271,8 @@ router.post('/upload', rateLimitManager.createClientRateLimit(), requireAuth, up
  * Query parameters:
  * - page: Page number (default: 1)
  * - per_page: Activities per page (default: 30, max: 200)
+ * - load_all: Load all available activities across multiple pages (default: false)
+ * - max_pages: Maximum pages to load when load_all is true (default: 10, max: 20)
  * - before: Unix timestamp for activities before this date
  * - after: Unix timestamp for activities after this date
  * - activity_types: Comma-separated list of activity types (e.g., "Ride,Run")
@@ -297,17 +299,49 @@ router.get('/activities', rateLimitManager.createClientRateLimit(), requireAuth,
       });
     }
 
-    // Build Strava API parameters (only supported parameters)
-    const stravaParams = buildStravaApiParams(parsedParams);
+    // Add new parameters for enhanced pagination
+    const loadAll = req.query.load_all === 'true';
+    const maxPages = Math.min(parseInt(req.query.max_pages) || 10, 20); // Safety limit
+    
+    let allActivities = [];
+    let currentPage = parsedParams.page;
+    let totalPagesLoaded = 0;
+    let hasMoreActivities = true;
 
-    // Generate cache key (without pagination for better cache hits)
-    const cacheKey = generateStravaKey(req, 'activities', parsedParams);
+    // Load activities (single page or multiple pages)
+    do {
+      // Build Strava API parameters for current page
+      const currentParams = { ...parsedParams, page: currentPage };
+      const stravaParams = buildStravaApiParams(currentParams);
 
-    // Fetch activities using Strava service
-    const activities = await stravaService.getActivities(req, stravaParams, parsedParams);
+      // Generate cache key for current page
+      const cacheKey = generateStravaKey(req, 'activities', currentParams);
+
+      // Fetch activities for current page
+      const pageActivities = await stravaService.getActivities(req, stravaParams, currentParams);
+      
+      if (pageActivities && pageActivities.length > 0) {
+        allActivities = allActivities.concat(pageActivities);
+        currentPage++;
+        totalPagesLoaded++;
+        
+        // Check if we got fewer activities than requested (likely last page)
+        if (pageActivities.length < parsedParams.per_page) {
+          hasMoreActivities = false;
+        }
+      } else {
+        hasMoreActivities = false;
+      }
+      
+      // Safety checks to prevent infinite loops
+      if (totalPagesLoaded >= maxPages) {
+        hasMoreActivities = false;
+      }
+      
+    } while (loadAll && hasMoreActivities && totalPagesLoaded < maxPages);
 
     // Format activity data for map generation
-    const formattedActivities = stravaService.formatActivitiesForMap(activities);
+    const formattedActivities = stravaService.formatActivitiesForMap(allActivities);
 
     // Apply client-side filtering
     const filteredActivities = filterActivities(formattedActivities, parsedParams);
@@ -323,6 +357,11 @@ router.get('/activities', rateLimitManager.createClientRateLimit(), requireAuth,
       console.log(`Applied filters: ${filterSummary.activeFilters.join(', ')} - Filtered from ${filterSummary.originalCount} to ${filterSummary.filteredCount} activities (${filterSummary.filterEfficiency} reduction)`);
     }
 
+    // Enhanced logging for multi-page loads
+    if (loadAll && totalPagesLoaded > 1) {
+      console.log(`Loaded ${totalPagesLoaded} pages, ${allActivities.length} total activities (hasMore: ${hasMoreActivities})`);
+    }
+
     res.json({
       success: true,
       activities: sortedActivities,
@@ -331,7 +370,10 @@ router.get('/activities', rateLimitManager.createClientRateLimit(), requireAuth,
         per_page: parsedParams.per_page,
         total_activities: sortedActivities.length,
         original_count: formattedActivities.length,
-        filtered_count: sortedActivities.length
+        filtered_count: sortedActivities.length,
+        pages_loaded: totalPagesLoaded,
+        has_more_activities: hasMoreActivities,
+        load_all_used: loadAll
       },
       filters_applied: {
         active_filters: filterSummary.activeFilters,
@@ -342,6 +384,98 @@ router.get('/activities', rateLimitManager.createClientRateLimit(), requireAuth,
 
   } catch (error) {
     console.error('Error fetching activities:', error);
+    const errorResponse = stravaService.handleStravaError(error);
+    res.status(errorResponse.status).json(errorResponse);
+  }
+});
+
+/**
+ * Load more activities for pagination (incremental loading)
+ * Query parameters:
+ * - page: Page number to load (required)
+ * - per_page: Activities per page (default: 30, max: 200)
+ * - before: Unix timestamp for activities before this date
+ * - after: Unix timestamp for activities after this date
+ * - activity_types: Comma-separated list of activity types (e.g., "Ride,Run")
+ * - min_distance: Minimum distance in meters
+ * - max_distance: Maximum distance in meters
+ * - min_elevation: Minimum total elevation gain in meters
+ * - max_elevation: Maximum total elevation gain in meters
+ * - min_duration: Minimum duration in seconds (moving_time)
+ * - max_duration: Maximum duration in seconds (moving_time)
+ * - search_name: Search activities by name (case-insensitive)
+ * - sort_by: Field to sort by (start_date, distance, moving_time, elapsed_time, total_elevation_gain, average_speed, max_speed, name)
+ * - sort_order: Sort order (asc, desc) - default: desc
+ */
+router.get('/activities/load-more', rateLimitManager.createClientRateLimit(), requireAuth, refreshTokenIfNeeded, rateLimitManager.checkStravaRateLimit(), async (req, res) => {
+  try {
+    // Validate and parse query parameters
+    let parsedParams;
+    try {
+      parsedParams = validateAndParseQuery(req.query);
+    } catch (validationError) {
+      return res.status(400).json({
+        error: 'Invalid query parameters',
+        message: validationError.message
+      });
+    }
+
+    // Ensure page number is provided and valid
+    if (parsedParams.page < 1) {
+      return res.status(400).json({
+        error: 'Invalid page parameter',
+        message: 'Page number must be 1 or greater'
+      });
+    }
+
+    // Build Strava API parameters
+    const stravaParams = buildStravaApiParams(parsedParams);
+
+    // Generate cache key for this specific page and filters
+    const cacheKey = generateStravaKey(req, 'activities-loadmore', parsedParams);
+
+    // Fetch activities for the requested page
+    const pageActivities = await stravaService.getActivities(req, stravaParams, parsedParams);
+
+    // Format activity data for map generation
+    const formattedActivities = stravaService.formatActivitiesForMap(pageActivities);
+
+    // Apply client-side filtering
+    const filteredActivities = filterActivities(formattedActivities, parsedParams);
+    
+    // Apply sorting
+    const sortedActivities = sortActivities(filteredActivities, parsedParams.sort_by, parsedParams.sort_order);
+
+    // Determine if there are potentially more activities
+    const hasMoreActivities = pageActivities.length >= parsedParams.per_page;
+
+    // Get filter summary for logging
+    const filterSummary = getFilterSummary(parsedParams, formattedActivities.length, sortedActivities.length);
+    
+    // Log load more operation
+    console.log(`Load more activities: page ${parsedParams.page}, loaded ${pageActivities.length} activities, filtered to ${sortedActivities.length}`);
+
+    res.json({
+      success: true,
+      activities: sortedActivities,
+      pagination: {
+        page: parsedParams.page,
+        per_page: parsedParams.per_page,
+        activities_count: sortedActivities.length,
+        original_count: formattedActivities.length,
+        filtered_count: sortedActivities.length,
+        has_more_activities: hasMoreActivities,
+        next_page: hasMoreActivities ? parsedParams.page + 1 : null
+      },
+      filters_applied: {
+        active_filters: filterSummary.activeFilters,
+        sort_by: filterSummary.sortBy,
+        sort_order: filterSummary.sortOrder
+      }
+    });
+
+  } catch (error) {
+    console.error('Error loading more activities:', error);
     const errorResponse = stravaService.handleStravaError(error);
     res.status(errorResponse.status).json(errorResponse);
   }

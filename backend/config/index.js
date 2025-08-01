@@ -67,8 +67,10 @@ function getConfig() {
     shopify: {
       apiKey: process.env.SHOPIFY_API_KEY,
       secretKey: process.env.SHOPIFY_SECRET_KEY,
+      accessToken: process.env.SHOPIFY_ACCESS_TOKEN,
       storeUrl: process.env.SHOPIFY_STORE_URL,
-      webhookSecret: process.env.SHOPIFY_WEBHOOK_SECRET
+      webhookSecret: process.env.SHOPIFY_WEBHOOK_SECRET,
+      productVariantId: process.env.SHOPIFY_PRODUCT_VARIANT_ID
     },
     
     // File storage configuration

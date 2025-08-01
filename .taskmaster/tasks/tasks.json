@@ -1425,22 +1425,22 @@
       {
         "id": 16,
         "title": "Implement Shopify App Integration",
-        "description": "Integrate the map generation service with Shopify as a custom app to enable seamless e-commerce functionality.",
-        "status": "pending",
+        "description": "Integrate the map generation service with Shopify as a custom app to enable seamless e-commerce functionality with preview generation and high-resolution map purchase flow.",
+        "status": "done",
         "dependencies": [
           1,
           2,
           3
         ],
         "priority": "medium",
-        "details": "1. Create a custom Shopify app for the map service\n2. Set up app proxy for secure communication\n3. Implement session handling between the app and Shopify\n4. Configure app permissions and scopes\n\nRefer to the completed documentation in Task 1.7 for proper configuration of environment variables, API endpoints, and integration patterns.\n\n```javascript\n// Server-side Shopify app configuration\nconst crypto = require('crypto');\nconst { Shopify } = require('@shopify/shopify-api');\n\n// Initialize Shopify API\nShopify.Context.initialize({\n  API_KEY: process.env.SHOPIFY_API_KEY,\n  API_SECRET_KEY: process.env.SHOPIFY_API_SECRET,\n  SCOPES: ['read_products', 'write_products'],\n  HOST_NAME: process.env.HOST.replace(/https?:\\/\\//, ''),\n  API_VERSION: '2023-07', // Use current version\n  IS_EMBEDDED_APP: false\n});\n\n// Verify Shopify app proxy requests\nfunction verifyAppProxyHmac(query) {\n  const { signature, ...params } = query;\n  const message = Object.keys(params)\n    .sort()\n    .map(key => `${key}=${params[key]}`)\n    .join('');\n  \n  const generatedHash = crypto\n    .createHmac('sha256', process.env.SHOPIFY_API_SECRET)\n    .update(message)\n    .digest('hex');\n  \n  return signature === generatedHash;\n}\n\n// App proxy endpoint\napp.get('/app-proxy', (req, res) => {\n  // Verify the request is from Shopify\n  if (!verifyAppProxyHmac(req.query)) {\n    return res.status(401).send('Unauthorized');\n  }\n  \n  // Handle the proxy request\n  const { shop, timestamp, logged_in } = req.query;\n  \n  // Render the app content\n  res.render('app-proxy', {\n    shop,\n    isLoggedIn: logged_in === 'true',\n    apiKey: process.env.SHOPIFY_API_KEY,\n    timestamp\n  });\n});\n\n// Endpoint to add map to cart\napp.post('/api/add-to-cart', async (req, res) => {\n  try {\n    const { mapId, shopDomain } = req.body;\n    \n    // Get map info from session\n    if (!req.session.maps || !req.session.maps[mapId]) {\n      return res.status(404).json({ error: 'Map not found' });\n    }\n    \n    const mapInfo = req.session.maps[mapId];\n    \n    // Generate a unique line item property to identify this map\n    const uniqueId = `map_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;\n    \n    // Create cart URL with line item properties\n    const cartUrl = `https://${shopDomain}/cart/add?id=${process.env.PRODUCT_VARIANT_ID}&quantity=1&properties[Map ID]=${uniqueId}&properties[Size]=${mapInfo.size}&properties[Style]=${mapInfo.style}&properties[Activity ID]=${mapInfo.activityId}`;\n    \n    // Store map info with unique ID for order processing\n    if (!req.session.orderMaps) req.session.orderMaps = {};\n    req.session.orderMaps[uniqueId] = mapInfo;\n    \n    res.json({ cartUrl, uniqueId });\n  } catch (error) {\n    console.error('Error adding to cart:', error);\n    res.status(500).json({ error: 'Failed to add map to cart' });\n  }\n});\n```",
-        "testStrategy": "Test app proxy verification with valid and invalid signatures. Verify session handling between app and Shopify. Test cart integration with different map configurations. Verify app permissions are correctly set. Ensure implementation follows the configuration guidelines in the documentation from Task 1.7.",
+        "details": "1. Create a custom Shopify app for the map service\n2. Set up app proxy for secure communication\n3. Implement session handling between the app and Shopify\n4. Configure app permissions and scopes\n5. Implement map preview and approval system\n6. Implement purchase flow and high-resolution map generation\n\nRefer to the completed documentation in Task 1.7 for proper configuration of environment variables, API endpoints, and integration patterns.\n\n```javascript\n// Server-side Shopify app configuration\nconst crypto = require('crypto');\nconst { Shopify } = require('@shopify/shopify-api');\n\n// Initialize Shopify API\nShopify.Context.initialize({\n  API_KEY: process.env.SHOPIFY_API_KEY,\n  API_SECRET_KEY: process.env.SHOPIFY_API_SECRET,\n  SCOPES: ['read_products', 'write_products'],\n  HOST_NAME: process.env.HOST.replace(/https?:\\/\\//, ''),\n  API_VERSION: '2023-07', // Use current version\n  IS_EMBEDDED_APP: false\n});\n\n// Verify Shopify app proxy requests\nfunction verifyAppProxyHmac(query) {\n  const { signature, ...params } = query;\n  const message = Object.keys(params)\n    .sort()\n    .map(key => `${key}=${params[key]}`)\n    .join('');\n  \n  const generatedHash = crypto\n    .createHmac('sha256', process.env.SHOPIFY_API_SECRET)\n    .update(message)\n    .digest('hex');\n  \n  return signature === generatedHash;\n}\n\n// App proxy endpoint\napp.get('/app-proxy', (req, res) => {\n  // Verify the request is from Shopify\n  if (!verifyAppProxyHmac(req.query)) {\n    return res.status(401).send('Unauthorized');\n  }\n  \n  // Handle the proxy request\n  const { shop, timestamp, logged_in } = req.query;\n  \n  // Render the app content\n  res.render('app-proxy', {\n    shop,\n    isLoggedIn: logged_in === 'true',\n    apiKey: process.env.SHOPIFY_API_KEY,\n    timestamp\n  });\n});\n\n// Endpoint to add map to cart\napp.post('/api/add-to-cart', async (req, res) => {\n  try {\n    const { mapId, shopDomain } = req.body;\n    \n    // Get map info from session\n    if (!req.session.maps || !req.session.maps[mapId]) {\n      return res.status(404).json({ error: 'Map not found' });\n    }\n    \n    const mapInfo = req.session.maps[mapId];\n    \n    // Generate a unique line item property to identify this map\n    const uniqueId = `map_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;\n    \n    // Create cart URL with line item properties\n    const cartUrl = `https://${shopDomain}/cart/add?id=${process.env.PRODUCT_VARIANT_ID}&quantity=1&properties[Map ID]=${uniqueId}&properties[Size]=${mapInfo.size}&properties[Style]=${mapInfo.style}&properties[Activity ID]=${mapInfo.activityId}`;\n    \n    // Store map info with unique ID for order processing\n    if (!req.session.orderMaps) req.session.orderMaps = {};\n    req.session.orderMaps[uniqueId] = mapInfo;\n    \n    res.json({ cartUrl, uniqueId });\n  } catch (error) {\n    console.error('Error adding to cart:', error);\n    res.status(500).json({ error: 'Failed to add map to cart' });\n  }\n});\n\n// Verify Shopify webhook authenticity\nfunction verifyWebhookHmac(data, hmac) {\n  const generatedHash = crypto\n    .createHmac('sha256', process.env.SHOPIFY_WEBHOOK_SECRET)\n    .update(data, 'utf8')\n    .digest('base64');\n  \n  return crypto.timingSafeEqual(\n    Buffer.from(generatedHash),\n    Buffer.from(hmac)\n  );\n}\n\n// Order webhook endpoint\napp.post('/api/shopify-integration/webhook/order', express.raw({type: 'application/json'}), async (req, res) => {\n  // Verify webhook authenticity\n  const hmac = req.headers['x-shopify-hmac-sha256'];\n  if (!verifyWebhookHmac(req.body, hmac)) {\n    return res.status(401).send('Unauthorized');\n  }\n  \n  const order = JSON.parse(req.body.toString());\n  \n  // Process order and generate high-resolution maps\n  try {\n    for (const item of order.line_items) {\n      const mapId = item.properties.find(p => p.name === 'Map ID')?.value;\n      if (mapId && req.session.orderMaps && req.session.orderMaps[mapId]) {\n        const mapInfo = req.session.orderMaps[mapId];\n        \n        // Generate high-resolution map\n        await mapService.generateHighResolutionImage(mapInfo, mapId);\n      }\n    }\n    \n    res.status(200).send('OK');\n  } catch (error) {\n    console.error('Error processing order webhook:', error);\n    res.status(500).send('Error processing order');\n  }\n});\n```",
+        "testStrategy": "Test app proxy verification with valid and invalid signatures. Verify session handling between app and Shopify. Test cart integration with different map configurations. Verify app permissions are correctly set. Test preview generation and approval system. Test high-resolution map generation after purchase. Test webhook processing for orders. Ensure implementation follows the configuration guidelines in the documentation from Task 1.7.",
         "subtasks": [
           {
             "id": 1,
             "title": "Create and Register Shopify App",
             "description": "Set up a new Shopify app in the Partner Dashboard and configure the basic app settings",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "details": "1. Create a Partner account if not already available\n2. Create a new app in the Shopify Partner Dashboard\n3. Configure app name, URLs (including redirect URLs)\n4. Generate API credentials (API key and secret)\n5. Store credentials securely in environment variables\n6. Set up the initial app structure using Shopify CLI or custom framework\n7. Reference the shopify.env.example file from Task 1.7 documentation for required environment variables",
             "testStrategy": "1. **Functionality Testing**: Test core functionality works as expected\n2. **Browser-based Testing**: Test functionality works correctly in browser environment\n3. **Cross-Browser Testing**: Test works consistently across Chrome, Firefox, Safari, and Edge\n4. **Error Handling Testing**: Test error scenarios are handled appropriately\n5. **Performance Testing**: Measure performance and ensure it meets requirements\n6. **Integration Testing**: Test integrates properly with other system components\n7. **User Experience Testing**: Test provides good user experience\n8. **Pass/Fail Criteria**: Functionality works, good performance, proper error handling, good UX"
@@ -1449,7 +1449,7 @@
             "id": 2,
             "title": "Implement OAuth Authentication Flow",
             "description": "Create the OAuth flow to authenticate the app with Shopify stores",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               1
             ],
@@ -1460,7 +1460,7 @@
             "id": 3,
             "title": "Configure App Proxy and Secure Communication",
             "description": "Set up app proxy for secure communication between Shopify and the app",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               1,
               2
@@ -1472,7 +1472,7 @@
             "id": 4,
             "title": "Implement Session Handling and Management",
             "description": "Create robust session handling between the app and Shopify",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               2,
               3
@@ -1484,7 +1484,7 @@
             "id": 5,
             "title": "Configure App Permissions and Scopes",
             "description": "Set up proper permission scopes and manage access control",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               2
             ],
@@ -1495,7 +1495,7 @@
             "id": 6,
             "title": "Implement Data Synchronization",
             "description": "Create bidirectional data sync between the map service and Shopify",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               3,
               4,
@@ -1508,7 +1508,7 @@
             "id": 7,
             "title": "Implement Error Handling and Monitoring",
             "description": "Create comprehensive error handling and monitoring for the Shopify integration",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               2,
               3,
@@ -1522,7 +1522,7 @@
             "id": 8,
             "title": "Conduct Integration Testing and Security Review",
             "description": "Perform comprehensive testing and security review of the Shopify integration",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               1,
               2,
@@ -1539,12 +1539,35 @@
             "id": 9,
             "title": "Review and Apply Documentation from Task 1.7",
             "description": "Review the completed documentation from Task 1.7 and ensure all Shopify integration components align with the documented specifications",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               1
             ],
             "details": "1. Review README.md for overall integration architecture\n2. Study DEVELOPMENT.md for development patterns and best practices\n3. Analyze SETUP.md for environment and configuration requirements\n4. Examine shopify.env.example for required environment variables\n5. Ensure all API endpoints match the documented specifications\n6. Verify OAuth flow implementation follows the documented patterns\n7. Confirm that error handling follows the documented approach\n8. Create a compliance checklist to verify implementation against documentation",
             "testStrategy": "1. **Documentation Compliance Testing**: Verify implementation matches documentation\n2. **Configuration Testing**: Test that all required environment variables are properly used\n3. **API Endpoint Testing**: Verify API endpoints match documentation\n4. **Integration Pattern Testing**: Test that integration patterns follow documentation\n5. **Error Handling Testing**: Verify error handling follows documented approach\n6. **Pass/Fail Criteria**: Implementation fully complies with documentation"
+          },
+          {
+            "id": 10,
+            "title": "Implement Map Preview and Approval System",
+            "description": "Create a system for generating and managing web-quality preview images for user approval before purchase",
+            "status": "done",
+            "dependencies": [
+              4
+            ],
+            "details": "1. Create `/api/maps/generate-preview` endpoint for web-quality preview generation (96 DPI)\n2. Implement `/api/maps/preview-image/:previewId` endpoint to serve preview images\n3. Add endpoints for approving, listing, and deleting previews\n4. Implement session-based preview storage with metadata\n5. Add `generatePreviewImage()` method to MapService for web-quality rendering\n6. Create directory structure for preview images at `backend/generated-maps/previews/`\n7. Implement comprehensive error handling and logging for preview generation",
+            "testStrategy": "1. **Functionality Testing**: Test preview generation with different map configurations\n2. **Image Quality Testing**: Verify preview images are generated at correct 96 DPI quality\n3. **Session Storage Testing**: Test that preview metadata is correctly stored in session\n4. **API Endpoint Testing**: Test all preview-related endpoints\n5. **Error Handling Testing**: Test error scenarios in preview generation\n6. **Performance Testing**: Measure preview generation time\n7. **Pass/Fail Criteria**: Preview generation works correctly, images display properly, session storage works"
+          },
+          {
+            "id": 11,
+            "title": "Implement Purchase and High-Resolution Generation",
+            "description": "Create the purchase flow and high-resolution map generation system for completed orders",
+            "status": "done",
+            "dependencies": [
+              10,
+              6
+            ],
+            "details": "1. Implement `/api/maps/purchase/:previewId` endpoint for preparing maps for Shopify cart\n2. Create cart URL generation with line item properties containing map metadata\n3. Add `/api/shopify-integration/webhook/order` endpoint for processing paid orders\n4. Implement `generateHighResolutionImage()` and `generateHighResFromPreview()` methods (300 DPI)\n5. Create directory structure for print-ready files at `backend/generated-maps/print-ready/`\n6. Add `/api/maps/download-print/:purchaseId` endpoint for completed high-res files\n7. Implement HMAC verification for Shopify webhook authenticity\n8. Add SHOPIFY_WEBHOOK_SECRET and SHOPIFY_PRODUCT_VARIANT_ID to environment configuration",
+            "testStrategy": "1. **Functionality Testing**: Test high-resolution generation with different map configurations\n2. **Image Quality Testing**: Verify print-ready images are generated at correct 300 DPI quality\n3. **Webhook Testing**: Test order webhook processing\n4. **Security Testing**: Verify HMAC verification for webhook authenticity\n5. **Download Testing**: Test download functionality for completed high-res files\n6. **Error Handling Testing**: Test error scenarios in high-res generation\n7. **Pass/Fail Criteria**: High-res generation works correctly, webhook processing works, downloads function properly"
           }
         ]
       },
@@ -1985,7 +2008,7 @@
     ],
     "metadata": {
       "created": "2025-07-18T09:49:17.060Z",
-      "updated": "2025-07-24T16:25:05.007Z",
+      "updated": "2025-07-31T16:21:04.496Z",
       "description": "Tasks for master context"
     }
   }

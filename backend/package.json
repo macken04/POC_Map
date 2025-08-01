@@ -16,13 +16,12 @@
     "test:integration": "node tests/oauth-integration-tests.js",
     "test:token-refresh": "node tests/oauth-token-refresh-enhanced.js",
     "test:csrf": "node tests/oauth-csrf-protection-test.js",
-    "test:error-handling": "node tests/oauth-error-handling-test.js",
+    "test:error-handling": "node tests/error-handling-service-test.js",
     "test:config": "node tests/config-test.js",
     "test:tokens": "node tests/token-test.js",
     "test:ci": "npm run test:config && npm run test:unit && npm run test:tokens && npm run test:csrf && npm run test:error-handling && npm run test:token-refresh",
     "test:mapbox": "node tests/mapbox-integration-test.js && node tests/dpi-export-validation.js && node tests/webgl-support-test.js",
     "test:security": "node tests/security-improvements-test.js",
-    "test:error-handling": "node tests/error-handling-service-test.js",
     "test:all": "npm run test:ci && npm run test:mapbox && npm run test:security && npm run test:error-handling && npm test"
   },
   "keywords": [
@@ -40,6 +39,7 @@
     "@mapbox/polyline": "^1.1.1",
     "@mapbox/togeojson": "^0.16.0",
     "axios": "^1.4.0",
+    "canvas": "^3.1.2",
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",

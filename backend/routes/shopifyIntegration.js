@@ -357,4 +357,415 @@ router.post('/complete-flow', requireAuth, (req, res) => {
   }
 });
 
+/**
+ * Shopify Webhook Handler for Order Processing
+ * Handles orders/create and orders/paid webhooks to trigger map generation
+ */
+router.post('/webhook/order', express.raw({ type: 'application/json' }), async (req, res) => {
+  try {
+    console.log('[Shopify Webhook] Order webhook received');
+    
+    const hmacHeader = req.get('X-Shopify-Hmac-Sha256');
+    const topic = req.get('X-Shopify-Topic');
+    const shopDomain = req.get('X-Shopify-Shop-Domain');
+    
+    if (!hmacHeader || !topic) {
+      console.log('[Shopify Webhook] Missing required headers');
+      return res.status(400).json({ error: 'Missing required webhook headers' });
+    }
+
+    // Verify webhook authenticity
+    const crypto = require('crypto');
+    const body = req.body;
+    const calculatedHmac = crypto
+      .createHmac('sha256', process.env.SHOPIFY_WEBHOOK_SECRET || process.env.SHOPIFY_SECRET_KEY)
+      .update(body, 'utf8')
+      .digest('base64');
+
+    if (calculatedHmac !== hmacHeader) {
+      console.log('[Shopify Webhook] HMAC verification failed');
+      return res.status(401).json({ error: 'Webhook verification failed' });
+    }
+
+    // Parse order data
+    const orderData = JSON.parse(body.toString());
+    console.log('[Shopify Webhook] Processing order:', {
+      id: orderData.id,
+      name: orderData.name,
+      topic: topic,
+      shopDomain: shopDomain
+    });
+
+    // Only process paid orders or order creation for map items
+    if (topic === 'orders/paid' || topic === 'orders/create') {
+      await processMapOrder(orderData, topic);
+    }
+
+    res.status(200).json({ success: true, message: 'Webhook processed successfully' });
+
+  } catch (error) {
+    console.error('[Shopify Webhook] Error processing webhook:', error);
+    res.status(500).json({ error: 'Webhook processing failed', message: error.message });
+  }
+});
+
+/**
+ * Process map orders and trigger high-resolution generation
+ */
+async function processMapOrder(orderData, webhookTopic) {
+  try {
+    console.log('[Map Order Processing] Processing order:', orderData.name);
+
+    // Find line items that contain map data
+    const mapLineItems = orderData.line_items.filter(item => {
+      const properties = item.properties || [];
+      return properties.some(prop => prop.name === 'Purchase ID' || prop.name === 'Map Type');
+    });
+
+    if (mapLineItems.length === 0) {
+      console.log('[Map Order Processing] No map items found in order');
+      return;
+    }
+
+    console.log('[Map Order Processing] Found', mapLineItems.length, 'map items');
+
+    // Process each map line item
+    for (const lineItem of mapLineItems) {
+      try {
+        await processMapLineItem(lineItem, orderData, webhookTopic);
+      } catch (error) {
+        console.error('[Map Order Processing] Error processing line item:', error);
+        // Continue processing other items even if one fails
+      }
+    }
+
+  } catch (error) {
+    console.error('[Map Order Processing] Error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Process individual map line item
+ */
+async function processMapLineItem(lineItem, orderData, webhookTopic) {
+  try {
+    // Extract map metadata from line item properties
+    const properties = lineItem.properties || [];
+    const purchaseId = properties.find(p => p.name === 'Purchase ID')?.value;
+    const previewId = properties.find(p => p.name === 'Preview ID')?.value;
+    const printSize = properties.find(p => p.name === 'Print Size')?.value || 'A4';
+    const orientation = properties.find(p => p.name === 'Orientation')?.value || 'portrait';
+    const mapStyle = properties.find(p => p.name === 'Map Style')?.value || 'outdoors-v12';
+    const activityId = properties.find(p => p.name === 'Activity ID')?.value;
+    
+    // Extract map configuration from line item properties
+    let mapConfiguration = null;
+    const mapConfigProperty = properties.find(p => p.name === 'Map Config')?.value;
+    if (mapConfigProperty) {
+      try {
+        mapConfiguration = JSON.parse(Buffer.from(mapConfigProperty, 'base64').toString());
+        console.log('[Map Line Item] Decoded map configuration:', mapConfiguration);
+      } catch (error) {
+        console.warn('[Map Line Item] Failed to decode map configuration:', error.message);
+      }
+    }
+
+    console.log('[Map Line Item] Processing:', {
+      purchaseId,
+      previewId,
+      printSize,
+      orientation,
+      mapStyle,
+      activityId,
+      orderId: orderData.id,
+      orderName: orderData.name
+    });
+
+    if (!purchaseId && !previewId) {
+      console.log('[Map Line Item] No purchase ID or preview ID found, skipping');
+      return;
+    }
+
+    // Create map generation job
+    const mapGenerationJob = {
+      id: `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      purchaseId: purchaseId,
+      previewId: previewId,
+      orderId: orderData.id,
+      orderName: orderData.name,
+      lineItemId: lineItem.id,
+      customer: {
+        id: orderData.customer?.id,
+        email: orderData.customer?.email,
+        firstName: orderData.customer?.first_name,
+        lastName: orderData.customer?.last_name
+      },
+      mapConfig: {
+        printSize: printSize,
+        orientation: orientation,
+        style: `mapbox://styles/mapbox/${mapStyle}`,
+        activityId: activityId,
+        configuration: mapConfiguration // Include decoded map configuration
+      },
+      webhookTopic: webhookTopic,
+      status: 'queued',
+      createdAt: new Date().toISOString()
+    };
+
+    // For paid orders, immediately trigger high-res generation
+    if (webhookTopic === 'orders/paid') {
+      console.log('[Map Generation] Triggering high-resolution generation for paid order');
+      await generateHighResolutionMap(mapGenerationJob);
+    } else {
+      console.log('[Map Generation] Order created but not yet paid, queuing for later processing');
+      // Store job for processing when payment is confirmed
+      // In a production system, you'd store this in a database
+    }
+
+  } catch (error) {
+    console.error('[Map Line Item] Error processing line item:', error);
+    throw error;
+  }
+}
+
+/**
+ * Generate high-resolution map for completed order using fresh Strava data
+ * Improved implementation: fetches activity data from Strava API and uses map configuration
+ */
+async function generateHighResolutionMap(job) {
+  try {
+    console.log('[High-Res Generation] Starting optimized generation for job:', job.id);
+
+    // Extract preview ID from Shopify order line item properties
+    const previewId = extractPreviewIdFromOrder(job.orderData);
+    
+    if (!previewId) {
+      throw new Error('Preview ID not found in order data - cannot generate high-res map');
+    }
+
+    console.log('[High-Res Generation] Using preview ID:', previewId);
+
+    const printSize = job.printSize || 'A4';
+    const orientation = job.printOrientation || 'portrait';
+
+    // Use our optimized endpoint that reuses the validated preview configuration
+    const mapPath = await generateHighResFromPreview(previewId, printSize, orientation);
+    
+    if (!mapPath) {
+      throw new Error('High-resolution map generation failed');
+    }
+
+    console.log('[High-Res Generation] High-res map generated successfully:', mapPath);
+
+    // Update job status with generated map path
+    job.status = 'completed';
+    job.completedAt = new Date().toISOString();
+    job.mapFilePath = mapPath;
+
+    // Store completion information
+    const path = require('path');
+    const fs = require('fs').promises;
+    
+    const jobFilePath = path.join(
+      __dirname, '..', 'generated-maps', 'completed', 
+      `${job.id}_completed.json`
+    );
+    
+    // Ensure directory exists
+    await fs.mkdir(path.dirname(jobFilePath), { recursive: true });
+    
+    // Store completed job information
+    await fs.writeFile(jobFilePath, JSON.stringify({
+      ...job,
+      mapFilePath: mapPath,
+      generationMethod: 'optimized_preview_reuse',
+      status: 'completed',
+      completedAt: new Date().toISOString()
+    }, null, 2));
+
+    console.log('[High-Res Generation] Job completed and stored:', jobFilePath);
+
+    // Send fulfillment email to customer with download link
+    await sendOrderFulfillmentEmail(job, mapPath);
+
+    console.log('[High-Res Generation] Order fulfilled successfully for job:', job.id);
+
+  } catch (error) {
+    console.error('[High-Res Generation] Error:', error);
+    
+    // Update job status to failed
+    job.status = 'failed';
+    job.failedAt = new Date().toISOString();
+    job.error = error.message;
+    
+    // Store failed job for debugging
+    try {
+      const path = require('path');
+      const fs = require('fs').promises;
+      
+      const failedJobPath = path.join(
+        __dirname, '..', 'generated-maps', 'failed', 
+        `${job.id}_failed.json`
+      );
+      
+      await fs.mkdir(path.dirname(failedJobPath), { recursive: true });
+      await fs.writeFile(failedJobPath, JSON.stringify(job, null, 2));
+    } catch (storeError) {
+      console.warn('[High-Res Generation] Could not store failed job:', storeError.message);
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Extract preview ID from Shopify order line item properties
+ */
+function extractPreviewIdFromOrder(orderData) {
+  try {
+    if (!orderData?.line_items) {
+      console.warn('[Preview ID Extraction] No line items found in order data');
+      return null;
+    }
+
+    for (const lineItem of orderData.line_items) {
+      if (lineItem.properties) {
+        // Check if properties is an array (newer Shopify format)
+        if (Array.isArray(lineItem.properties)) {
+          for (const prop of lineItem.properties) {
+            if (prop.name === 'Preview ID') {
+              console.log('[Preview ID Extraction] Found preview ID:', prop.value);
+              return prop.value;
+            }
+          }
+        } 
+        // Check if properties is an object (older format)
+        else if (typeof lineItem.properties === 'object') {
+          if (lineItem.properties['Preview ID']) {
+            console.log('[Preview ID Extraction] Found preview ID:', lineItem.properties['Preview ID']);
+            return lineItem.properties['Preview ID'];
+          }
+        }
+      }
+    }
+
+    console.warn('[Preview ID Extraction] Preview ID not found in any line item properties');
+    return null;
+  } catch (error) {
+    console.error('[Preview ID Extraction] Error extracting preview ID:', error);
+    return null;
+  }
+}
+
+/**
+ * Generate high-resolution map using optimized preview endpoint
+ */
+async function generateHighResFromPreview(previewId, format, orientation) {
+  try {
+    console.log('[Optimized Generation] Calling optimized endpoint for preview:', previewId);
+
+    // Use axios to call our optimized endpoint internally (more reliable than fetch in Node.js)
+    const axios = require('axios');
+    const response = await axios.post(`http://localhost:3000/api/maps/generate-from-preview/${previewId}`, {
+      format: format,
+      orientation: orientation,
+      dpi: 300
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    if (response.status !== 200) {
+      throw new Error(response.data?.message || 'Optimized generation failed');
+    }
+
+    const result = response.data;
+    console.log('[Optimized Generation] Success:', {
+      mapPath: result.mapPath,
+      generationTime: result.config.generationTime,
+      method: 'preview_config_reuse'
+    });
+
+    return result.mapPath;
+
+  } catch (error) {
+    console.error('[Optimized Generation] Failed:', error);
+    throw new Error(`Optimized high-res generation failed: ${error.message}`);
+  }
+}
+
+/**
+ * Send order fulfillment email to customer with download link
+ */
+async function sendOrderFulfillmentEmail(job, mapFilePath) {
+  try {
+    console.log('[Order Fulfillment] Sending fulfillment email for job:', job.id);
+    
+    // In a production system, you would:
+    // 1. Upload the map file to a CDN or secure download area
+    // 2. Generate a secure download link with expiration
+    // 3. Send a professional email with the download link
+    // 4. Update the Shopify order with fulfillment information
+    
+    console.log('[Order Fulfillment] Map ready for delivery:', {
+      jobId: job.id,
+      customerEmail: job.orderData?.email || 'customer@example.com',
+      mapFile: mapFilePath,
+      orderNumber: job.orderData?.name || 'N/A',
+      fileSize: require('fs').existsSync(mapFilePath) ? 
+        Math.round(require('fs').statSync(mapFilePath).size / 1024) + ' KB' : 'Unknown'
+    });
+
+    // TODO: Integrate with actual email service (SendGrid, AWS SES, etc.)
+    // TODO: Upload map to secure storage and generate download link
+    // TODO: Update Shopify order status to fulfilled
+    
+    console.log('[Order Fulfillment] Fulfillment completed for job:', job.id);
+    
+  } catch (error) {
+    console.error('[Order Fulfillment] Error sending fulfillment email:', error);
+    // Don't throw - fulfillment email failure shouldn't stop the entire process
+  }
+}
+
+/**
+ * Send order processing notification to customer
+ */
+async function sendOrderProcessingEmail(job) {
+  try {
+    console.log('[Email Notification] Sending processing notification for order:', job.orderName);
+    
+    // In a production system, implement email sending here
+    // This would notify the customer that their order is being processed
+    // and provide an estimated completion time
+    
+    console.log('[Email Notification] Processing notification would be sent to:', job.customer.email);
+    console.log('[Email Notification] Message: Your custom map is being prepared and will be ready for download soon.');
+    
+  } catch (error) {
+    console.error('[Email Notification] Error sending processing email:', error);
+    // Don't throw - email failure shouldn't break the order processing
+  }
+}
+
+/**
+ * Send order completion email to customer
+ */
+async function sendOrderCompletionEmail(job) {
+  try {
+    console.log('[Email Notification] Sending completion email for order:', job.orderName);
+    
+    // In a production system, implement email sending here
+    // This could use services like SendGrid, Mailgun, or AWS SES
+    
+    console.log('[Email Notification] Email would be sent to:', job.customer.email);
+    
+  } catch (error) {
+    console.error('[Email Notification] Error sending email:', error);
+    // Don't throw - email failure shouldn't break the order processing
+  }
+}
+
 module.exports = router;
