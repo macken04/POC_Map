@@ -23,9 +23,9 @@ class CrossDomainTokenStore {
    * @param {Object} tokenData - Token data to store
    * @param {string} tokenData.sessionId - Session ID
    * @param {Object} tokenData.athlete - Athlete information
-   * @param {number} expiresIn - Expiry time in milliseconds (default: 5 minutes)
+   * @param {number} expiresIn - Expiry time in milliseconds (default: 15 minutes for map confirmation flow)
    */
-  storeToken(token, tokenData, expiresIn = 5 * 60 * 1000) {
+  storeToken(token, tokenData, expiresIn = 15 * 60 * 1000) {
     const expiryTime = Date.now() + expiresIn;
     
     this.tokens.set(token, {
@@ -79,6 +79,140 @@ class CrossDomainTokenStore {
    */
   isValidToken(token) {
     return this.getTokenData(token) !== null;
+  }
+
+  /**
+   * Extend/refresh a token's expiry time
+   * @param {string} token - The cross-domain token to extend
+   * @param {number} expiresIn - New expiry time in milliseconds (default: 15 minutes)
+   * @returns {boolean} True if token was extended, false if not found
+   */
+  extendToken(token, expiresIn = 15 * 60 * 1000) {
+    const tokenData = this.tokens.get(token);
+    
+    if (!tokenData) {
+      console.log('Cannot extend - token not found:', token.substring(0, 8) + '...');
+      return false;
+    }
+
+    const newExpiryTime = Date.now() + expiresIn;
+    tokenData.expiryTime = newExpiryTime;
+    
+    console.log('Cross-domain token extended:', {
+      token: token.substring(0, 8) + '...',
+      newExpiresAt: new Date(newExpiryTime).toISOString(),
+      athleteId: tokenData.athlete?.id
+    });
+    
+    return true;
+  }
+
+  /**
+   * Store map preview data for a cross-domain token
+   * @param {string} token - The cross-domain token
+   * @param {string} previewId - The preview ID
+   * @param {Object} previewData - The preview data to store
+   * @returns {boolean} True if stored successfully, false if token not found
+   */
+  storeMapPreview(token, previewId, previewData) {
+    const tokenData = this.tokens.get(token);
+    
+    if (!tokenData) {
+      console.log('Cannot store preview - token not found:', token.substring(0, 8) + '...');
+      return false;
+    }
+
+    // Initialize mapPreviews if not exists
+    if (!tokenData.mapPreviews) {
+      tokenData.mapPreviews = {};
+    }
+
+    tokenData.mapPreviews[previewId] = {
+      ...previewData,
+      storedAt: new Date().toISOString()
+    };
+
+    console.log('Map preview stored in cross-domain token:', {
+      token: token.substring(0, 8) + '...',
+      previewId,
+      athleteId: tokenData.athlete?.id
+    });
+
+    return true;
+  }
+
+  /**
+   * Get map preview data for a cross-domain token
+   * @param {string} token - The cross-domain token
+   * @param {string} previewId - The preview ID (optional - returns all if not specified)
+   * @returns {Object|null} Preview data or null if not found
+   */
+  getMapPreview(token, previewId = null) {
+    const tokenData = this.tokens.get(token);
+    
+    if (!tokenData || !tokenData.mapPreviews) {
+      return null;
+    }
+
+    if (previewId) {
+      return tokenData.mapPreviews[previewId] || null;
+    }
+
+    return tokenData.mapPreviews;
+  }
+
+  /**
+   * Store confirmed map data for a cross-domain token
+   * @param {string} token - The cross-domain token
+   * @param {string} mapId - The confirmed map ID
+   * @param {Object} mapData - The confirmed map data to store
+   * @returns {boolean} True if stored successfully, false if token not found
+   */
+  storeConfirmedMap(token, mapId, mapData) {
+    const tokenData = this.tokens.get(token);
+    
+    if (!tokenData) {
+      console.log('Cannot store confirmed map - token not found:', token.substring(0, 8) + '...');
+      return false;
+    }
+
+    // Initialize confirmedMaps if not exists
+    if (!tokenData.confirmedMaps) {
+      tokenData.confirmedMaps = {};
+    }
+
+    tokenData.confirmedMaps[mapId] = {
+      ...mapData,
+      confirmedAt: new Date().toISOString()
+    };
+
+    console.log('Confirmed map stored in cross-domain token:', {
+      token: token.substring(0, 8) + '...',
+      mapId,
+      athleteId: tokenData.athlete?.id
+    });
+
+    return true;
+  }
+
+  /**
+   * Get confirmed map data for a cross-domain token
+   * @param {string} token - The cross-domain token
+   * @param {string} mapId - The map ID (optional - returns all if not specified)
+   * @returns {Object|null} Confirmed map data or null if not found
+   */
+  getConfirmedMap(token, mapId = null) {
+    const tokenData = this.tokens.get(token);
+    
+    if (!tokenData || !tokenData.confirmedMaps) {
+      return null;
+    }
+
+    if (mapId) {
+      return tokenData.confirmedMaps[mapId] || null;
+    }
+
+    return tokenData.confirmedMaps;
   }
 
   /**

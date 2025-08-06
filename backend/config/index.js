@@ -28,21 +28,21 @@ function getConfig() {
     // Session configuration
     session: {
       secret: process.env.SESSION_SECRET,
-      maxAge: parseInt(process.env.SESSION_MAX_AGE) || 86400000, // 24 hours
-      secure: env === 'production' || process.env.NGROK_URL?.includes('https'),
-      httpOnly: true,
-      sameSite: env === 'production' ? 'strict' : 'none',
       name: process.env.SESSION_NAME || 'connect.sid',
       // Enhanced security settings
       rolling: true, // Reset expiration on activity
       saveUninitialized: false,
       resave: false,
-      // Cookie settings for different environments
+      // Cookie settings optimized for cross-domain Shopify integration
       cookie: {
         secure: env === 'production' || process.env.NGROK_URL?.includes('https'),
         httpOnly: true,
-        maxAge: parseInt(process.env.SESSION_MAX_AGE) || 86400000,
-        sameSite: env === 'production' ? 'strict' : 'none'
+        maxAge: parseInt(process.env.SESSION_MAX_AGE) || 86400000, // 24 hours
+        // Use 'none' for cross-domain requests with HTTPS (ngrok)
+        // Use 'lax' for local development without HTTPS
+        sameSite: (env === 'production' || process.env.NGROK_URL?.includes('https')) ? 'none' : 'lax',
+        // Set domain to null to work across subdomains
+        domain: process.env.SESSION_DOMAIN || null
       }
     },
     
@@ -70,7 +70,10 @@ function getConfig() {
       accessToken: process.env.SHOPIFY_ACCESS_TOKEN,
       storeUrl: process.env.SHOPIFY_STORE_URL,
       webhookSecret: process.env.SHOPIFY_WEBHOOK_SECRET,
-      productVariantId: process.env.SHOPIFY_PRODUCT_VARIANT_ID
+      productVariantIds: {
+        A4: process.env.SHOPIFY_PRODUCT_VARIANT_ID_A4,
+        A3: process.env.SHOPIFY_PRODUCT_VARIANT_ID_A3
+      }
     },
     
     // File storage configuration

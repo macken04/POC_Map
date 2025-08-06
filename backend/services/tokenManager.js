@@ -312,6 +312,9 @@ class TokenManager {
         const tokenData = crossDomainTokenStore.getTokenData(crossDomainToken);
         
         if (tokenData) {
+          // Valid token from persistent store - extend it for ongoing operations
+          crossDomainTokenStore.extendToken(crossDomainToken);
+          
           // Valid token from persistent store - create auth status
           const authStatus = {
             authenticated: true,

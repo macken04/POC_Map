@@ -428,6 +428,147 @@ class StravaService {
       message: 'Unable to complete request to Strava API'
     };
   }
+
+  /**
+   * Fetch activity data for order fulfillment using stored user tokens
+   * This method is used when regenerating maps from order data without active session
+   * @param {string} activityId - Strava activity ID
+   * @param {string} stravaUserId - Strava user ID for token lookup
+   * @returns {Promise<Object>} - Activity data for map generation
+   */
+  async getActivityForOrderFulfillment(activityId, stravaUserId) {
+    try {
+      console.log('[StravaService] Fetching activity for order fulfillment:', {
+        activityId,
+        stravaUserId
+      });
+
+      // Get stored access token for this Strava user
+      const accessToken = await this.getStoredAccessToken(stravaUserId);
+      
+      if (!accessToken) {
+        throw new Error(`No stored access token found for Strava user: ${stravaUserId}`);
+      }
+
+      // Fetch activity details with direct API call (bypass session-based caching)
+      const activityData = await this.fetchActivityWithToken(activityId, accessToken);
+      
+      if (!activityData) {
+        throw new Error(`Activity ${activityId} not found or not accessible`);
+      }
+
+      // Validate activity has required map data
+      if (!activityData.map || !activityData.map.polyline) {
+        throw new Error(`Activity ${activityId} does not contain GPS route data`);
+      }
+
+      console.log('[StravaService] Successfully fetched activity for order fulfillment:', {
+        activityId: activityData.id,
+        name: activityData.name,
+        hasPolyline: !!activityData.map.polyline,
+        distance: activityData.distance
+      });
+
+      return activityData;
+    } catch (error) {
+      console.error('[StravaService] Failed to fetch activity for order fulfillment:', error);
+      throw new Error(`Could not fetch activity ${activityId} for order fulfillment: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get stored access token for a Strava user
+   * In a production system, this would query a database or secure token store
+   * For now, this is a placeholder that needs to be implemented
+   */
+  async getStoredAccessToken(stravaUserId) {
+    try {
+      // TODO: Implement token storage and retrieval
+      // This could be:
+      // 1. Database lookup by Strava user ID
+      // 2. Encrypted token storage file
+      // 3. External token management service
+      
+      console.warn('[StravaService] Token storage not yet implemented - using placeholder');
+      return null;
+    } catch (error) {
+      console.error('[StravaService] Error retrieving stored token:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Fetch activity data using a specific access token (no session required)
+   */
+  async fetchActivityWithToken(activityId, accessToken) {
+    try {
+      return await this.stravaApiRequest(
+        `https://www.strava.com/api/v3/activities/${activityId}`,
+        accessToken
+      );
+    } catch (error) {
+      // Handle token expiration by attempting refresh
+      if (error.status === 401) {
+        console.log('[StravaService] Access token expired, attempting refresh...');
+        // TODO: Implement token refresh for stored tokens
+        throw new Error('Access token expired and refresh not yet implemented');
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Validate activity data for map generation
+   */
+  validateActivityForMapGeneration(activityData) {
+    const required = ['id', 'name', 'map'];
+    
+    for (const field of required) {
+      if (!activityData[field]) {
+        return { valid: false, reason: `Missing required field: ${field}` };
+      }
+    }
+
+    if (!activityData.map.polyline) {
+      return { valid: false, reason: 'Activity does not contain GPS route data' };
+    }
+
+    // Check if polyline has sufficient data points
+    const polyline = require('@mapbox/polyline');
+    try {
+      const coordinates = polyline.decode(activityData.map.polyline);
+      if (coordinates.length < 2) {
+        return { valid: false, reason: 'Activity route has insufficient GPS points' };
+      }
+    } catch (error) {
+      return { valid: false, reason: 'Invalid polyline data format' };
+    }
+
+    return { valid: true };
+  }
+
+  /**
+   * Transform activity data for map configuration
+   */
+  transformActivityForMapConfig(activityData) {
+    const polyline = require('@mapbox/polyline');
+    
+    // Decode polyline and convert to [lng, lat] format for Mapbox
+    const coordinates = polyline.decode(activityData.map.polyline)
+      .map(([lat, lng]) => [lng, lat]);
+
+    return {
+      id: activityData.id,
+      name: activityData.name || 'Strava Activity',
+      coordinates: coordinates,
+      distance: activityData.distance,
+      movingTime: activityData.moving_time,
+      elevationGain: activityData.total_elevation_gain,
+      startDate: activityData.start_date,
+      type: activityData.sport_type || activityData.type,
+      polyline: activityData.map.polyline
+    };
+  }
 }
 
 // Export singleton instance

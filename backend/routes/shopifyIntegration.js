@@ -361,7 +361,7 @@ router.post('/complete-flow', requireAuth, (req, res) => {
  * Shopify Webhook Handler for Order Processing
  * Handles orders/create and orders/paid webhooks to trigger map generation
  */
-router.post('/webhook/order', express.raw({ type: 'application/json' }), async (req, res) => {
+router.post('/webhook/order', async (req, res) => {
   try {
     console.log('[Shopify Webhook] Order webhook received');
     
@@ -374,21 +374,32 @@ router.post('/webhook/order', express.raw({ type: 'application/json' }), async (
       return res.status(400).json({ error: 'Missing required webhook headers' });
     }
 
-    // Verify webhook authenticity
+    // Verify webhook authenticity using preserved raw body
     const crypto = require('crypto');
-    const body = req.body;
+    const rawBody = req.rawBody;
+    
+    if (!rawBody) {
+      console.log('[Shopify Webhook] Raw body not available for HMAC verification');
+      return res.status(400).json({ error: 'Raw body required for webhook verification' });
+    }
+    
     const calculatedHmac = crypto
       .createHmac('sha256', process.env.SHOPIFY_WEBHOOK_SECRET || process.env.SHOPIFY_SECRET_KEY)
-      .update(body, 'utf8')
+      .update(rawBody, 'utf8')
       .digest('base64');
 
     if (calculatedHmac !== hmacHeader) {
-      console.log('[Shopify Webhook] HMAC verification failed');
+      console.log('[Shopify Webhook] HMAC verification failed', {
+        calculated: calculatedHmac,
+        received: hmacHeader
+      });
       return res.status(401).json({ error: 'Webhook verification failed' });
     }
 
-    // Parse order data
-    const orderData = JSON.parse(body.toString());
+    console.log('[Shopify Webhook] HMAC verification successful');
+
+    // Parse the raw body as JSON for processing
+    const orderData = JSON.parse(rawBody);
     console.log('[Shopify Webhook] Processing order:', {
       id: orderData.id,
       name: orderData.name,
@@ -409,12 +420,142 @@ router.post('/webhook/order', express.raw({ type: 'application/json' }), async (
   }
 });
 
+// Order processing state tracker to prevent duplicates
+const orderProcessingState = new Map();
+const configProcessingState = new Map();
+const ORDER_PROCESSING_TIMEOUT = 10 * 60 * 1000; // 10 minutes
+
+/**
+ * Check if order is currently being processed or recently processed
+ */
+function isOrderBeingProcessed(orderId, webhookTopic) {
+  const key = `${orderId}_${webhookTopic}`;
+  const processingInfo = orderProcessingState.get(key);
+  
+  if (!processingInfo) {
+    return false;
+  }
+  
+  // Check if processing is still within timeout window
+  const now = Date.now();
+  if (now - processingInfo.timestamp > ORDER_PROCESSING_TIMEOUT) {
+    // Clean up expired entry
+    orderProcessingState.delete(key);
+    return false;
+  }
+  
+  return true;
+}
+
+/**
+ * Mark order as being processed
+ */
+function markOrderAsProcessing(orderId, webhookTopic) {
+  const key = `${orderId}_${webhookTopic}`;
+  orderProcessingState.set(key, {
+    timestamp: Date.now(),
+    status: 'processing'
+  });
+}
+
+/**
+ * Mark order processing as complete
+ */
+function markOrderProcessingComplete(orderId, webhookTopic) {
+  const key = `${orderId}_${webhookTopic}`;
+  const processingInfo = orderProcessingState.get(key);
+  if (processingInfo) {
+    processingInfo.status = 'completed';
+    processingInfo.completedAt = Date.now();
+  }
+}
+
+/**
+ * Check if configuration is currently being processed
+ */
+function isConfigurationBeingProcessed(configId) {
+  const processingInfo = configProcessingState.get(configId);
+  
+  if (!processingInfo) {
+    return false;
+  }
+  
+  const now = Date.now();
+  if (now - processingInfo.timestamp > ORDER_PROCESSING_TIMEOUT) {
+    configProcessingState.delete(configId);
+    return false;
+  }
+  
+  return true;
+}
+
+/**
+ * Mark configuration as being processed
+ */
+function markConfigurationAsProcessing(configId) {
+  configProcessingState.set(configId, {
+    timestamp: Date.now(),
+    status: 'processing'
+  });
+}
+
+/**
+ * Mark configuration processing as complete
+ */
+function markConfigurationProcessingComplete(configId) {
+  const processingInfo = configProcessingState.get(configId);
+  if (processingInfo) {
+    processingInfo.status = 'completed';
+    processingInfo.completedAt = Date.now();
+  }
+}
+
+/**
+ * Periodic cleanup of expired processing states
+ */
+function cleanupExpiredProcessingStates() {
+  const now = Date.now();
+  let cleanedCount = 0;
+  
+  // Clean up expired order processing states
+  for (const [key, processingInfo] of orderProcessingState.entries()) {
+    if (now - processingInfo.timestamp > ORDER_PROCESSING_TIMEOUT) {
+      orderProcessingState.delete(key);
+      cleanedCount++;
+    }
+  }
+  
+  // Clean up expired configuration processing states
+  for (const [configId, processingInfo] of configProcessingState.entries()) {
+    if (now - processingInfo.timestamp > ORDER_PROCESSING_TIMEOUT) {
+      configProcessingState.delete(configId);
+      cleanedCount++;
+    }
+  }
+  
+  if (cleanedCount > 0) {
+    console.log(`[Processing State Cleanup] Cleaned up ${cleanedCount} expired processing states`);
+  }
+}
+
+// Run cleanup every 5 minutes
+setInterval(cleanupExpiredProcessingStates, 5 * 60 * 1000);
+
 /**
  * Process map orders and trigger high-resolution generation
  */
 async function processMapOrder(orderData, webhookTopic) {
   try {
     console.log('[Map Order Processing] Processing order:', orderData.name);
+    
+    // Check for duplicate processing
+    if (isOrderBeingProcessed(orderData.id, webhookTopic)) {
+      console.log('[Map Order Processing] Order already being processed, skipping:', orderData.name, webhookTopic);
+      return;
+    }
+    
+    // Mark as processing to prevent duplicates
+    markOrderAsProcessing(orderData.id, webhookTopic);
 
     // Find line items that contain map data
     const mapLineItems = orderData.line_items.filter(item => {
@@ -439,18 +580,257 @@ async function processMapOrder(orderData, webhookTopic) {
       }
     }
 
+    // Mark processing as complete
+    markOrderProcessingComplete(orderData.id, webhookTopic);
+    console.log('[Map Order Processing] Order processing completed:', orderData.name, webhookTopic);
+
   } catch (error) {
     console.error('[Map Order Processing] Error:', error);
+    // Mark as failed/completed to prevent stuck state
+    markOrderProcessingComplete(orderData.id, webhookTopic);
     throw error;
   }
 }
 
 /**
- * Process individual map line item
+ * Process individual map line item - Enhanced for background job integration
  */
 async function processMapLineItem(lineItem, orderData, webhookTopic) {
   try {
     // Extract map metadata from line item properties
+    const properties = lineItem.properties || [];
+    const configurationId = properties.find(p => p.name === 'Configuration ID')?.value;
+    const activityId = properties.find(p => p.name === 'Activity ID')?.value;
+    const printSize = properties.find(p => p.name === 'Print Size')?.value || 'A4';
+    const orientation = properties.find(p => p.name === 'Orientation')?.value || 'portrait';
+    const mapStyle = properties.find(p => p.name === 'Map Style')?.value || 'streets';
+    const mapType = properties.find(p => p.name === 'Map Type')?.value;
+
+    console.log('[Map Line Item] Processing with JSON file-based approach:', {
+      configurationId,
+      activityId,
+      printSize,
+      orientation,
+      mapStyle,
+      mapType,
+      orderId: orderData.id,
+      orderName: orderData.name,
+      webhookTopic
+    });
+
+    // NEW APPROACH: Use Configuration ID if available
+    if (configurationId) {
+      console.log('[Map Line Item] Using JSON file-based configuration:', configurationId);
+      
+      // Check if this configuration is already being processed
+      if (isConfigurationBeingProcessed(configurationId)) {
+        console.log('[Map Line Item] Configuration already being processed, skipping:', configurationId);
+        return;
+      }
+      
+      if (webhookTopic === 'orders/paid') {
+        console.log('[Map Line Item] Order paid - generating high-resolution map');
+        
+        // Mark configuration as processing
+        markConfigurationAsProcessing(configurationId);
+        
+        try {
+          // Use OrderMapService to generate map from configuration
+          const orderMapService = require('../services/orderMapService');
+          const result = await orderMapService.generateMapFromOrder(orderData, lineItem, webhookTopic);
+          
+          console.log('[Map Line Item] Map generation completed successfully:', {
+            orderId: orderData.id,
+            configurationId: result.configId,
+            mapPath: result.mapPath,
+            configSource: result.configSource
+          });
+          
+          // Mark configuration processing as complete
+          markConfigurationProcessingComplete(configurationId);
+          
+        } catch (error) {
+          console.error('[Map Line Item] Map generation failed:', error);
+          // Mark as complete to prevent stuck state
+          markConfigurationProcessingComplete(configurationId);
+          throw error;
+        }
+        
+      } else if (webhookTopic === 'orders/create') {
+        console.log('[Map Line Item] Order created - configuration ready for processing on payment');
+      }
+      
+      return;
+    }
+
+    // FALLBACK APPROACH: Handle legacy orders without Configuration ID
+    console.log('[Map Line Item] No Configuration ID found - checking for legacy approach');
+    
+    // Check for legacy Purchase ID or other identifiers
+    const purchaseId = properties.find(p => p.name === 'Purchase ID')?.value;
+    const previewId = properties.find(p => p.name === 'Preview ID')?.value;
+    const mapConfig = properties.find(p => p.name === 'Map Config')?.value;
+
+    if (purchaseId || previewId || mapConfig) {
+      console.log('[Map Line Item] Found legacy identifiers - using fallback generation');
+      await fallbackMapGeneration(lineItem, orderData, webhookTopic);
+      return;
+    }
+
+    // No valid map identifiers found
+    console.log('[Map Line Item] No valid map identifiers found - skipping processing');
+
+  } catch (error) {
+    console.error('[Map Line Item] Error processing line item:', error);
+    throw error;
+  }
+}
+
+/**
+ * Process completed purchase - add map file to order if generation is complete
+ */
+async function processCompletedPurchase(job, orderData, lineItem) {
+  try {
+    console.log('[Completed Purchase] Processing for job:', {
+      jobId: job.id,
+      purchaseId: job.purchaseId,
+      status: job.status,
+      orderName: orderData.name
+    });
+
+    if (job.status === 'completed' && job.filePath && job.fileName) {
+      // Map generation is complete - add filename to order
+      console.log('[Completed Purchase] Map generation complete, adding file to order:', {
+        fileName: job.fileName,
+        filePath: job.filePath
+      });
+
+      // Add map filename as order metafield or note
+      await addMapFileToOrder(orderData, job);
+      
+      // Send completion email to customer
+      await sendOrderCompletionEmail(orderData, job);
+      
+    } else if (job.status === 'processing' || job.status === 'pending') {
+      // Map generation still in progress
+      console.log('[Completed Purchase] Map generation in progress, will notify when complete');
+      
+      // Send processing notification to customer
+      await sendOrderProcessingEmail(orderData, job);
+      
+      // Set up listener for job completion (if not already set)
+      setupJobCompletionListener(job, orderData);
+      
+    } else if (job.status === 'failed') {
+      // Map generation failed
+      console.error('[Completed Purchase] Map generation failed for job:', job.id);
+      
+      // Attempt retry or notify customer of issue
+      await handleGenerationFailure(job, orderData);
+    }
+
+  } catch (error) {
+    console.error('[Completed Purchase] Error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Process order creation - log and prepare for payment
+ */
+async function processOrderCreation(job, orderData, lineItem) {
+  try {
+    console.log('[Order Creation] Processing for job:', {
+      jobId: job.id,
+      purchaseId: job.purchaseId,
+      status: job.status,
+      orderName: orderData.name
+    });
+
+    // Just log the order creation - main processing happens on payment
+    console.log('[Order Creation] Order created, waiting for payment confirmation');
+
+  } catch (error) {
+    console.error('[Order Creation] Error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Add map file information to Shopify order
+ */
+async function addMapFileToOrder(orderData, job) {
+  try {
+    // TODO: Implement Shopify API call to add order metafield or note
+    // For now, just log the information
+    console.log('[Order Update] Would add map file to order:', {
+      orderId: orderData.id,
+      orderName: orderData.name,
+      fileName: job.fileName,
+      filePath: job.filePath,
+      customerId: orderData.customer?.id
+    });
+
+    // In a real implementation, this would make a Shopify Admin API call:
+    // await shopifyAdminAPI.addOrderMetafield(orderData.id, {
+    //   key: 'map_file_name',
+    //   value: job.fileName,
+    //   type: 'single_line_text_field'
+    // });
+
+  } catch (error) {
+    console.error('[Order Update] Error adding map file to order:', error);
+    throw error;
+  }
+}
+
+/**
+ * Set up listener for job completion
+ */
+function setupJobCompletionListener(job, orderData) {
+  try {
+    const backgroundJobManager = require('../services/backgroundJobManager');
+    
+    // Listen for job completion
+    const handleJobCompletion = (completedJob) => {
+      if (completedJob.id === job.id && completedJob.status === 'completed') {
+        console.log('[Job Completion] Background job completed, updating order:', {
+          jobId: completedJob.id,
+          orderId: orderData.id
+        });
+        
+        // Add map file to order
+        addMapFileToOrder(orderData, completedJob).catch(error => {
+          console.error('[Job Completion] Error updating order:', error);
+        });
+        
+        // Send completion email
+        sendOrderCompletionEmail(orderData, completedJob).catch(error => {
+          console.error('[Job Completion] Error sending completion email:', error);
+        });
+        
+        // Remove listener
+        backgroundJobManager.removeListener('jobStatusChanged', handleJobCompletion);
+      }
+    };
+    
+    backgroundJobManager.on('jobStatusChanged', handleJobCompletion);
+    
+    console.log('[Job Completion] Listener set up for job:', job.id);
+
+  } catch (error) {
+    console.error('[Job Completion] Error setting up listener:', error);
+  }
+}
+
+/**
+ * Fallback map generation for backwards compatibility
+ */
+async function fallbackMapGeneration(lineItem, orderData, webhookTopic) {
+  try {
+    console.log('[Fallback Generation] Using legacy map generation for line item:', lineItem.id);
+    
+    // Use the existing generateHighResolutionMap function
     const properties = lineItem.properties || [];
     const purchaseId = properties.find(p => p.name === 'Purchase ID')?.value;
     const previewId = properties.find(p => p.name === 'Preview ID')?.value;
@@ -465,36 +845,19 @@ async function processMapLineItem(lineItem, orderData, webhookTopic) {
     if (mapConfigProperty) {
       try {
         mapConfiguration = JSON.parse(Buffer.from(mapConfigProperty, 'base64').toString());
-        console.log('[Map Line Item] Decoded map configuration:', mapConfiguration);
       } catch (error) {
-        console.warn('[Map Line Item] Failed to decode map configuration:', error.message);
+        console.warn('[Fallback Generation] Failed to decode map configuration:', error.message);
       }
     }
 
-    console.log('[Map Line Item] Processing:', {
-      purchaseId,
-      previewId,
-      printSize,
-      orientation,
-      mapStyle,
-      activityId,
-      orderId: orderData.id,
-      orderName: orderData.name
-    });
-
-    if (!purchaseId && !previewId) {
-      console.log('[Map Line Item] No purchase ID or preview ID found, skipping');
-      return;
-    }
-
-    // Create map generation job
-    const mapGenerationJob = {
-      id: `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    const legacyJob = {
+      id: `legacy_job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       purchaseId: purchaseId,
       previewId: previewId,
       orderId: orderData.id,
       orderName: orderData.name,
       lineItemId: lineItem.id,
+      orderProperties: properties,
       customer: {
         id: orderData.customer?.id,
         email: orderData.customer?.email,
@@ -506,62 +869,62 @@ async function processMapLineItem(lineItem, orderData, webhookTopic) {
         orientation: orientation,
         style: `mapbox://styles/mapbox/${mapStyle}`,
         activityId: activityId,
-        configuration: mapConfiguration // Include decoded map configuration
+        configuration: mapConfiguration
       },
       webhookTopic: webhookTopic,
       status: 'queued',
       createdAt: new Date().toISOString()
     };
 
-    // For paid orders, immediately trigger high-res generation
     if (webhookTopic === 'orders/paid') {
-      console.log('[Map Generation] Triggering high-resolution generation for paid order');
-      await generateHighResolutionMap(mapGenerationJob);
-    } else {
-      console.log('[Map Generation] Order created but not yet paid, queuing for later processing');
-      // Store job for processing when payment is confirmed
-      // In a production system, you'd store this in a database
+      await generateHighResolutionMap(legacyJob);
     }
 
   } catch (error) {
-    console.error('[Map Line Item] Error processing line item:', error);
+    console.error('[Fallback Generation] Error:', error);
     throw error;
   }
 }
 
 /**
- * Generate high-resolution map for completed order using fresh Strava data
- * Improved implementation: fetches activity data from Strava API and uses map configuration
+ * Generate high-resolution map for completed order using robust multi-tier fallback
+ * Uses OrderMapService for self-contained, session-independent processing
  */
 async function generateHighResolutionMap(job) {
   try {
-    console.log('[High-Res Generation] Starting optimized generation for job:', job.id);
+    console.log('[High-Res Generation] Starting robust generation for job:', job.id);
 
-    // Extract preview ID from Shopify order line item properties
-    const previewId = extractPreviewIdFromOrder(job.orderData);
+    // Use the new OrderMapService for reliable map generation
+    const orderMapService = require('../services/orderMapService');
     
-    if (!previewId) {
-      throw new Error('Preview ID not found in order data - cannot generate high-res map');
+    const result = await orderMapService.generateMapFromOrder(
+      { 
+        id: job.orderId, 
+        name: job.orderName,
+        customer: job.customer
+      },
+      {
+        id: job.lineItemId,
+        properties: job.orderProperties || []
+      },
+      job.webhookTopic
+    );
+
+    if (!result || !result.mapPath) {
+      throw new Error('OrderMapService failed to generate map');
     }
 
-    console.log('[High-Res Generation] Using preview ID:', previewId);
-
-    const printSize = job.printSize || 'A4';
-    const orientation = job.printOrientation || 'portrait';
-
-    // Use our optimized endpoint that reuses the validated preview configuration
-    const mapPath = await generateHighResFromPreview(previewId, printSize, orientation);
-    
-    if (!mapPath) {
-      throw new Error('High-resolution map generation failed');
-    }
-
-    console.log('[High-Res Generation] High-res map generated successfully:', mapPath);
+    console.log('[High-Res Generation] High-res map generated successfully:', {
+      mapPath: result.mapPath,
+      configSource: result.configSource,
+      method: 'robust_multi_tier_fallback'
+    });
 
     // Update job status with generated map path
     job.status = 'completed';
     job.completedAt = new Date().toISOString();
-    job.mapFilePath = mapPath;
+    job.mapFilePath = result.mapPath;
+    job.configurationSource = result.configSource;
 
     // Store completion information
     const path = require('path');
@@ -578,8 +941,9 @@ async function generateHighResolutionMap(job) {
     // Store completed job information
     await fs.writeFile(jobFilePath, JSON.stringify({
       ...job,
-      mapFilePath: mapPath,
-      generationMethod: 'optimized_preview_reuse',
+      mapFilePath: result.mapPath,
+      generationMethod: 'robust_multi_tier_fallback',
+      configurationSource: result.configSource,
       status: 'completed',
       completedAt: new Date().toISOString()
     }, null, 2));
@@ -587,7 +951,7 @@ async function generateHighResolutionMap(job) {
     console.log('[High-Res Generation] Job completed and stored:', jobFilePath);
 
     // Send fulfillment email to customer with download link
-    await sendOrderFulfillmentEmail(job, mapPath);
+    await sendOrderFulfillmentEmail(job, result.mapPath);
 
     console.log('[High-Res Generation] Order fulfilled successfully for job:', job.id);
 
@@ -619,108 +983,31 @@ async function generateHighResolutionMap(job) {
   }
 }
 
-/**
- * Extract preview ID from Shopify order line item properties
- */
-function extractPreviewIdFromOrder(orderData) {
-  try {
-    if (!orderData?.line_items) {
-      console.warn('[Preview ID Extraction] No line items found in order data');
-      return null;
-    }
-
-    for (const lineItem of orderData.line_items) {
-      if (lineItem.properties) {
-        // Check if properties is an array (newer Shopify format)
-        if (Array.isArray(lineItem.properties)) {
-          for (const prop of lineItem.properties) {
-            if (prop.name === 'Preview ID') {
-              console.log('[Preview ID Extraction] Found preview ID:', prop.value);
-              return prop.value;
-            }
-          }
-        } 
-        // Check if properties is an object (older format)
-        else if (typeof lineItem.properties === 'object') {
-          if (lineItem.properties['Preview ID']) {
-            console.log('[Preview ID Extraction] Found preview ID:', lineItem.properties['Preview ID']);
-            return lineItem.properties['Preview ID'];
-          }
-        }
-      }
-    }
-
-    console.warn('[Preview ID Extraction] Preview ID not found in any line item properties');
-    return null;
-  } catch (error) {
-    console.error('[Preview ID Extraction] Error extracting preview ID:', error);
-    return null;
-  }
-}
 
 /**
- * Generate high-resolution map using optimized preview endpoint
- */
-async function generateHighResFromPreview(previewId, format, orientation) {
-  try {
-    console.log('[Optimized Generation] Calling optimized endpoint for preview:', previewId);
-
-    // Use axios to call our optimized endpoint internally (more reliable than fetch in Node.js)
-    const axios = require('axios');
-    const response = await axios.post(`http://localhost:3000/api/maps/generate-from-preview/${previewId}`, {
-      format: format,
-      orientation: orientation,
-      dpi: 300
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-
-    if (response.status !== 200) {
-      throw new Error(response.data?.message || 'Optimized generation failed');
-    }
-
-    const result = response.data;
-    console.log('[Optimized Generation] Success:', {
-      mapPath: result.mapPath,
-      generationTime: result.config.generationTime,
-      method: 'preview_config_reuse'
-    });
-
-    return result.mapPath;
-
-  } catch (error) {
-    console.error('[Optimized Generation] Failed:', error);
-    throw new Error(`Optimized high-res generation failed: ${error.message}`);
-  }
-}
-
-/**
- * Send order fulfillment email to customer with download link
+ * Send order fulfillment email to customer - map ready for processing
  */
 async function sendOrderFulfillmentEmail(job, mapFilePath) {
   try {
     console.log('[Order Fulfillment] Sending fulfillment email for job:', job.id);
     
     // In a production system, you would:
-    // 1. Upload the map file to a CDN or secure download area
-    // 2. Generate a secure download link with expiration
-    // 3. Send a professional email with the download link
-    // 4. Update the Shopify order with fulfillment information
+    // 1. Send completion notification to customer
+    // 2. Update the Shopify order with fulfillment information
+    // 3. Prepare map for physical printing/shipping if applicable
     
     console.log('[Order Fulfillment] Map ready for delivery:', {
       jobId: job.id,
-      customerEmail: job.orderData?.email || 'customer@example.com',
+      customerEmail: job.customer?.email || 'customer@example.com',
       mapFile: mapFilePath,
-      orderNumber: job.orderData?.name || 'N/A',
+      orderNumber: job.orderName || 'N/A',
       fileSize: require('fs').existsSync(mapFilePath) ? 
         Math.round(require('fs').statSync(mapFilePath).size / 1024) + ' KB' : 'Unknown'
     });
 
     // TODO: Integrate with actual email service (SendGrid, AWS SES, etc.)
-    // TODO: Upload map to secure storage and generate download link
     // TODO: Update Shopify order status to fulfilled
+    // TODO: Integrate with printing service if physical delivery is required
     
     console.log('[Order Fulfillment] Fulfillment completed for job:', job.id);
     
@@ -742,7 +1029,7 @@ async function sendOrderProcessingEmail(job) {
     // and provide an estimated completion time
     
     console.log('[Email Notification] Processing notification would be sent to:', job.customer.email);
-    console.log('[Email Notification] Message: Your custom map is being prepared and will be ready for download soon.');
+    console.log('[Email Notification] Message: Your custom map is being prepared and will be ready for fulfillment soon.');
     
   } catch (error) {
     console.error('[Email Notification] Error sending processing email:', error);
@@ -765,6 +1052,75 @@ async function sendOrderCompletionEmail(job) {
   } catch (error) {
     console.error('[Email Notification] Error sending email:', error);
     // Don't throw - email failure shouldn't break the order processing
+  }
+}
+
+/**
+ * Handle generation failure - retry or notify customer
+ */
+async function handleGenerationFailure(job, orderData) {
+  try {
+    console.log('[Generation Failure] Handling failed generation:', {
+      jobId: job.id,
+      purchaseId: job.purchaseId,
+      retryCount: job.retryCount,
+      error: job.error
+    });
+
+    const backgroundJobManager = require('../services/backgroundJobManager');
+    
+    if (job.retryCount < job.maxRetries) {
+      // Attempt retry
+      console.log('[Generation Failure] Attempting retry:', {
+        jobId: job.id,
+        retryCount: job.retryCount + 1,
+        maxRetries: job.maxRetries
+      });
+      
+      await backgroundJobManager.updateJobStatus(job.id, 'pending', {
+        retryCount: job.retryCount + 1
+      });
+      
+    } else {
+      // Max retries reached - notify customer and support team
+      console.error('[Generation Failure] Max retries reached for job:', job.id);
+      
+      // Send failure notification email to customer
+      await sendGenerationFailureEmail(orderData, job);
+      
+      // Log for manual intervention
+      console.error('[Generation Failure] Manual intervention required:', {
+        orderId: orderData.id,
+        orderName: orderData.name,
+        customerEmail: orderData.customer?.email,
+        jobId: job.id,
+        error: job.error
+      });
+    }
+
+  } catch (error) {
+    console.error('[Generation Failure] Error handling failure:', error);
+  }
+}
+
+/**
+ * Send generation failure notification to customer
+ */
+async function sendGenerationFailureEmail(orderData, job) {
+  try {
+    console.log('[Generation Failure] Sending failure notification email:', {
+      orderName: orderData.name,
+      customerEmail: orderData.customer?.email,
+      jobId: job.id
+    });
+    
+    // In a production system, implement failure notification email here
+    // This would inform the customer of the issue and provide next steps
+    
+    console.log('[Generation Failure] Failure notification would be sent to:', orderData.customer?.email);
+    
+  } catch (error) {
+    console.error('[Generation Failure] Error sending failure email:', error);
   }
 }
 

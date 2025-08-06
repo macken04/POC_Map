@@ -6,7 +6,9 @@
 
 const puppeteer = require('puppeteer');
 const path = require('path');
-const fs = require('fs').promises;
+const fs = require('fs');
+const fsPromises = require('fs').promises;
+const sharp = require('sharp');
 const fetch = require('node-fetch');
 const config = require('../config');
 
@@ -291,6 +293,74 @@ class MapService {
   }
 
   /**
+   * Normalize Mapbox style input to a proper Mapbox style URL
+   * Handles various input formats and returns a consistent Mapbox style URL
+   * @param {string} style - Style input (ID, partial URL, or full URL)
+   * @returns {string} Normalized Mapbox style URL
+   */
+  static normalizeMapboxStyleURL(style) {
+    if (!style || typeof style !== 'string') {
+      // Default to streets-v12 if no style provided
+      return 'mapbox://styles/mapbox/streets-v12';
+    }
+
+    // If already a complete mapbox:// URL, return as-is
+    if (style.startsWith('mapbox://styles/')) {
+      return style;
+    }
+
+    // If it's a custom style URL (https://), return as-is
+    if (style.startsWith('https://') || style.startsWith('http://')) {
+      return style;
+    }
+
+    // Handle style name mappings - matches frontend getMapTypeStyles() function
+    const styleMap = {
+      // Standard Mapbox styles
+      'streets': 'streets-v11',
+      'outdoors': 'outdoors-v11',
+      'light': 'light-v10', 
+      'dark': 'dark-v10',
+      'satellite': 'satellite-v9',
+      'satellite-streets': 'satellite-streets-v11',
+      'terrain': 'outdoors-v11',
+      'navigation-day': 'navigation-day-v1',
+      'navigation-night': 'navigation-night-v1',
+      
+      // Custom styles from frontend (these need special handling)
+      'grey': 'macken04/cm9qvmy7500hr01s5h4h67lsr'
+    };
+
+    // Normalize the style name
+    let normalizedStyle = style.toLowerCase().trim();
+    
+    // Check if it's a mapped style name
+    if (styleMap[normalizedStyle]) {
+      const mappedStyle = styleMap[normalizedStyle];
+      
+      // Handle custom styles (contain '/')
+      if (mappedStyle.includes('/')) {
+        return `mapbox://styles/${mappedStyle}`;
+      }
+      // Handle standard Mapbox styles
+      else {
+        return `mapbox://styles/mapbox/${mappedStyle}`;
+      }
+    }
+    // If it already has version (e.g., "streets-v12"), use as-is for Mapbox styles
+    else if (normalizedStyle.includes('-v')) {
+      // Keep the original casing for version numbers
+      normalizedStyle = style.trim();
+      return `mapbox://styles/mapbox/${normalizedStyle}`;
+    }
+    // If it's just a base name without version, add latest version
+    else {
+      normalizedStyle = `${normalizedStyle}-v12`; // Default to v12 for most styles
+      return `mapbox://styles/mapbox/${normalizedStyle}`;
+    }
+  }
+
+  /**
    * Initialize Puppeteer browser instance with macOS ARM64 optimizations
    */
   async initialize() {
@@ -300,11 +370,7 @@ class MapService {
 
     // Clean up any existing browser instance
     if (this.browser) {
-      try {
-        await this.browser.close();
-      } catch (error) {
-        // Ignore cleanup errors
-      }
+      await this.safeBrowserClose(this.browser);
       this.browser = null;
       this.isInitialized = false;
     }
@@ -371,13 +437,20 @@ class MapService {
       timeout: launchConfig.timeout
     });
 
+    let browser = null;
     try {
-      const browser = await puppeteer.launch(launchConfig);
+      // Launch browser with timeout wrapper
+      browser = await Promise.race([
+        puppeteer.launch(launchConfig),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Browser launch timeout')), launchConfig.timeout || 45000)
+        )
+      ]);
       
       // Verify browser connection with comprehensive health check
       const isHealthy = await this.verifyBrowserHealth(browser);
       if (!isHealthy) {
-        await browser.close();
+        await this.safeBrowserClose(browser);
         throw new Error('Browser failed health check');
       }
       
@@ -387,12 +460,41 @@ class MapService {
     } catch (error) {
       console.error(`MapService: Launch configuration failed:`, error.message);
       
-      // Log Chrome process output if dumpio was enabled
-      if (launchConfig.dumpio && error.message.includes('socket hang up')) {
+      // Enhanced error handling for different failure types
+      if (error.message.includes('socket hang up')) {
         console.error('MapService: Socket hang up detected - Chrome process may have crashed during startup');
+      } else if (error.message.includes('Protocol error')) {
+        console.error('MapService: Protocol error - Chrome DevTools communication failed');
+      } else if (error.message.includes('timeout')) {
+        console.error('MapService: Browser launch timeout - process may be hanging');
+      }
+      
+      // Ensure browser cleanup even on launch failure
+      if (browser) {
+        await this.safeBrowserClose(browser);
       }
       
       throw error;
+    }
+  }
+
+  /**
+   * Safely close browser with error handling
+   */
+  async safeBrowserClose(browser) {
+    if (!browser) return;
+    
+    try {
+      // Try graceful close first
+      await browser.close();
+    } catch (error) {
+      console.warn('MapService: Graceful browser close failed, attempting force close:', error.message);
+      try {
+        // Force close if graceful fails
+        await browser.disconnect();
+      } catch (disconnectError) {
+        console.warn('MapService: Browser disconnect also failed:', disconnectError.message);
+      }
     }
   }
 
@@ -435,12 +537,12 @@ class MapService {
    */
   getMacOSARM64Config(baseConfig, attempt) {
     const configs = [
-      // Attempt 1: ARM64 optimized with pipe connection
+      // Attempt 1: ARM64 optimized with WebSocket connection (most stable)
       {
         ...baseConfig,
         headless: 'new',
-        pipe: true,
-        dumpio: true,
+        pipe: false, // Use WebSocket instead of pipe for ARM64
+        dumpio: false, // Reduce logging overhead
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -450,31 +552,39 @@ class MapService {
           '--no-first-run',
           '--disable-default-apps',
           '--disable-sync',
-          '--disable-background-timer-throttling'
+          '--disable-background-timer-throttling',
+          '--disable-features=VizDisplayCompositor',
+          '--disable-gpu-sandbox'
         ]
       },
-      // Attempt 2: WebSocket connection with minimal flags
+      // Attempt 2: Minimal flags with WebSocket
       {
         ...baseConfig,
         headless: 'new',
-        dumpio: true,
+        pipe: false,
+        dumpio: false,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
-          '--no-first-run'
+          '--no-first-run',
+          '--disable-features=VizDisplayCompositor'
         ]
       },
-      // Attempt 3: Maximum compatibility mode with pipe fallback
+      // Attempt 3: Compatibility mode without problematic flags
       {
         ...baseConfig,
         headless: 'new',
-        pipe: true,
+        pipe: false,
         dumpio: true,
         ignoreDefaultArgs: ['--disable-extensions'],
         args: [
           '--no-sandbox',
-          '--disable-setuid-sandbox'
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-web-security',
+          '--no-first-run',
+          '--single-process' // Last resort for ARM64 compatibility
         ]
       }
     ];
@@ -498,7 +608,8 @@ class MapService {
           '--enable-webgl',
           '--enable-gpu',
           '--window-size=1200,800',
-          '--disable-infobars'
+          '--disable-infobars',
+          '--enable-chrome-browser-cloud-management'
         ]
       },
       // Attempt 2: Headless with WebGL
@@ -509,7 +620,8 @@ class MapService {
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
-          '--enable-webgl'
+          '--enable-webgl',
+          '--enable-chrome-browser-cloud-management'
         ]
       },
       // Attempt 3: Basic compatibility
@@ -519,7 +631,8 @@ class MapService {
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage'
+          '--disable-dev-shm-usage',
+          '--enable-chrome-browser-cloud-management'
         ]
       }
     ];
@@ -540,7 +653,8 @@ class MapService {
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-gpu',
-          '--no-first-run'
+          '--no-first-run',
+          '--enable-chrome-browser-cloud-management'
         ]
       },
       {
@@ -548,7 +662,8 @@ class MapService {
         headless: 'new',
         args: [
           '--no-sandbox',
-          '--disable-setuid-sandbox'
+          '--disable-setuid-sandbox',
+          '--enable-chrome-browser-cloud-management'
         ]
       }
     ];
@@ -568,7 +683,8 @@ class MapService {
           '--no-sandbox',
           '--disable-dev-shm-usage',
           '--enable-webgl',
-          '--no-first-run'
+          '--no-first-run',
+          '--enable-chrome-browser-cloud-management'
         ]
       },
       {
@@ -576,7 +692,8 @@ class MapService {
         headless: 'new',
         args: [
           '--no-sandbox',
-          '--disable-dev-shm-usage'
+          '--disable-dev-shm-usage',
+          '--enable-chrome-browser-cloud-management'
         ]
       }
     ];
@@ -594,7 +711,8 @@ class MapService {
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage'
+        '--disable-dev-shm-usage',
+        '--enable-chrome-browser-cloud-management'
       ]
     };
   }
@@ -644,7 +762,8 @@ class MapService {
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
-        '--no-first-run'
+        '--no-first-run',
+        '--enable-chrome-browser-cloud-management'
       ]
     };
   }
@@ -960,7 +1079,7 @@ class MapService {
 
       // Save to file if output path provided
       if (outputPath) {
-        await fs.writeFile(outputPath, screenshot);
+        await fsPromises.writeFile(outputPath, screenshot);
         console.log(`MapService: Map saved to ${outputPath}`);
       }
 
@@ -1619,9 +1738,10 @@ class MapService {
   }
 
   /**
-   * Generate HTML content for map rendering with resolution management
+   * Generate HTML content for map rendering - LEGACY METHOD - Use generateValidatedMapHTML instead
+   * This method is deprecated and should not be used. It lacks proper validation.
    */
-  generateMapHTML(options) {
+  generateMapHTML_OLD_DEPRECATED(options) {
     const {
       routeCoordinates,
       bounds,
@@ -1706,7 +1826,7 @@ class MapService {
         // Create map
         const map = new mapboxgl.Map({
             container: 'map',
-            style: 'mapbox://styles/mapbox/${style}',
+            style: '${MapService.normalizeMapboxStyleURL(style)}',
             center: [${center[1]}, ${center[0]}],
             zoom: 12,
             preserveDrawingBuffer: true,
@@ -1779,11 +1899,144 @@ class MapService {
 
         map.on('error', function(e) {
             console.error('Map error:', e);
-            window.mapLoaded = true; // Prevent infinite waiting
+            const errorMsg = e.error?.message || e.message || 'Map initialization failed';
+            
+            // If style-related error, try fallback to default style
+            if (errorMsg.includes('style') || errorMsg.includes('Failed to parse URL') || errorMsg.includes('Failed to construct')) {
+                console.warn('Style error detected, attempting fallback to default style');
+                window.mapError = 'Style loading failed, using default style: ' + errorMsg;
+                
+                // Try to create a new map with default style
+                try {
+                    const fallbackMap = new mapboxgl.Map({
+                        container: 'map',
+                        style: 'mapbox://styles/mapbox/streets-v12',
+                        center: [${center[1]}, ${center[0]}],
+                        zoom: 12,
+                        preserveDrawingBuffer: true,
+                        interactive: false,
+                        attributionControl: false
+                    });
+                    
+                    // Replace the original map instance
+                    window.map = fallbackMap;
+                    
+                    // Re-setup event handlers for fallback map
+                    fallbackMap.on('load', function() {
+                        // Add route source
+                        fallbackMap.addSource('route', {
+                            type: 'geojson',
+                            data: ${JSON.stringify(routeGeoJSON)}
+                        });
+
+                        // Add route layer
+                        fallbackMap.addLayer({
+                            id: 'route',
+                            type: 'line',
+                            source: 'route',
+                            layout: {
+                                'line-join': 'round',
+                                'line-cap': 'round'
+                            },
+                            paint: {
+                                'line-color': '${routeColor}',
+                                'line-width': ${Math.round(routeWidth * scalingFactor)}
+                            }
+                        });
+
+                        ${showStartEnd ? `
+                        // Add start marker
+                        const startCoord = ${JSON.stringify(routeCoordinates[0])};
+                        new mapboxgl.Marker({
+                            color: '#10B981'
+                        })
+                        .setLngLat([startCoord[1], startCoord[0]])
+                        .addTo(fallbackMap);
+
+                        // Add end marker
+                        const endCoord = ${JSON.stringify(routeCoordinates[routeCoordinates.length - 1])};
+                        new mapboxgl.Marker({
+                            color: '#EF4444'
+                        })
+                        .setLngLat([endCoord[1], endCoord[0]])
+                        .addTo(fallbackMap);
+                        ` : ''}
+
+                        // Fit to poster bounds
+                        const boundsPadding = Math.round(20 * scalingFactor);
+                        fallbackMap.fitBounds([
+                            [${bounds.west}, ${bounds.south}],
+                            [${bounds.east}, ${bounds.north}]
+                        ], {
+                            padding: boundsPadding
+                        });
+
+                        // Mark as loaded
+                        setTimeout(function() {
+                            window.mapLoaded = true;
+                        }, 2000);
+                    });
+                    
+                    fallbackMap.on('error', function() {
+                        console.error('Fallback map also failed');
+                        window.mapError = 'Both primary and fallback styles failed to load';
+                        window.mapLoaded = true;
+                    });
+                } catch (fallbackError) {
+                    console.error('Failed to create fallback map:', fallbackError);
+                    window.mapError = 'Failed to create fallback map: ' + fallbackError.message;
+                    window.mapLoaded = true;
+                }
+            } else {
+                window.mapError = errorMsg;
+                window.mapLoaded = true; // Prevent infinite waiting
+            }
         });
     </script>
 </body>
 </html>`;
+  }
+
+  /**
+   * Generate HTML content for map rendering - MAIN METHOD
+   * Handles both old-style and new-style parameter formats
+   */
+  generateMapHTML(options) {
+    // Check if this is new-style config (has route.coordinates) or old-style (has routeCoordinates)
+    if (options.route && options.route.coordinates) {
+      // New-style config - use validated method directly
+      return this.generateValidatedMapHTML(options);
+    } else {
+      // Old-style config - convert to new format
+      const convertedConfig = {
+        width: options.dimensions?.width || options.width || 800,
+        height: options.dimensions?.height || options.height || 600,
+        center: options.center || [-0.127, 51.507],
+        bounds: options.bounds || {
+          west: -0.2,
+          east: 0.0,
+          south: 51.4,
+          north: 51.6
+        },
+        style: options.style || 'mapbox://styles/mapbox/streets-v12',
+        route: {
+          coordinates: options.routeCoordinates || [],
+          color: options.routeColor || '#fc5200',
+          width: options.routeWidth || 4
+        },
+        markers: options.showStartEnd && options.routeCoordinates && options.routeCoordinates.length >= 2 ? {
+          start: options.routeCoordinates[0],
+          end: options.routeCoordinates[options.routeCoordinates.length - 1]
+        } : null,
+        title: options.title || '',
+        format: options.format || 'A4',
+        orientation: options.orientation || 'portrait',
+        dpi: options.dimensions?.dpi || options.dpi || 300
+      };
+
+      console.log('[MapService] Converting old-style parameters to new format for HTML generation');
+      return this.generateValidatedMapHTML(convertedConfig);
+    }
   }
 
   /**
@@ -2067,8 +2320,8 @@ class MapService {
       sourcePreview: 'reused_validated_config'
     });
 
-    const browser = await this.getBrowser();
-    const page = await browser.newPage();
+    await this.ensureBrowserReady();
+    const page = await this.browser.newPage();
 
     try {
       // Calculate device scale factor for 300 DPI
@@ -2099,7 +2352,7 @@ class MapService {
       const timestamp = Date.now();
       const randomString = Math.random().toString(36).substr(2, 9);
       const filename = `map_${highResConfig.format.toLowerCase()}_${highResConfig.orientation}_${timestamp}_${randomString}.png`;
-      const filePath = path.join(this.appConfig.generatedMapsPath, filename);
+      const filePath = path.join(this.appConfig.storage.generatedMapsDir, filename);
 
       await page.screenshot({
         path: filePath,
@@ -2242,24 +2495,82 @@ class MapService {
   /**
    * Generate HTML content for map rendering
    */
-  generateMapHTML(config) {
+  generateValidatedMapHTML(config) {
+    // Validate required configuration properties with comprehensive safe defaults
+    const validatedConfig = {
+      width: config.width || 800,
+      height: config.height || 600,
+      center: Array.isArray(config.center) && config.center.length === 2 ? config.center : [-0.127, 51.507], // Default to London
+      bounds: config.bounds && typeof config.bounds === 'object' ? config.bounds : {
+        west: -0.2,
+        east: 0.0,
+        south: 51.4,
+        north: 51.6
+      },
+      style: config.style || 'mapbox://styles/mapbox/streets-v12',
+      route: {
+        coordinates: Array.isArray(config.route?.coordinates) ? config.route.coordinates : [],
+        color: config.route?.color || '#fc5200',
+        width: config.route?.width || 4
+      },
+      markers: config.markers || null,
+      title: config.title || '',
+      format: config.format || 'A4',
+      orientation: config.orientation || 'portrait',
+      dpi: config.dpi || 300
+    };
+
+    // Additional validation for route coordinates
+    if (validatedConfig.route.coordinates.length > 0) {
+      // Ensure all coordinates are valid [lng, lat] pairs
+      validatedConfig.route.coordinates = validatedConfig.route.coordinates.filter(coord => {
+        return Array.isArray(coord) && coord.length >= 2 && 
+               typeof coord[0] === 'number' && typeof coord[1] === 'number' &&
+               !isNaN(coord[0]) && !isNaN(coord[1]);
+      });
+      
+      // If we filtered out invalid coordinates, log a warning
+      if (validatedConfig.route.coordinates.length !== config.route?.coordinates?.length) {
+        console.warn('[MapService] Filtered out invalid route coordinates');
+      }
+    }
+
+    // Generate markers from route if not provided but route exists
+    if (!validatedConfig.markers && validatedConfig.route.coordinates.length >= 2) {
+      validatedConfig.markers = {
+        start: validatedConfig.route.coordinates[0],
+        end: validatedConfig.route.coordinates[validatedConfig.route.coordinates.length - 1]
+      };
+    }
+
+    // Log configuration validation for debugging
+    console.log('[MapService] Generating HTML with validated config:', {
+      hasCenter: !!validatedConfig.center,
+      hasBounds: !!validatedConfig.bounds,
+      routeCoordCount: validatedConfig.route.coordinates.length,
+      hasMarkers: !!validatedConfig.markers,
+      originalStyle: config.style,
+      validatedStyle: validatedConfig.style,
+      normalizedStyle: MapService.normalizeMapboxStyleURL(validatedConfig.style)
+    });
+
     const routeGeoJSON = {
       type: 'Feature',
       geometry: {
         type: 'LineString',
-        coordinates: config.route.coordinates // Already in [lng, lat] format from decodePolyline
+        coordinates: validatedConfig.route.coordinates // Already in [lng, lat] format from decodePolyline
       },
       properties: {}
     };
 
-    const markersGeoJSON = config.markers ? {
+    const markersGeoJSON = validatedConfig.markers ? {
       type: 'FeatureCollection',
       features: [
         {
           type: 'Feature',
           geometry: {
             type: 'Point',
-            coordinates: config.markers.start // Already in [lng, lat] format
+            coordinates: validatedConfig.markers.start // Already in [lng, lat] format
           },
           properties: { type: 'start' }
         },
@@ -2267,7 +2578,7 @@ class MapService {
           type: 'Feature',
           geometry: {
             type: 'Point',
-            coordinates: config.markers.end // Already in [lng, lat] format
+            coordinates: validatedConfig.markers.end // Already in [lng, lat] format
           },
           properties: { type: 'end' }
         }
@@ -2287,8 +2598,8 @@ class MapService {
         body {
             margin: 0;
             padding: 0;
-            width: ${config.width}px;
-            height: ${config.height}px;
+            width: ${validatedConfig.width}px;
+            height: ${validatedConfig.height}px;
             overflow: hidden;
         }
         #map {
@@ -2301,15 +2612,20 @@ class MapService {
     <div id="map"></div>
     <script>
         mapboxgl.accessToken = '${this.appConfig.mapbox.accessToken}';
+        console.log('[MapHTML] Mapbox access token:', mapboxgl.accessToken ? 'present (' + mapboxgl.accessToken.substring(0, 8) + '...)' : 'MISSING');
         
-        // Map configuration with enhanced WebGL error handling
+        // Map configuration with enhanced WebGL error handling and safe defaults
+        const requestedStyle = '${MapService.normalizeMapboxStyleURL(validatedConfig.style)}';
+        console.log('[MapHTML] Using map style:', requestedStyle);
+        console.log('[MapHTML] Original style from config:', '${validatedConfig.style}');
+        
         let mapOptions = {
             container: 'map',
-            style: '${config.style}',
-            center: [${config.center[1]}, ${config.center[0]}],
+            style: requestedStyle,
+            center: [${validatedConfig.center[1]}, ${validatedConfig.center[0]}],
             bounds: [
-                [${config.bounds.west}, ${config.bounds.south}],
-                [${config.bounds.east}, ${config.bounds.north}]
+                [${validatedConfig.bounds.west}, ${validatedConfig.bounds.south}],
+                [${validatedConfig.bounds.east}, ${validatedConfig.bounds.north}]
             ],
             fitBoundsOptions: {
                 padding: 40
@@ -2347,11 +2663,103 @@ class MapService {
             map.on('error', function(e) {
                 console.error('Mapbox error:', e);
                 const errorMsg = e.error?.message || e.message || 'Map initialization failed';
-                window.mapError = errorMsg;
                 
-                // Try to provide more specific error information
-                if (errorMsg.includes('WebGL')) {
-                    window.mapError = 'Failed to initialize WebGL. Browser may not support WebGL or GPU acceleration is disabled.';
+                // If style-related error, try fallback to default style
+                if (errorMsg.includes('style') || errorMsg.includes('Failed to parse URL') || errorMsg.includes('Failed to construct') || 
+                    errorMsg.includes('Not Found') || errorMsg.includes('Unauthorized') || errorMsg.includes('403') || errorMsg.includes('401')) {
+                    console.error('[MapHTML] Style loading failed for:', requestedStyle);
+                    console.error('[MapHTML] Error details:', errorMsg);
+                    console.warn('[MapHTML] Attempting fallback to default streets style');
+                    window.mapError = 'Style loading failed, using default style: ' + errorMsg;
+                    
+                    // Try to create a new map with default style
+                    try {
+                        const fallbackMapOptions = {
+                            ...mapOptions,
+                            style: 'mapbox://styles/mapbox/streets-v12'
+                        };
+                        
+                        const fallbackMap = new mapboxgl.Map(fallbackMapOptions);
+                        window.map = fallbackMap;
+                        
+                        // Re-setup event handlers for fallback map
+                        fallbackMap.on('load', function() {
+                            window.mapLoaded = true;
+                            // Add route source and layer
+                            fallbackMap.addSource('route', {
+                                type: 'geojson',
+                                data: ${JSON.stringify(routeGeoJSON)}
+                            });
+
+                            fallbackMap.addLayer({
+                                id: 'route',
+                                type: 'line',
+                                source: 'route',
+                                layout: {
+                                    'line-join': 'round',
+                                    'line-cap': 'round'
+                                },
+                                paint: {
+                                    'line-color': '${validatedConfig.route.color}',
+                                    'line-width': ${validatedConfig.route.width}
+                                }
+                            });
+
+                            ${validatedConfig.markers ? `
+                            // Add markers
+                            fallbackMap.addSource('markers', {
+                                type: 'geojson',
+                                data: ${JSON.stringify(markersGeoJSON)}
+                            });
+
+                            fallbackMap.addLayer({
+                                id: 'start-marker',
+                                type: 'circle',
+                                source: 'markers',
+                                filter: ['==', ['get', 'type'], 'start'],
+                                paint: {
+                                    'circle-radius': 8,
+                                    'circle-color': '#00ff00',
+                                    'circle-stroke-color': '#ffffff',
+                                    'circle-stroke-width': 2
+                                }
+                            });
+
+                            fallbackMap.addLayer({
+                                id: 'end-marker',
+                                type: 'circle',
+                                source: 'markers',
+                                filter: ['==', ['get', 'type'], 'end'],
+                                paint: {
+                                    'circle-radius': 8,
+                                    'circle-color': '#ff0000',
+                                    'circle-stroke-color': '#ffffff',
+                                    'circle-stroke-width': 2
+                                }
+                            });
+                            ` : ''}
+                        });
+                        
+                        fallbackMap.on('error', function() {
+                            console.error('Fallback map also failed');
+                            window.mapError = 'Both primary and fallback styles failed to load';
+                            window.mapLoaded = true;
+                        });
+                    } catch (fallbackError) {
+                        console.error('Failed to create fallback map:', fallbackError);
+                        window.mapError = 'Failed to create fallback map: ' + fallbackError.message;
+                        window.mapLoaded = true;
+                    }
+                } else {
+                    // Handle other types of errors
+                    window.mapError = errorMsg;
+                    
+                    // Try to provide more specific error information
+                    if (errorMsg.includes('WebGL')) {
+                        window.mapError = 'Failed to initialize WebGL. Browser may not support WebGL or GPU acceleration is disabled.';
+                    }
+                    
+                    window.mapLoaded = true;
                 }
             });
 
@@ -2372,12 +2780,12 @@ class MapService {
                     'line-cap': 'round'
                 },
                 paint: {
-                    'line-color': '${config.route.color}',
-                    'line-width': ${config.route.width}
+                    'line-color': '${validatedConfig.route.color}',
+                    'line-width': ${validatedConfig.route.width}
                 }
             });
 
-            ${config.markers ? `
+            ${validatedConfig.markers ? `
             // Add markers
             map.addSource('markers', {
                 type: 'geojson',
@@ -2499,7 +2907,7 @@ class MapService {
       const filename = `${config.id || 'static_map'}.png`;
       const filePath = path.join(outputDir, filename);
       
-      await fs.writeFile(filePath, imageBuffer);
+      await fsPromises.writeFile(filePath, imageBuffer);
       
       console.log('MapService: Static map fallback generated successfully:', {
         filePath,
@@ -2636,27 +3044,43 @@ class MapService {
    * Normalize style ID for Static API
    */
   normalizeStyleId(style) {
-    if (!style) return 'streets-v12';
+    if (!style) return 'streets-v11';
     
     // Remove mapbox:// prefix if present
     if (style.startsWith('mapbox://styles/mapbox/')) {
       return style.replace('mapbox://styles/mapbox/', '');
     }
     
-    // Handle custom styles - for now, fall back to standard style
-    if (style.includes('/')) {
-      console.log('MapService: Custom style detected, using streets-v12 for Static API');
-      return 'streets-v12';
+    // Handle custom styles - extract the style ID and fallback appropriately  
+    if (style.startsWith('mapbox://styles/') && style.includes('/')) {
+      const customStyleId = style.replace('mapbox://styles/', '');
+      console.log(`MapService: Custom style detected: ${customStyleId}`);
+      
+      // For Static API, custom styles aren't supported, so we need to map to equivalent standard styles
+      const customStyleFallbacks = {
+        'macken04/cm9qvmy7500hr01s5h4h67lsr': 'light-v10' // grey style maps to light
+      };
+      
+      if (customStyleFallbacks[customStyleId]) {
+        console.log(`MapService: Using fallback style ${customStyleFallbacks[customStyleId]} for Static API`);
+        return customStyleFallbacks[customStyleId];
+      }
+      
+      // Default fallback for unknown custom styles
+      console.log('MapService: Unknown custom style, using light-v10 for Static API');
+      return 'light-v10';
     }
     
-    // Add versioning to standard Mapbox styles if not present
+    // Add versioning to standard Mapbox styles if not present - updated to match frontend
     const styleVersionMap = {
-      'streets': 'streets-v12',
-      'outdoors': 'outdoors-v12', 
-      'light': 'light-v11',
-      'dark': 'dark-v11',
+      'streets': 'streets-v11',
+      'outdoors': 'outdoors-v11',
+      'light': 'light-v10', 
+      'dark': 'dark-v10',
       'satellite': 'satellite-v9',
-      'satellite-streets': 'satellite-streets-v12',
+      'satellite-streets': 'satellite-streets-v11',
+      'terrain': 'outdoors-v11',
+      'grey': 'light-v10', // Fallback for grey custom style
       'navigation-day': 'navigation-day-v1',
       'navigation-night': 'navigation-night-v1'
     };
@@ -2888,7 +3312,7 @@ class MapService {
       quality 
     });
     
-    await fs.writeFile(filePath, buffer);
+    await fsPromises.writeFile(filePath, buffer);
     
     console.log('MapService: Canvas image saved:', {
       filePath,
@@ -3275,10 +3699,10 @@ class MapService {
    */
   async ensureDirectoryExists(dirPath) {
     try {
-      await fs.access(dirPath);
+      await fsPromises.access(dirPath);
     } catch (error) {
       if (error.code === 'ENOENT') {
-        await fs.mkdir(dirPath, { recursive: true });
+        await fsPromises.mkdir(dirPath, { recursive: true });
         console.log('MapService: Created directory:', dirPath);
       } else {
         throw error;

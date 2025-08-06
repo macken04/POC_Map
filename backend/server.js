@@ -85,7 +85,14 @@ app.use(cors({
   preflightContinue: false
 }));
 
-// 5. Body parsing middleware
+// 5. Body parsing middleware with webhook raw body preservation
+// Preserve raw body for webhook routes that need HMAC verification
+app.use('/api/shopify-integration/webhook', express.raw({ type: 'application/json' }), (req, res, next) => {
+  // Store raw body as string for HMAC verification
+  req.rawBody = req.body.toString('utf8');
+  next();
+});
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -112,11 +119,21 @@ app.use('/generated-maps', express.static(appConfig.storage.generatedMapsDir));
 app.use(['/api', '/auth'], (req, res, next) => {
   const origin = req.headers.origin;
   
-  // Set CORS headers explicitly for cross-domain routes
-  res.header('Access-Control-Allow-Origin', origin || '*');
-  res.header('Access-Control-Allow-Credentials', 'true');
+  // Validate origin against allowed origins for security
+  const isAllowedOrigin = !origin || 
+    appConfig.cors.allowedOrigins.includes(origin) ||
+    (appConfig.env === 'development' && origin?.includes('localhost')) ||
+    origin?.includes('.myshopify.com') ||
+    origin?.includes('.shopify.com');
+  
+  // Set CORS headers for cross-domain routes (never use '*' with credentials)
+  if (isAllowedOrigin) {
+    res.header('Access-Control-Allow-Origin', origin || appConfig.cors.allowedOrigins[0]);
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+  
   res.header('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS,POST,PUT,DELETE');
-  res.header('Access-Control-Allow-Headers', 'Origin,X-Requested-With,Content-Type,Accept,Authorization,X-Shopify-Topic,X-Shopify-Hmac-Sha256,X-Session-Token,ngrok-skip-browser-warning');
+  res.header('Access-Control-Allow-Headers', 'Origin,X-Requested-With,Content-Type,Accept,Authorization,X-Shopify-Topic,X-Shopify-Hmac-Sha256,X-Session-Token,ngrok-skip-browser-warning,Cookie');
   res.header('Access-Control-Max-Age', '86400');
   
   // Handle preflight requests

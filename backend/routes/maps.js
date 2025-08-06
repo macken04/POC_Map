@@ -10,16 +10,22 @@ const mapEventService = require('../services/mapEventService');
 const fileStorageService = require('../services/fileStorageService');
 const fileMonitoringService = require('../services/fileMonitoringService');
 const fileCleanupService = require('../services/fileCleanupService');
+const { MapService } = require('../services/mapService');
 const FileValidationMiddleware = require('../middleware/fileValidation');
 const FileNaming = require('../utils/fileNaming');
 const FileCompressionUtils = require('../utils/fileCompressionUtils');
 const CanvasProcessor = require('../services/canvasProcessor');
 const ErrorHandlingService = require('../services/errorHandlingService');
+const MapConfigurationService = require('../services/mapConfigurationService');
+const { validateMapSession, validatePurchaseSession, saveSessionForRecovery } = require('../middleware/sessionValidation');
 
 const appConfig = config.getConfig();
 
 // Initialize error handling service
 const errorHandler = new ErrorHandlingService();
+
+// Initialize map configuration service
+const mapConfigService = new MapConfigurationService();
 
 /**
  * Map generation routes
@@ -260,7 +266,7 @@ router.post('/generate-preview', requireAuth, async (req, res) => {
       id: previewId,
       center: center,
       bounds: bounds,
-      style: `mapbox://styles/mapbox/${mapService.normalizeStyleId(mapConfiguration.style)}`,
+      style: MapService.normalizeMapboxStyleURL(mapConfiguration.style),
       width: dimensions.width,
       height: dimensions.height,
       format: selectedFormat,
@@ -295,7 +301,7 @@ router.post('/generate-preview', requireAuth, async (req, res) => {
       req.session.mapPreviews = {};
     }
     
-    req.session.mapPreviews[previewId] = {
+    const previewData = {
       id: previewId,
       config: previewConfig,
       filePath: previewPath,
@@ -305,6 +311,15 @@ router.post('/generate-preview', requireAuth, async (req, res) => {
       activityName: activityData.name,
       mapConfiguration: mapConfiguration // Store original configuration
     };
+    
+    req.session.mapPreviews[previewId] = previewData;
+
+    // Also store in cross-domain token store for cross-domain flows
+    const crossDomainToken = req.query.token || req.headers['x-session-token'];
+    if (crossDomainToken) {
+      const crossDomainTokenStore = require('../services/crossDomainTokenStore');
+      crossDomainTokenStore.storeMapPreview(crossDomainToken, previewId, previewData);
+    }
 
     const previewUrl = `/api/maps/preview-image/${previewId}`;
 
@@ -438,7 +453,7 @@ router.post('/preview', requireAuth, async (req, res) => {
       id: generateMapId(),
       center: center,
       bounds: paddedBounds,
-      style: `mapbox://styles/mapbox/${style}`,
+      style: MapService.normalizeMapboxStyleURL(style),
       width: parseInt(width),
       height: parseInt(height),
       format: selectedFormat,
@@ -454,8 +469,46 @@ router.post('/preview', requireAuth, async (req, res) => {
       } : null
     };
 
+    // Generate unique preview ID
+    const previewId = `preview_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Store preview metadata in session for confirmation flow
+    if (!req.session.mapPreviews) {
+      req.session.mapPreviews = {};
+    }
+    
+    const previewData = {
+      id: previewId,
+      config: mapConfig,
+      filePath: null, // No file generated for preview endpoint
+      createdAt: new Date().toISOString(),
+      approved: false,
+      activityId: activityId,
+      activityName: activityId ? `Activity ${activityId}` : 'Custom Route', // Default name for custom routes
+      mapConfiguration: {
+        style,
+        format,
+        orientation,
+        showStartEnd,
+        lineColor,
+        lineWidth,
+        polyline,
+        coordinates
+      }
+    };
+    
+    req.session.mapPreviews[previewId] = previewData;
+
+    // Also store in cross-domain token store for cross-domain flows
+    const crossDomainToken = req.query.token || req.headers['x-session-token'];
+    if (crossDomainToken) {
+      const crossDomainTokenStore = require('../services/crossDomainTokenStore');
+      crossDomainTokenStore.storeMapPreview(crossDomainToken, previewId, previewData);
+    }
+
     res.json({
       success: true,
+      previewId: previewId,
       preview: mapConfig,
       stats: {
         totalPoints: routeCoordinates.length,
@@ -1127,6 +1180,138 @@ router.post('/generate-from-preview/:previewId', requireAuth, async (req, res) =
     console.error('Error generating high-res map from preview:', error);
     res.status(500).json({
       error: 'High-resolution map generation failed',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
+ * Internal endpoint: Generate high-resolution map from validated preview configuration
+ * This is used by Shopify webhook processing for paid orders and bypasses authentication
+ * WARNING: This endpoint should only be called internally, not exposed to external users
+ */
+router.post('/generate-from-preview-internal/:previewId', async (req, res) => {
+  try {
+    const { previewId } = req.params;
+    const { 
+      format = 'A4', 
+      orientation = 'portrait',
+      dpi = 300 
+    } = req.body;
+
+    console.log('[Internal Generation] Processing internal high-res request:', {
+      previewId,
+      format,
+      orientation,
+      dpi
+    });
+
+    // For internal calls, we need to find the preview in any active session
+    // This is safe because we're processing paid orders
+    let previewConfig = null;
+    
+    // Search through all active sessions to find the preview
+    // This is necessary because webhook processing doesn't have access to the original session
+    const sessionStore = req.sessionStore;
+    if (sessionStore && sessionStore.all) {
+      await new Promise((resolve, reject) => {
+        sessionStore.all((err, sessions) => {
+          if (err) {
+            console.error('[Internal Generation] Error accessing session store:', err);
+            return reject(err);
+          }
+          
+          // Search for preview in all sessions
+          for (const sessionId in sessions) {
+            const session = sessions[sessionId];
+            if (session.mapPreviews && session.mapPreviews[previewId]) {
+              previewConfig = session.mapPreviews[previewId].config;
+              console.log('[Internal Generation] Found preview in session:', sessionId);
+              break;
+            }
+          }
+          resolve();
+        });
+      });
+    }
+
+    if (!previewConfig) {
+      return res.status(404).json({
+        error: 'Preview not found',
+        message: 'Preview ID not found in any active session - may have expired'
+      });
+    }
+
+    // Calculate high-resolution dimensions
+    const highResDimensions = {
+      A4: {
+        portrait: { width: 2480, height: 3508 },  // 300 DPI
+        landscape: { width: 3508, height: 2480 }
+      },
+      A3: {
+        portrait: { width: 3508, height: 4961 },  // 300 DPI  
+        landscape: { width: 4961, height: 3508 }
+      }
+    };
+
+    const selectedFormat = format.toUpperCase();
+    const selectedOrientation = orientation.toLowerCase();
+    
+    if (!highResDimensions[selectedFormat]?.[selectedOrientation]) {
+      return res.status(400).json({
+        error: 'Invalid format or orientation',
+        message: 'Format must be A4/A3 and orientation must be portrait/landscape'
+      });
+    }
+
+    const targetDimensions = highResDimensions[selectedFormat][selectedOrientation];
+
+    // Create high-resolution config based on validated preview config
+    const highResConfig = {
+      ...previewConfig, // Reuse all validated settings
+      width: targetDimensions.width,
+      height: targetDimensions.height,
+      format: selectedFormat,
+      orientation: selectedOrientation,
+      dpi: dpi,
+      // Generate new ID for high-res version
+      id: `highres_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    };
+
+    // Initialize MapService
+    const mapService = require('../services/mapService');
+    await mapService.initialize();
+
+    // Generate high-resolution map using the validated configuration
+    console.log('[Internal Generation] Starting high-res generation with reused config');
+    const startTime = Date.now();
+    
+    const mapPath = await mapService.generateHighResFromPreviewConfig(highResConfig);
+    
+    const generationTime = Date.now() - startTime;
+    console.log(`[Internal Generation] High-res map generated in ${generationTime}ms using preview config`);
+
+    // Return success response
+    res.json({
+      success: true,
+      message: 'High-resolution map generated successfully from preview (internal)',
+      mapPath: mapPath,
+      config: {
+        dimensions: targetDimensions,
+        format: selectedFormat,
+        orientation: selectedOrientation,
+        dpi: dpi,
+        generationTime: `${generationTime}ms`,
+        sourcePreviewId: previewId
+      },
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('[Internal Generation] Error generating high-res map from preview:', error);
+    res.status(500).json({
+      error: 'Internal high-resolution map generation failed',
       message: error.message,
       timestamp: new Date().toISOString()
     });
@@ -2761,96 +2946,390 @@ router.delete('/preview/:previewId', requireAuth, async (req, res) => {
 });
 
 /**
- * Purchase endpoint - prepares approved map for Shopify checkout
+ * Confirm map for high-resolution generation
+ * Triggers background generation process without blocking user
  */
-router.post('/purchase/:previewId', requireAuth, async (req, res) => {
+router.post('/confirm/:previewId', requireAuth, validateMapSession, saveSessionForRecovery, async (req, res) => {
   try {
     const { previewId } = req.params;
-    const { 
-      printSize = 'A4',
-      printOrientation = 'portrait',
-      quantity = 1,
-      shippingAddress = null,
-      mapConfiguration = null,
-      activityData = null
-    } = req.body;
-
-    let preview;
+    const { printSize = 'A4', printOrientation = 'portrait' } = req.body;
     
-    // Check if this is a client-generated preview with map configuration
-    if (mapConfiguration && activityData) {
-      console.log('Processing client-generated preview with map configuration');
-      
-      // Create a preview object from the client data
-      preview = {
-        id: previewId,
-        activityId: activityData.id,
-        approved: true, // Auto-approve client previews
-        approvedAt: new Date().toISOString(),
-        config: {
-          style: mapConfiguration.style,
-          bounds: mapConfiguration.bounds,
-          center: mapConfiguration.center,
-          zoom: mapConfiguration.zoom,
-          customization: mapConfiguration.customization,
-          route: {
-            color: mapConfiguration.customization?.routeColor || '#ff4444',
-            width: mapConfiguration.customization?.routeWidth || 3,
-            coordinates: [] // Will be filled from activity data during high-res generation
-          },
-          markers: mapConfiguration.customization?.showMarkers || true
-        },
-        clientGenerated: true
-      };
-      
-      // Store in session for webhook access
-      if (!req.session.mapPreviews) {
-        req.session.mapPreviews = {};
+    // COMPREHENSIVE SESSION DEBUGGING
+    console.log('=== CONFIRM ROUTE SESSION DEBUG ===');
+    console.log('Session ID:', req.sessionID);
+    console.log('Session exists:', !!req.session);
+    console.log('Session cookie:', req.headers.cookie);
+    console.log('Request origin:', req.headers.origin);
+    console.log('Request referer:', req.headers.referer);
+    console.log('Preview ID requested:', previewId);
+    console.log('Session mapPreviews exists:', !!req.session?.mapPreviews);
+    console.log('Session mapPreviews keys:', req.session?.mapPreviews ? Object.keys(req.session.mapPreviews) : 'none');
+    console.log('Full session data:', JSON.stringify(req.session, null, 2));
+    console.log('================================');
+    
+    // Validate preview exists and is approved
+    let preview = req.session.mapPreviews?.[previewId];
+    let previewSource = 'session';
+
+    // If not found in session, check cross-domain token store
+    if (!preview) {
+      const crossDomainToken = req.query.token || req.headers['x-session-token'];
+      if (crossDomainToken) {
+        const crossDomainTokenStore = require('../services/crossDomainTokenStore');
+        preview = crossDomainTokenStore.getMapPreview(crossDomainToken, previewId);
+        if (preview) {
+          previewSource = 'cross-domain-token';
+          console.log('Preview found in cross-domain token store:', {
+            previewId,
+            token: crossDomainToken.substring(0, 8) + '...'
+          });
+          
+          // Sync preview data to current session for consistency
+          if (!req.session.mapPreviews) {
+            req.session.mapPreviews = {};
+          }
+          req.session.mapPreviews[previewId] = preview;
+        }
       }
-      req.session.mapPreviews[previewId] = preview;
+    }
+
+    if (!preview) {
+      console.log('Preview not found in storage - attempting reconstruction...');
       
-      console.log('Client-generated preview stored in session:', previewId);
-      
-    } else {
-      // Verify server-generated preview exists
-      if (!req.session.mapPreviews?.[previewId]) {
-        return res.status(404).json({
-          error: 'Preview not found',
-          message: 'Preview ID not found in session and no map configuration provided'
+      // Extract activity data from request body for reconstruction
+      const { 
+        activityId, 
+        activityData, 
+        mapConfiguration,
+        polyline,
+        coordinates,
+        style = 'streets-v12',
+        lineColor = '#ff4444',
+        lineWidth = 3,
+        showStartEnd = true
+      } = req.body;
+
+      // Try to reconstruct preview data from available information
+      if (activityId || activityData || polyline || coordinates) {
+        console.log('Reconstructing preview data from request data...');
+        
+        // Create reconstructed preview data
+        const reconstructedPreview = {
+          id: previewId,
+          config: {
+            // Basic map configuration
+            style: style,
+            center: coordinates ? coordinates[Math.floor(coordinates.length / 2)] : [0, 0],
+            zoom: 12,
+            width: 800,
+            height: 600,
+            route: {
+              coordinates: coordinates || [],
+              polyline: polyline || '',
+              color: lineColor,
+              width: lineWidth
+            },
+            markers: showStartEnd && coordinates ? {
+              start: coordinates[0],
+              end: coordinates[coordinates.length - 1]
+            } : null
+          },
+          filePath: null, // No file for reconstructed preview
+          createdAt: new Date().toISOString(),
+          approved: true, // Auto-approve reconstructed previews
+          activityId: activityId || 'reconstructed',
+          activityName: activityData?.name || `Reconstructed Activity`,
+          mapConfiguration: mapConfiguration || {
+            style,
+            format: req.body.printSize || 'A4',
+            orientation: req.body.printOrientation || 'portrait',
+            showStartEnd,
+            lineColor,
+            lineWidth
+          },
+          reconstructed: true // Flag to indicate this was reconstructed
+        };
+
+        // Store reconstructed preview in session
+        if (!req.session.mapPreviews) {
+          req.session.mapPreviews = {};
+        }
+        req.session.mapPreviews[previewId] = reconstructedPreview;
+
+        // Also store in cross-domain token store
+        const crossDomainToken = req.query.token || req.headers['x-session-token'];
+        if (crossDomainToken) {
+          const crossDomainTokenStore = require('../services/crossDomainTokenStore');
+          crossDomainTokenStore.storeMapPreview(crossDomainToken, previewId, reconstructedPreview);
+        }
+
+        preview = reconstructedPreview;
+        console.log('Preview successfully reconstructed:', {
+          previewId,
+          hasActivityId: !!activityId,
+          hasCoordinates: !!(coordinates && coordinates.length > 0),
+          hasPolyline: !!polyline
+        });
+      } else {
+        // Fallback: Create minimal preview for confirmation without specific activity data
+        console.log('No activity data provided - creating minimal fallback preview...');
+        
+        // Create minimal fallback preview that allows confirmation to proceed
+        const fallbackPreview = {
+          id: previewId,
+          config: {
+            style: 'streets-v12',
+            center: [0, 0], // Default center
+            zoom: 12,
+            width: 800,
+            height: 600,
+            route: {
+              coordinates: [],
+              polyline: '',
+              color: '#ff4444',
+              width: 3
+            },
+            markers: null
+          },
+          filePath: null,
+          createdAt: new Date().toISOString(),
+          approved: true, // Auto-approve fallback previews
+          activityId: 'fallback',
+          activityName: 'Fallback Preview',
+          mapConfiguration: {
+            style: 'streets-v12',
+            format: req.body.printSize || 'A4',
+            orientation: req.body.printOrientation || 'portrait',
+            showStartEnd: true,
+            lineColor: '#ff4444',
+            lineWidth: 3
+          },
+          reconstructed: true,
+          fallback: true // Flag to indicate this is a fallback preview
+        };
+
+        // Store fallback preview in session
+        if (!req.session.mapPreviews) {
+          req.session.mapPreviews = {};
+        }
+        req.session.mapPreviews[previewId] = fallbackPreview;
+
+        // Also store in cross-domain token store
+        const crossDomainToken = req.query.token || req.headers['x-session-token'];
+        if (crossDomainToken) {
+          const crossDomainTokenStore = require('../services/crossDomainTokenStore');
+          crossDomainTokenStore.storeMapPreview(crossDomainToken, previewId, fallbackPreview);
+        }
+
+        preview = fallbackPreview;
+        console.log('Fallback preview created for confirmation:', {
+          previewId,
+          fallback: true,
+          requestBodyKeys: Object.keys(req.body)
         });
       }
-      
-      preview = req.session.mapPreviews[previewId];
-    }
-    
-    // Auto-approve preview for purchase flow
-    if (!preview.approved) {
-      preview.approved = true;
-      preview.approvedAt = new Date().toISOString();
-      console.log('Auto-approved preview for purchase:', previewId);
     }
 
-    // Generate unique purchase ID
+    console.log('Preview found via:', previewSource);
+    
+    if (!preview.approved) {
+      return res.status(400).json({
+        error: 'Preview not approved',
+        message: 'Preview must be approved before confirmation'
+      });
+    }
+
+    // Generate unique purchase ID for this confirmation
     const purchaseId = `purchase_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
+    console.log('[Map Confirmation] Starting background generation:', {
+      previewId,
+      purchaseId,
+      printSize,
+      printOrientation
+    });
+
+    // Prepare complete map configuration for background generation
+    const dimensions = {
+      A4: {
+        portrait: { width: 2480, height: 3508 },
+        landscape: { width: 3508, height: 2480 }
+      },
+      A3: {
+        portrait: { width: 3508, height: 4961 },
+        landscape: { width: 4961, height: 3508 }
+      }
+    };
+
+    const selectedDimensions = dimensions[printSize]?.[printOrientation] || dimensions.A4.portrait;
+
+    const highResConfig = {
+      id: `highres_${purchaseId}`,
+      width: selectedDimensions.width,
+      height: selectedDimensions.height,
+      format: printSize.toLowerCase(),
+      orientation: printOrientation,
+      dpi: 300, // High resolution for print
+      style: preview.config.style,
+      center: preview.config.center,
+      bounds: preview.config.bounds,
+      route: {
+        coordinates: preview.config.route.coordinates,
+        color: preview.config.route.color || '#fc5200',
+        width: preview.config.route.width || 4
+      },
+      markers: preview.config.markers,
+      title: preview.config.title || `Strava Activity Map - ${preview.activityId}`,
+      activityId: preview.activityId,
+      customization: preview.config.customization || {},
+      selfContained: true
+    };
+
+    // Validate route coordinates exist
+    if (!highResConfig.route.coordinates || highResConfig.route.coordinates.length === 0) {
+      return res.status(400).json({
+        error: 'Missing route data',
+        message: 'Preview does not contain valid route coordinates for high-resolution generation'
+      });
+    }
+
+    // Create background job for high-resolution generation
+    const backgroundJobManager = require('../services/backgroundJobManager');
+    const job = await backgroundJobManager.createJob({
+      purchaseId: purchaseId,
+      previewId: previewId,
+      mapConfig: highResConfig,
+      printSize: printSize,
+      orientation: printOrientation
+    });
+
+    // Store confirmation data in session for purchase flow
+    if (!req.session.confirmedMaps) {
+      req.session.confirmedMaps = {};
+    }
+
+    req.session.confirmedMaps[purchaseId] = {
+      id: purchaseId,
+      previewId: previewId,
+      jobId: job.id,
+      printSize: printSize,
+      orientation: printOrientation,
+      confirmedAt: new Date().toISOString(),
+      status: 'generating', // generating, completed, failed
+      highResConfig: highResConfig
+    };
+
+    console.log('[Map Confirmation] Background generation started:', {
+      purchaseId,
+      jobId: job.id,
+      routeCoordinatesCount: highResConfig.route.coordinates.length
+    });
+
+    // Return immediately - don't wait for generation
+    res.json({
+      success: true,
+      message: 'Map confirmation successful - high-resolution generation started',
+      purchaseId: purchaseId,
+      jobId: job.id,
+      printSize: printSize,
+      orientation: printOrientation,
+      estimatedCompletionTime: '2-5 minutes',
+      status: 'generating'
+    });
+
+  } catch (error) {
+    console.error('[Map Confirmation] Error:', error);
+    res.status(500).json({
+      error: 'Map confirmation failed',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * Purchase endpoint - prepares approved map for Shopify checkout
+ */
+router.post('/purchase/:purchaseId', requireAuth, validatePurchaseSession, saveSessionForRecovery, async (req, res) => {
+  try {
+    const { purchaseId } = req.params;
+    const { 
+      quantity = 1,
+      shippingAddress = null
+    } = req.body;
+
+    // COMPREHENSIVE SESSION DEBUGGING
+    console.log('=== PURCHASE ROUTE SESSION DEBUG ===');
+    console.log('Session ID:', req.sessionID);
+    console.log('Session exists:', !!req.session);
+    console.log('Session cookie:', req.headers.cookie);
+    console.log('Request origin:', req.headers.origin);
+    console.log('Request referer:', req.headers.referer);
+    console.log('Purchase ID requested:', purchaseId);
+    console.log('Session confirmedMaps exists:', !!req.session?.confirmedMaps);
+    console.log('Session confirmedMaps keys:', req.session?.confirmedMaps ? Object.keys(req.session.confirmedMaps) : 'none');
+    console.log('Session mapPreviews exists:', !!req.session?.mapPreviews);
+    console.log('Session mapPreviews keys:', req.session?.mapPreviews ? Object.keys(req.session.mapPreviews) : 'none');
+    console.log('Full session data:', JSON.stringify(req.session, null, 2));
+    console.log('================================');
+
+    // Verify confirmed map exists
+    if (!req.session.confirmedMaps?.[purchaseId]) {
+      console.error('Session validation failed - Confirmed map not found in session');
+      console.error('Available purchase IDs:', req.session?.confirmedMaps ? Object.keys(req.session.confirmedMaps) : 'none');
+      return res.status(404).json({
+        error: 'Confirmed map not found',
+        message: 'Purchase ID not found. Please confirm your map first before purchase.',
+        debug: {
+          sessionId: req.sessionID,
+          purchaseId: purchaseId,
+          availablePurchaseIds: req.session?.confirmedMaps ? Object.keys(req.session.confirmedMaps) : [],
+          sessionExists: !!req.session,
+          confirmedMapsExists: !!req.session?.confirmedMaps,
+          mapPreviewsExists: !!req.session?.mapPreviews
+        }
+      });
+    }
+
+    const confirmedMap = req.session.confirmedMaps[purchaseId];
+    const previewId = confirmedMap.previewId;
+    
+    console.log('[Purchase] Processing purchase for confirmed map:', {
+      purchaseId,
+      previewId,
+      jobId: confirmedMap.jobId,
+      status: confirmedMap.status
+    });
+
+    // Get background job manager to check generation status
+    const backgroundJobManager = require('../services/backgroundJobManager');
+    const job = backgroundJobManager.getJob(confirmedMap.jobId);
+    
+    if (!job) {
+      return res.status(404).json({
+        error: 'Background job not found',
+        message: 'Map generation job not found. Please try confirming your map again.'
+      });
+    }
+
     // Prepare map data for Shopify
     const mapMetadata = {
       previewId: previewId,
       purchaseId: purchaseId,
-      activityId: preview.activityId,
-      printSize: printSize,
-      printOrientation: printOrientation,
-      mapStyle: preview.config.style,
-      routeColor: preview.config.route.color,
-      routeWidth: preview.config.route.width,
-      showMarkers: !!preview.config.markers,
-      customization: preview.config.customization || {},
-      center: preview.config.center,
-      bounds: preview.config.bounds,
-      coordinates: preview.config.route.coordinates
+      jobId: confirmedMap.jobId,
+      activityId: confirmedMap.highResConfig.activityId,
+      printSize: confirmedMap.printSize,
+      printOrientation: confirmedMap.orientation,
+      mapStyle: confirmedMap.highResConfig.style,
+      routeColor: confirmedMap.highResConfig.route.color,
+      routeWidth: confirmedMap.highResConfig.route.width,
+      showMarkers: !!confirmedMap.highResConfig.markers,
+      customization: confirmedMap.highResConfig.customization || {},
+      center: confirmedMap.highResConfig.center,
+      bounds: confirmedMap.highResConfig.bounds,
+      generationStatus: job.status
     };
 
-    // Store purchase data in session for Shopify integration
+    // Store purchase data in session for webhook processing
     if (!req.session.pendingPurchases) {
       req.session.pendingPurchases = {};
     }
@@ -2858,40 +3337,54 @@ router.post('/purchase/:previewId', requireAuth, async (req, res) => {
     req.session.pendingPurchases[purchaseId] = {
       id: purchaseId,
       previewId: previewId,
+      jobId: confirmedMap.jobId,
       mapMetadata: mapMetadata,
       quantity: quantity,
       shippingAddress: shippingAddress,
       createdAt: new Date().toISOString(),
-      status: 'pending'
+      status: 'pending', // Purchase status (different from generation status)
+      generationJobId: confirmedMap.jobId
     };
 
     // Generate Shopify cart URL with line item properties
     const config = require('../config');
     const appConfig = config.getConfig();
     
-    // Create line item properties for Shopify with encoded route data
+    // Get athlete information from session
+    const authStatus = require('../services/tokenManager').getAuthStatus(req);
+    const stravaUserId = authStatus?.athlete?.id;
+
+    // Create line item properties for Shopify (minimal data - job ID for reference)
     const lineItemProperties = {
       'Map Type': 'Custom Activity Map',
-      'Print Size': printSize,
-      'Orientation': printOrientation,
+      'Print Size': confirmedMap.printSize,
+      'Orientation': confirmedMap.orientation,
       'Purchase ID': purchaseId,
       'Preview ID': previewId,
-      'Map Style': preview.config.style.replace('mapbox://styles/mapbox/', ''),
-      'Activity ID': preview.activityId || 'custom',
-      // Store only the map configuration (not route coordinates)
-      'Map Config': Buffer.from(JSON.stringify(preview.mapConfiguration)).toString('base64')
+      'Background Job ID': confirmedMap.jobId,
+      'Activity ID': confirmedMap.highResConfig.activityId || 'custom',
+      'Strava User ID': stravaUserId || 'unknown',
+      'Generation Status': job.status,
+      'Map Style': confirmedMap.highResConfig.style.replace('mapbox://styles/mapbox/', '').replace('mapbox://', '')
     };
 
     // Build Shopify cart add URL
     const shopifyStoreUrl = appConfig.shopify.storeUrl;
-    const productVariantId = appConfig.shopify.productVariantId || '44567890123456'; // Default variant ID
+    const productVariantId = appConfig.shopify.productVariantIds?.[confirmedMap.printSize] || appConfig.shopify.productVariantIds?.A4 || '51199435473237'; // Default to A4 variant
+    
+    console.log('Debug - Print Size:', confirmedMap.printSize);
+    console.log('Debug - Product Variant ID from config:', productVariantId);
+    console.log('Debug - Available variants:', appConfig.shopify.productVariantIds);
     
     let cartUrl = `${shopifyStoreUrl}/cart/add?id=${productVariantId}&quantity=${quantity}`;
+    console.log('Debug - Initial cartUrl:', cartUrl);
     
     // Add line item properties to URL
     Object.entries(lineItemProperties).forEach(([key, value]) => {
       cartUrl += `&properties[${encodeURIComponent(key)}]=${encodeURIComponent(value)}`;
     });
+    
+    console.log('Debug - Final cartUrl:', cartUrl);
 
     res.json({
       success: true,
@@ -2901,12 +3394,19 @@ router.post('/purchase/:previewId', requireAuth, async (req, res) => {
         cartUrl: cartUrl,
         metadata: mapMetadata,
         lineItemProperties: lineItemProperties,
+        backgroundJob: {
+          id: confirmedMap.jobId,
+          status: job.status,
+          createdAt: job.createdAt,
+          estimatedCompletion: job.status === 'pending' ? '2-5 minutes' : 
+                               job.status === 'processing' ? '1-3 minutes' : 'completed'
+        },
         shopifyIntegration: {
           storeUrl: shopifyStoreUrl,
           productVariantId: productVariantId
         }
       },
-      message: 'Purchase prepared successfully - redirect to Shopify cart'
+      message: `Purchase prepared successfully - map generation is ${job.status}. Redirect to Shopify cart.`
     });
 
   } catch (error) {
@@ -2944,7 +3444,7 @@ router.get('/purchase-status/:purchaseId', requireAuth, async (req, res) => {
         mapMetadata: purchase.mapMetadata,
         shopifyOrderId: purchase.shopifyOrderId || null,
         highResPath: purchase.highResPath || null,
-        downloadUrl: purchase.highResPath ? `/api/maps/download-print/${purchaseId}` : null
+        localFilePath: purchase.highResPath || null
       }
     });
 
@@ -2958,52 +3458,227 @@ router.get('/purchase-status/:purchaseId', requireAuth, async (req, res) => {
 });
 
 /**
- * Download completed high-resolution print file
+ * Save map configuration to file system
+ * New JSON file-based approach to replace session storage
  */
-router.get('/download-print/:purchaseId', requireAuth, async (req, res) => {
+router.post('/save-configuration', requireAuth, async (req, res) => {
   try {
-    const { purchaseId } = req.params;
-    
-    if (!req.session.pendingPurchases?.[purchaseId]) {
-      return res.status(404).json({
-        error: 'Purchase not found',
-        message: 'Purchase ID not found in session'
-      });
-    }
+    const { mapConfiguration, printSize, orientation } = req.body;
 
-    const purchase = req.session.pendingPurchases[purchaseId];
-    
-    if (purchase.status !== 'completed' || !purchase.highResPath) {
+    if (!mapConfiguration) {
       return res.status(400).json({
-        error: 'Print not ready',
-        message: 'High-resolution print is not yet available'
+        error: 'Missing map configuration',
+        message: 'Map configuration data is required'
       });
     }
 
-    // Check if file exists
-    if (!fsSync.existsSync(purchase.highResPath)) {
-      return res.status(404).json({
-        error: 'Print file not found',
-        message: 'High-resolution print file no longer exists'
-      });
-    }
+    // Ensure required fields are present
+    const configData = {
+      ...mapConfiguration,
+      printSize: printSize || mapConfiguration.printSize || 'A4',
+      orientation: orientation || mapConfiguration.orientation || 'portrait',
+      activityId: mapConfiguration.activityId || mapConfiguration.id,
+      timestamp: new Date().toISOString(),
+      userId: req.session.strava?.athlete?.id || 'unknown'
+    };
 
-    // Set download headers
-    const filename = `map_print_${purchaseId}_${purchase.mapMetadata.printSize}.png`;
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.setHeader('Content-Type', 'image/png');
+    // Generate unique configuration ID
+    const configId = mapConfigService.generateConfigurationId();
 
-    // Stream the file
-    const fileStream = fsSync.createReadStream(purchase.highResPath);
-    fileStream.pipe(res);
+    // Save configuration to file system
+    await mapConfigService.saveConfiguration(configId, configData);
+
+    console.log('[Maps] Configuration saved successfully:', {
+      configId,
+      activityId: configData.activityId,
+      printSize: configData.printSize,
+      userId: configData.userId
+    });
+
+    res.json({
+      success: true,
+      configurationId: configId,
+      message: 'Configuration saved successfully'
+    });
 
   } catch (error) {
-    console.error('Error downloading print file:', error);
+    console.error('[Maps] Error saving configuration:', error);
+    
     res.status(500).json({
-      error: 'Download failed',
+      error: 'Failed to save configuration',
       message: error.message
     });
   }
 });
+
+/**
+ * Purchase with configuration ID
+ * Simplified purchase flow using file-based configuration
+ */
+router.post('/purchase-with-config', requireAuth, async (req, res) => {
+  try {
+    const { configurationId, printSize, activityId, quantity = 1 } = req.body;
+
+    if (!configurationId) {
+      return res.status(400).json({
+        error: 'Missing configuration ID',
+        message: 'Configuration ID is required for purchase'
+      });
+    }
+
+    // Validate configuration exists
+    const configData = await mapConfigService.loadConfiguration(configurationId);
+    if (!configData) {
+      return res.status(404).json({
+        error: 'Configuration not found',
+        message: 'The specified configuration could not be found'
+      });
+    }
+
+    console.log('[Maps] Processing purchase with configuration:', {
+      configurationId,
+      printSize: printSize || configData.mapConfiguration.printSize,
+      activityId: activityId || configData.mapConfiguration.activityId
+    });
+
+    // Build simplified Shopify order properties
+    const finalPrintSize = printSize || configData.mapConfiguration.printSize || 'A4';
+    const finalActivityId = activityId || configData.mapConfiguration.activityId || 'unknown';
+
+    const orderProperties = {
+      'Configuration ID': configurationId,
+      'Activity ID': finalActivityId,
+      'Print Size': finalPrintSize.toLowerCase(),
+      'Map Type': 'Custom Activity Map',
+      'Orientation': configData.mapConfiguration.orientation || 'portrait',
+      'Map Style': configData.mapConfiguration.style || 'streets'
+    };
+
+    // Get product variant ID based on print size
+    const productVariantId = appConfig.shopify.productVariantIds?.[finalPrintSize] || 
+                            appConfig.shopify.productVariantIds?.[finalPrintSize.toUpperCase()] ||
+                            appConfig.shopify.productVariantIds?.A4 || 
+                            '51199435473237'; // Default fallback
+
+    console.log('[Maps] Using product variant ID:', productVariantId, 'for size:', finalPrintSize);
+
+    // Build cart URL with simplified properties
+    let cartUrl = `${appConfig.shopify.storeUrl}/cart/add?id=${productVariantId}&quantity=${quantity}`;
+
+    // Add line item properties to URL
+    Object.entries(orderProperties).forEach(([key, value]) => {
+      cartUrl += `&properties[${encodeURIComponent(key)}]=${encodeURIComponent(value)}`;
+    });
+
+    console.log('[Maps] Generated cart URL length:', cartUrl.length);
+
+    res.json({
+      success: true,
+      cartUrl: cartUrl,
+      configurationId: configurationId,
+      orderProperties: orderProperties,
+      productVariantId: productVariantId
+    });
+
+  } catch (error) {
+    console.error('[Maps] Error processing purchase with config:', error);
+    
+    res.status(500).json({
+      error: 'Failed to process purchase',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * Configuration management endpoints
+ */
+
+/**
+ * Get configuration statistics
+ */
+router.get('/config-stats', requireAuth, async (req, res) => {
+  try {
+    const stats = await mapConfigService.getStatistics();
+    
+    res.json({
+      success: true,
+      statistics: stats,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('[Maps] Error getting configuration statistics:', error);
+    res.status(500).json({
+      error: 'Failed to get statistics',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * Cleanup old configurations
+ */
+router.post('/cleanup-configs', requireAuth, async (req, res) => {
+  try {
+    const { maxAgeDays = 7 } = req.body;
+    const maxAgeMs = maxAgeDays * 24 * 60 * 60 * 1000;
+    
+    const cleanedCount = await mapConfigService.cleanupOldConfigurations(maxAgeMs);
+    
+    console.log('[Maps] Configuration cleanup completed:', {
+      cleanedCount,
+      maxAgeDays,
+      timestamp: new Date().toISOString()
+    });
+    
+    res.json({
+      success: true,
+      cleanedCount,
+      maxAgeDays,
+      message: `Cleaned up ${cleanedCount} old configurations`,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('[Maps] Error cleaning up configurations:', error);
+    res.status(500).json({
+      error: 'Failed to cleanup configurations',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * Recover failed configuration
+ */
+router.post('/recover-config/:configId', requireAuth, async (req, res) => {
+  try {
+    const { configId } = req.params;
+    
+    const success = await mapConfigService.recoverFailedConfiguration(configId);
+    
+    if (success) {
+      res.json({
+        success: true,
+        configurationId: configId,
+        message: 'Configuration recovered successfully',
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      res.status(404).json({
+        success: false,
+        error: 'Configuration not found',
+        message: 'Configuration not found in failed folder',
+        configurationId: configId
+      });
+    }
+  } catch (error) {
+    console.error('[Maps] Error recovering configuration:', error);
+    res.status(500).json({
+      error: 'Failed to recover configuration',
+      message: error.message
+    });
+  }
+});
+
 
 module.exports = router;
