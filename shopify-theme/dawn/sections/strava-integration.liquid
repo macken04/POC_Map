@@ -1,0 +1,544 @@
+{{ 'component-card.css' | asset_url | stylesheet_tag }}
+
+{%- style -%}
+  .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+
+  .strava-integration-section {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .auth-status {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    text-align: center;
+  }
+
+  .auth-status.authenticated {
+    background: #ecfdf5;
+    border-color: #10b981;
+    color: #047857;
+  }
+
+  .auth-status.not-authenticated {
+    background: #fef3c7;
+    border-color: #f59e0b;
+    color: #92400e;
+  }
+
+  .auth-status.error {
+    background: #fef2f2;
+    border-color: #ef4444;
+    color: #dc2626;
+  }
+
+  .integration-controls {
+    display: flex;
+    gap: 1rem;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .integration-button {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .integration-button:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+  }
+
+  .integration-button:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .integration-button.secondary {
+    background: #6b7280;
+  }
+
+  .integration-button.secondary:hover {
+    background: #4b5563;
+  }
+
+  .integration-button.success {
+    background: #10b981;
+  }
+
+  .integration-button.success:hover {
+    background: #059669;
+  }
+
+  .user-info {
+    background: #f0f9ff;
+    border: 1px solid #0ea5e9;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+  }
+
+  .user-info h4 {
+    margin: 0 0 0.5rem 0;
+    color: #0c4a6e;
+  }
+
+  .status-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+  }
+
+  .status-success { background: #10b981; }
+  .status-error { background: #ef4444; }
+  .status-warning { background: #f59e0b; }
+  .status-info { background: #3b82f6; }
+
+  .integration-flow {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+  }
+
+  .flow-step {
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+
+  .flow-step.active {
+    border-color: #2563eb;
+  }
+
+  .flow-step.completed {
+    border-color: #10b981;
+    background: #f0fdf4;
+  }
+
+  .flow-step-number {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    background: #e5e7eb;
+    color: #4b5563;
+    border-radius: 50%;
+    line-height: 32px;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+  }
+
+  .flow-step.active .flow-step-number {
+    background: #2563eb;
+    color: white;
+  }
+
+  .flow-step.completed .flow-step-number {
+    background: #10b981;
+    color: white;
+  }
+
+  .integration-debug {
+    background: #1f2937;
+    color: #f9fafb;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 2rem 0;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+  }
+
+  .integration-debug.show {
+    display: block;
+  }
+{%- endstyle -%}
+
+<div class="page-width section-{{ section.id }}-padding">
+  <div class="strava-integration-section">
+    {% if section.settings.heading != blank %}
+      <h2 class="h1">{{ section.settings.heading | escape }}</h2>
+    {% endif %}
+
+    {% if section.settings.description != blank %}
+      <p>{{ section.settings.description | escape }}</p>
+    {% endif %}
+
+    <!-- Authentication Status Display -->
+    <div class="auth-status not-authenticated" id="auth-status">
+      <span class="status-indicator status-warning"></span>
+      <strong>Checking authentication status...</strong>
+      <p id="auth-message">Please wait while we verify your connection.</p>
+    </div>
+
+    <!-- User Information (hidden initially) -->
+    <div class="user-info" id="user-info" style="display: none;">
+      <h4><span class="status-indicator status-success"></span>Welcome, <span id="user-name">Athlete</span>!</h4>
+      <p>Your Strava account is connected and ready to use.</p>
+      <small>Session ID: <code id="session-id">Loading...</code></small>
+    </div>
+
+    <!-- Integration Flow Steps -->
+    <div class="integration-flow">
+      <div class="flow-step" id="step-1">
+        <div class="flow-step-number">1</div>
+        <h4>Connect Strava</h4>
+        <p>Authenticate with your Strava account</p>
+      </div>
+      <div class="flow-step" id="step-2">
+        <div class="flow-step-number">2</div>
+        <h4>Select Activity</h4>
+        <p>Choose which ride to map</p>
+      </div>
+      <div class="flow-step" id="step-3">
+        <div class="flow-step-number">3</div>
+        <h4>Customize Map</h4>
+        <p>Personalize your print</p>
+      </div>
+      <div class="flow-step" id="step-4">
+        <div class="flow-step-number">4</div>
+        <h4>Order Print</h4>
+        <p>Add to cart and checkout</p>
+      </div>
+    </div>
+
+    <!-- Control Buttons -->
+    <div class="integration-controls">
+      <button type="button" class="integration-button" id="connect-strava" style="display: none;">
+        Connect with Strava
+      </button>
+      <button type="button" class="integration-button success" id="proceed-to-activities" style="display: none;">
+        View My Activities
+      </button>
+      <button type="button" class="integration-button secondary" id="check-status">
+        Check Connection Status
+      </button>
+      <button type="button" class="integration-button secondary" id="toggle-debug">
+        Show Debug Info
+      </button>
+    </div>
+
+    <!-- Debug Information -->
+    <div class="integration-debug" id="debug-info">
+      Waiting for debug information...
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // Configuration
+  const CONFIG = {
+    ngrokBaseUrl: 'https://boss-hog-freely.ngrok-free.app',
+    endpoints: {
+      auth: '/auth/strava',
+      integrationStatus: '/api/shopify-integration/status',
+      sessionContext: '/api/shopify-integration/session-context',
+      completeFlow: '/api/shopify-integration/complete-flow',
+      health: '/api/shopify-integration/health'
+    }
+  };
+
+  // DOM elements
+  const elements = {
+    authStatus: document.getElementById('auth-status'),
+    authMessage: document.getElementById('auth-message'),
+    userInfo: document.getElementById('user-info'),
+    userName: document.getElementById('user-name'),
+    sessionId: document.getElementById('session-id'),
+    connectStrava: document.getElementById('connect-strava'),
+    proceedToActivities: document.getElementById('proceed-to-activities'),
+    checkStatus: document.getElementById('check-status'),
+    toggleDebug: document.getElementById('toggle-debug'),
+    debugInfo: document.getElementById('debug-info'),
+    steps: {
+      step1: document.getElementById('step-1'),
+      step2: document.getElementById('step-2'),
+      step3: document.getElementById('step-3'),
+      step4: document.getElementById('step-4')
+    }
+  };
+
+  // State management
+  let currentState = {
+    authenticated: false,
+    shopifyReady: false,
+    user: null,
+    session: null,
+    debugMode: false
+  };
+
+  // Utility functions
+  function updateAuthStatus(message, type = 'info', showUserInfo = false) {
+    elements.authStatus.className = `auth-status ${type}`;
+    elements.authMessage.textContent = message;
+    
+    const indicators = {
+      'authenticated': 'status-success',
+      'not-authenticated': 'status-warning', 
+      'error': 'status-error'
+    };
+    
+    const indicator = elements.authStatus.querySelector('.status-indicator');
+    indicator.className = `status-indicator ${indicators[type] || 'status-info'}`;
+    
+    elements.userInfo.style.display = showUserInfo ? 'block' : 'none';
+  }
+
+  function updateFlowSteps(activeStep = 0) {
+    Object.values(elements.steps).forEach((step, index) => {
+      step.classList.remove('active', 'completed');
+      if (index < activeStep) {
+        step.classList.add('completed');
+      } else if (index === activeStep) {
+        step.classList.add('active');
+      }
+    });
+  }
+
+  function updateControls(state) {
+    elements.connectStrava.style.display = state.authenticated ? 'none' : 'inline-block';
+    elements.proceedToActivities.style.display = state.shopifyReady ? 'inline-block' : 'none';
+  }
+
+  function logDebug(message, data = null) {
+    const timestamp = new Date().toLocaleTimeString();
+    let debugText = elements.debugInfo.textContent + '\n';
+    debugText += `[${timestamp}] ${message}`;
+    if (data) {
+      debugText += '\n' + JSON.stringify(data, null, 2);
+    }
+    debugText += '\n---';
+    elements.debugInfo.textContent = debugText;
+    
+    // Auto-scroll to bottom
+    elements.debugInfo.scrollTop = elements.debugInfo.scrollHeight;
+  }
+
+  // API functions
+  async function checkIntegrationStatus() {
+    try {
+      logDebug('Checking integration status...');
+      
+      const response = await fetch(`${CONFIG.ngrokBaseUrl}${CONFIG.endpoints.integrationStatus}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+      logDebug('Integration status response:', data);
+
+      if (data.success && data.status) {
+        currentState.authenticated = data.status.isAuthenticated;
+        currentState.shopifyReady = data.status.canProceedToStore;
+        
+        if (data.status.isAuthenticated) {
+          updateAuthStatus('Connected to Strava successfully!', 'authenticated', true);
+          elements.userName.textContent = data.status.userDisplayName || 'Athlete';
+          updateFlowSteps(currentState.shopifyReady ? 2 : 1);
+        } else {
+          updateAuthStatus('Not connected to Strava. Click below to connect.', 'not-authenticated');
+          updateFlowSteps(0);
+        }
+        
+        updateControls(currentState);
+        return data.status;
+      } else {
+        throw new Error(data.error || 'Failed to get status');
+      }
+    } catch (error) {
+      logDebug('Error checking status:', { error: error.message });
+      updateAuthStatus('Unable to check connection status: ' + error.message, 'error');
+      updateFlowSteps(0);
+      updateControls({ authenticated: false, shopifyReady: false });
+      return null;
+    }
+  }
+
+  async function getSessionContext() {
+    try {
+      const response = await fetch(`${CONFIG.ngrokBaseUrl}${CONFIG.endpoints.sessionContext}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Accept': 'application/json' }
+      });
+
+      const data = await response.json();
+      logDebug('Session context:', data);
+
+      if (data.success && data.context) {
+        currentState = { ...currentState, ...data.context };
+        elements.sessionId.textContent = data.context.session?.id || 'Unknown';
+        return data.context;
+      }
+      return null;
+    } catch (error) {
+      logDebug('Error getting session context:', { error: error.message });
+      return null;
+    }
+  }
+
+  function initializeStravaAuth() {
+    logDebug('Redirecting to Strava authentication...');
+    window.location.href = `${CONFIG.ngrokBaseUrl}${CONFIG.endpoints.auth}`;
+  }
+
+  async function proceedToActivities() {
+    try {
+      logDebug('Proceeding to activities selection...');
+      
+      // For now, just update the flow step - later this will redirect to activity selection
+      updateFlowSteps(2);
+      updateAuthStatus('Ready to select activities! (Feature coming soon)', 'authenticated', true);
+      
+      // Future: Redirect to activities page or show activity selector
+      
+    } catch (error) {
+      logDebug('Error proceeding to activities:', { error: error.message });
+      updateAuthStatus('Error accessing activities: ' + error.message, 'error');
+    }
+  }
+
+  function toggleDebug() {
+    currentState.debugMode = !currentState.debugMode;
+    elements.debugInfo.classList.toggle('show', currentState.debugMode);
+    elements.toggleDebug.textContent = currentState.debugMode ? 'Hide Debug Info' : 'Show Debug Info';
+  }
+
+  // Event listeners
+  elements.checkStatus.addEventListener('click', checkIntegrationStatus);
+  elements.connectStrava.addEventListener('click', initializeStravaAuth);
+  elements.proceedToActivities.addEventListener('click', proceedToActivities);
+  elements.toggleDebug.addEventListener('click', toggleDebug);
+
+  // URL parameter handling for redirect validation
+  function handleUrlParameters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const source = urlParams.get('source');
+    const authStatus = urlParams.get('auth_status');
+    
+    if (source === 'strava_auth' && authStatus === 'verified') {
+      logDebug('Detected redirect from Strava authentication');
+      updateAuthStatus('Authentication successful! Setting up your session...', 'authenticated');
+      
+      // Check status after a short delay to allow session setup
+      setTimeout(checkIntegrationStatus, 1000);
+    }
+  }
+
+  // Initialize the integration
+  async function initialize() {
+    logDebug('Initializing Strava integration section');
+    
+    // Handle URL parameters if present
+    handleUrlParameters();
+    
+    // Check current status
+    await checkIntegrationStatus();
+    
+    // Get session context if authenticated
+    if (currentState.authenticated) {
+      await getSessionContext();
+    }
+    
+    logDebug('Integration initialization complete');
+  }
+
+  // Auto-initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialize);
+  } else {
+    initialize();
+  }
+
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Strava Integration",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "default": "Connect Your Strava Account",
+      "label": "Heading"
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "default": "Connect your Strava account to access your cycling activities and create personalized maps of your rides.",
+      "label": "Description"
+    },
+    {
+      "type": "header",
+      "content": "Section padding"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Top padding",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Bottom padding",
+      "default": 40
+    }
+  ],
+  "presets": [
+    {
+      "name": "Strava Integration"
+    }
+  ]
+}
+{% endschema %}

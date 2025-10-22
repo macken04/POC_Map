@@ -1,0 +1,456 @@
+{{ 'component-card.css' | asset_url | stylesheet_tag }}
+
+{%- style -%}
+  .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+
+  .test-backend-section {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .test-controls {
+    display: flex;
+    gap: 1rem;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+  }
+
+  .test-button {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+  }
+
+  .test-button:hover {
+    background: #1d4ed8;
+  }
+
+  .test-button:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  .test-results {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    min-height: 100px;
+  }
+
+  .status-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+  }
+
+  .status-success { background: #10b981; }
+  .status-error { background: #ef4444; }
+  .status-warning { background: #f59e0b; }
+  .status-info { background: #3b82f6; }
+
+  .result-json {
+    background: #1f2937;
+    color: #f9fafb;
+    padding: 1rem;
+    border-radius: 6px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+    overflow-x: auto;
+    margin-top: 1rem;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .connection-info {
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .connection-info strong {
+    color: #92400e;
+  }
+{%- endstyle -%}
+
+<div class="page-width section-{{ section.id }}-padding">
+  <div class="test-backend-section">
+    {% if section.settings.heading != blank %}
+      <h2 class="h1">{{ section.settings.heading | escape }}</h2>
+    {% endif %}
+
+    {% if section.settings.description != blank %}
+      <p>{{ section.settings.description | escape }}</p>
+    {% endif %}
+
+    <div class="connection-info">
+      <strong>Testing Configuration:</strong><br>
+      Shopify Store: {{ shop.domain }}<br>
+      Expected Backend: <span id="backend-url">Loading...</span><br>
+      Connection Status: <span id="connection-status">Not tested</span>
+    </div>
+
+    <div class="test-controls">
+      <button type="button" class="test-button" id="test-basic-connection">
+        Test Basic Connection
+      </button>
+      <button type="button" class="test-button" id="test-cors-config">
+        Test CORS Configuration
+      </button>
+      <button type="button" class="test-button" id="test-ngrok-url">
+        Get ngrok URL
+      </button>
+      <button type="button" class="test-button" id="test-auth-flow">
+        Test Auth Flow
+      </button>
+      <button type="button" class="test-button" id="clear-results">
+        Clear Results
+      </button>
+    </div>
+
+    <div class="test-results" id="test-results">
+      <p><span class="status-indicator status-info"></span>Click a test button to begin testing the backend connection.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // Configuration
+  const CONFIG = {
+    ngrokBaseUrl: 'https://boss-hog-freely.ngrok-free.app', // Default from .env
+    endpoints: {
+      test: '/api/test-shopify',
+      ngrokUrl: '/api/ngrok-url',
+      health: '/health',
+      auth: '/auth/strava'
+    }
+  };
+
+  // DOM elements
+  const elements = {
+    backendUrl: document.getElementById('backend-url'),
+    connectionStatus: document.getElementById('connection-status'),
+    testResults: document.getElementById('test-results'),
+    testBasic: document.getElementById('test-basic-connection'),
+    testCors: document.getElementById('test-cors-config'),
+    testNgrok: document.getElementById('test-ngrok-url'),
+    testAuth: document.getElementById('test-auth-flow'),
+    clearResults: document.getElementById('clear-results')
+  };
+
+  // Utility functions
+  function updateStatus(message, type = 'info') {
+    const indicator = `<span class="status-indicator status-${type}"></span>`;
+    elements.connectionStatus.innerHTML = indicator + message;
+  }
+
+  function addResult(title, message, data = null, type = 'info') {
+    const indicator = `<span class="status-indicator status-${type}"></span>`;
+    const timestamp = new Date().toLocaleTimeString();
+    
+    let resultHtml = `
+      <div style="margin-bottom: 1rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 1rem;">
+        <h4>${indicator}${title} <small style="color: #6b7280;">(${timestamp})</small></h4>
+        <p>${message}</p>
+    `;
+    
+    if (data) {
+      resultHtml += `<div class="result-json">${JSON.stringify(data, null, 2)}</div>`;
+    }
+    
+    resultHtml += '</div>';
+    
+    elements.testResults.innerHTML = resultHtml + elements.testResults.innerHTML;
+  }
+
+  function clearResults() {
+    elements.testResults.innerHTML = '<p><span class="status-indicator status-info"></span>Results cleared. Click a test button to begin testing.</p>';
+    updateStatus('Not tested');
+  }
+
+  // Test functions
+  async function testBasicConnection() {
+    updateStatus('Testing basic connection...', 'warning');
+    
+    try {
+      const response = await fetch(`${CONFIG.ngrokBaseUrl}${CONFIG.endpoints.test}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        mode: 'cors',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        updateStatus('Connection successful', 'success');
+        addResult(
+          'Basic Connection Test',
+          'Successfully connected to backend server through ngrok tunnel.',
+          data,
+          'success'
+        );
+      } else {
+        updateStatus('Connection failed', 'error');
+        addResult(
+          'Basic Connection Test',
+          'Connection failed: ' + (data.message || 'Unknown error'),
+          data,
+          'error'
+        );
+      }
+    } catch (error) {
+      updateStatus('Connection error', 'error');
+      addResult(
+        'Basic Connection Test',
+        'Failed to connect to backend: ' + error.message,
+        { error: error.message, stack: error.stack },
+        'error'
+      );
+    }
+  }
+
+  async function testCorsConfiguration() {
+    updateStatus('Testing CORS configuration...', 'warning');
+    
+    try {
+      const response = await fetch(`${CONFIG.ngrokBaseUrl}${CONFIG.endpoints.test}`, {
+        method: 'GET',
+        headers: {
+          'Origin': window.location.origin,
+          'Accept': 'application/json'
+        },
+        mode: 'cors'
+      });
+
+      const data = await response.json();
+      const corsHeaders = {
+        'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+        'Access-Control-Allow-Credentials': response.headers.get('Access-Control-Allow-Credentials'),
+        'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods')
+      };
+
+      if (data.success && data.cors) {
+        updateStatus('CORS configured correctly', 'success');
+        addResult(
+          'CORS Configuration Test',
+          'CORS is properly configured for Shopify store access.',
+          { ...data.cors, headers: corsHeaders },
+          'success'
+        );
+      } else {
+        updateStatus('CORS configuration issue', 'warning');
+        addResult(
+          'CORS Configuration Test',
+          'CORS may not be properly configured.',
+          { ...data, headers: corsHeaders },
+          'warning'
+        );
+      }
+    } catch (error) {
+      updateStatus('CORS test failed', 'error');
+      addResult(
+        'CORS Configuration Test',
+        'CORS test failed: ' + error.message,
+        { error: error.message },
+        'error'
+      );
+    }
+  }
+
+  async function testNgrokUrl() {
+    updateStatus('Getting ngrok URL...', 'warning');
+    
+    try {
+      const response = await fetch(`${CONFIG.ngrokBaseUrl}${CONFIG.endpoints.ngrokUrl}`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        mode: 'cors'
+      });
+
+      const data = await response.json();
+      
+      if (data.available && data.ngrokUrl) {
+        elements.backendUrl.textContent = data.ngrokUrl;
+        updateStatus('ngrok URL retrieved', 'success');
+        addResult(
+          'ngrok URL Test',
+          'ngrok tunnel is active and accessible.',
+          data,
+          'success'
+        );
+      } else {
+        updateStatus('ngrok not available', 'error');
+        addResult(
+          'ngrok URL Test',
+          'ngrok tunnel is not available: ' + (data.message || 'Unknown error'),
+          data,
+          'error'
+        );
+      }
+    } catch (error) {
+      updateStatus('ngrok test failed', 'error');
+      addResult(
+        'ngrok URL Test',
+        'Failed to get ngrok URL: ' + error.message,
+        { error: error.message },
+        'error'
+      );
+    }
+  }
+
+  async function testAuthFlow() {
+    updateStatus('Testing auth flow...', 'warning');
+    
+    try {
+      // First check if auth endpoint is accessible
+      const response = await fetch(`${CONFIG.ngrokBaseUrl}${CONFIG.endpoints.auth}`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        mode: 'cors',
+        redirect: 'manual'
+      });
+
+      // For auth endpoints, we expect a redirect or specific response
+      if (response.status === 0 || response.type === 'opaqueredirect') {
+        updateStatus('Auth endpoint accessible', 'success');
+        addResult(
+          'Authentication Flow Test',
+          'Auth endpoint is accessible and responding (redirect behavior expected).',
+          { 
+            status: 'redirect_detected',
+            message: 'Auth flow would redirect to Strava OAuth',
+            endpoint: `${CONFIG.ngrokBaseUrl}${CONFIG.endpoints.auth}`
+          },
+          'success'
+        );
+      } else if (response.ok) {
+        const data = await response.json();
+        updateStatus('Auth endpoint responding', 'success');
+        addResult(
+          'Authentication Flow Test',
+          'Auth endpoint is responding with data.',
+          data,
+          'success'
+        );
+      } else {
+        updateStatus('Auth endpoint issue', 'warning');
+        addResult(
+          'Authentication Flow Test',
+          `Auth endpoint returned status ${response.status}`,
+          { status: response.status, statusText: response.statusText },
+          'warning'
+        );
+      }
+    } catch (error) {
+      updateStatus('Auth test failed', 'error');
+      addResult(
+        'Authentication Flow Test',
+        'Auth flow test failed: ' + error.message,
+        { error: error.message },
+        'error'
+      );
+    }
+  }
+
+  // Event listeners
+  elements.testBasic.addEventListener('click', testBasicConnection);
+  elements.testCors.addEventListener('click', testCorsConfiguration);
+  elements.testNgrok.addEventListener('click', testNgrokUrl);
+  elements.testAuth.addEventListener('click', testAuthFlow);
+  elements.clearResults.addEventListener('click', clearResults);
+
+  // Initialize
+  elements.backendUrl.textContent = CONFIG.ngrokBaseUrl;
+  
+  // Auto-run basic connection test on page load
+  setTimeout(() => {
+    testBasicConnection();
+  }, 1000);
+
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Backend Connection Test",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "default": "Backend Connection Test",
+      "label": "Heading"
+    },
+    {
+      "type": "textarea",
+      "id": "description", 
+      "default": "This section tests the connection between the Shopify store and the Express backend server.",
+      "label": "Description"
+    },
+    {
+      "type": "header",
+      "content": "Section padding"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Top padding",
+      "default": 36
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Bottom padding",
+      "default": 36
+    }
+  ],
+  "presets": [
+    {
+      "name": "Backend Connection Test"
+    }
+  ]
+}
+{% endschema %}

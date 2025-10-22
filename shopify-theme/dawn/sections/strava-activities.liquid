@@ -1,0 +1,263 @@
+{{ 'strava-cards-v3.css' | asset_url | append: '?v=' | append: 'now' | stylesheet_tag }}
+
+<!-- Include authentication utilities -->
+{{ 'auth-utils.js' | asset_url | script_tag }}
+
+<div class="strava-activities-section">
+  <div class="strava-content-wrapper">
+    <!-- Header Section -->
+    <div class="strava-activities-header">
+      <div class="strava-header-content">
+        <div class="strava-logo">
+          <svg class="strava-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066M7.613 13.828L2.461 3.656H5.53l2.083 4.116 2.083-4.116H12.7"/>
+          </svg>
+        </div>
+        <h1 class="strava-activities-heading">
+          <span class="gradient-text">YOUR STRAVA ACTIVITIES</span>
+        </h1>
+        <div id="user-connection-status" class="user-connection-status">
+          <span id="connection-text">Connected as <span id="user-name">Loading...</span></span>
+        </div>
+      </div>
+      
+      {%- if section.settings.description != blank -%}
+        <p class="strava-activities-description">{{ section.settings.description | escape }}</p>
+      {%- else -%}
+        <p class="strava-activities-description">
+          Select any activity below to create a stunning retro poster. Activities with GPS data work best for detailed route visualization.
+        </p>
+      {%- endif -%}
+    </div>
+
+    <!-- Statistics Dashboard -->
+    <div class="statistics-dashboard">
+      <div class="stat-card stat-activities">
+        <div class="stat-number" id="total-activities">0</div>
+        <div class="stat-label">Total Activities</div>
+      </div>
+      <div class="stat-card stat-distance">
+        <div class="stat-number" id="total-distance">0</div>
+        <div class="stat-label">Total Distance (km)</div>
+      </div>
+      <div class="stat-card stat-elevation">
+        <div class="stat-number" id="total-elevation">0</div>
+        <div class="stat-label">Total Elevation (m)</div>
+      </div>
+      <div class="stat-card stat-time">
+        <div class="stat-number" id="total-time">0h 0m</div>
+        <div class="stat-label">Total Time</div>
+      </div>
+    </div>
+
+    <!-- Enhanced Controls Section -->
+    {%- if section.settings.show_search or section.settings.show_filters -%}
+    <div class="strava-activities-controls">
+      <div class="controls-header">
+        <div id="auth-status" class="auth-status-container hidden">
+          <div class="auth-status-message">
+            <svg class="auth-status-icon" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+            </svg>
+            <span id="auth-status-text">Checking authentication...</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="controls-body">
+        {%- if section.settings.show_search -%}
+        <div class="strava-activities-search">
+          <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+          <input 
+            type="text" 
+            id="activity-search" 
+            class="strava-search-input"
+            placeholder="Search activities..."
+            autocomplete="off"
+          >
+          <button type="button" class="search-clear-button hidden" id="search-clear">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+            </svg>
+          </button>
+        </div>
+        {%- endif -%}
+        
+        {%- if section.settings.show_filters -%}
+        <div class="strava-activities-filters">
+          <button type="button" class="filter-button" id="filter-activity-type">
+            <svg class="filter-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+            </svg>
+            <span>Filter</span>
+            <svg class="chevron-icon" width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+            </svg>
+          </button>
+          
+          <button type="button" class="filter-button" id="date-range-button">
+            <svg class="calendar-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <span>Date Range</span>
+          </button>
+          
+          <select id="activity-type-filter" class="strava-filter-select hidden-filters">
+            <option value="">All Activities</option>
+            <option value="Ride">Cycling</option>
+            <option value="Run">Running</option>
+            <option value="Hike">Hiking</option>
+            <option value="Walk">Walking</option>
+          </select>
+        </div>
+        {%- endif -%}
+      </div>
+    </div>
+    {%- endif -%}
+
+    <!-- Loading State -->
+    <div id="activities-loading" class="activities-loading hidden">
+      <div class="loading-spinner">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+      </div>
+      <h3>Loading your activities...</h3>
+      <p>Fetching your latest adventures from Strava</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="activities-error" class="activities-error hidden">
+      <div class="error-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.865-.833-2.635 0L4.179 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+        </svg>
+      </div>
+      <h3 id="error-title">Unable to load activities</h3>
+      <p id="error-message">Please check your connection and try again.</p>
+      <div style="display: flex; gap: 1rem; justify-content: center; align-items: center;">
+        <button type="button" id="retry-button" class="load-more-button">Try Again</button>
+        <a href="https://boss-hog-freely.ngrok-free.app/auth/strava" class="create-poster-button" style="min-width: auto; padding: 0.75rem 1.5rem;">Connect with Strava</a>
+      </div>
+    </div>
+
+    <!-- Activities Grid -->
+    <div class="activities-grid-wrapper">
+      <div id="activities-grid" class="activities-grid hidden">
+        <!-- Activities will be populated by JavaScript -->
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="activities-empty" class="activities-empty hidden">
+      <div class="empty-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+      </div>
+      <h3>No activities found</h3>
+      <p>Try refreshing or <a href="https://www.strava.com" target="_blank">upload some activities to Strava</a> to get started.</p>
+    </div>
+
+    <!-- Load More Section -->
+    <div id="activities-pagination" class="load-more-section hidden">
+      <div class="activities-pagination">
+        <p class="pagination-info">
+          <span id="activities-count">0</span> activities loaded <span id="pagination-status"></span>
+        </p>
+        <button type="button" id="load-more-btn" class="load-more-button">
+          Load More Activities
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{ 'strava-activities.js' | asset_url | script_tag }}
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof StravaActivities !== 'undefined') {
+      const activitiesManager = new StravaActivities({
+        activitiesPerPage: {{ section.settings.activities_per_page | default: 12 }}
+      });
+      activitiesManager.init();
+    } else {
+      console.error('StravaActivities not loaded');
+      document.getElementById('activities-error').classList.remove('hidden');
+      document.getElementById('error-title').textContent = 'Script Loading Error';
+      document.getElementById('error-message').textContent = 'Failed to load activities functionality.';
+    }
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Strava Activities",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "default": "Your Strava Activities",
+      "label": "Heading"
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "default": "Select an activity to create a personalized map of your ride.",
+      "label": "Description"
+    },
+    {
+      "type": "number",
+      "id": "activities_per_page",
+      "default": 12,
+      "label": "Activities per page",
+      "info": "Number of activities to display per page (maximum 30)"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_search",
+      "default": true,
+      "label": "Show search"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_filters",
+      "default": true,
+      "label": "Show filters"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Top padding",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Bottom padding",
+      "default": 40
+    }
+  ],
+  "presets": [
+    {
+      "name": "Strava Activities"
+    }
+  ]
+}
+{% endschema %}

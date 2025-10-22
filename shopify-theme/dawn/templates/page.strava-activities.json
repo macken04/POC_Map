@@ -1,0 +1,27 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-page",
+      "settings": {
+        "padding_top": 28,
+        "padding_bottom": 28
+      }
+    },
+    "strava-activities-section": {
+      "type": "strava-activities",
+      "settings": {
+        "heading": "Your Strava Activities",
+        "description": "Select an activity to create a personalized map of your ride.",
+        "activities_per_page": 12,
+        "show_filters": true,
+        "show_search": true,
+        "padding_top": 40,
+        "padding_bottom": 40
+      }
+    }
+  },
+  "order": [
+    "main", 
+    "strava-activities-section"
+  ]
+}

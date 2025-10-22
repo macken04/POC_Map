@@ -1,0 +1,462 @@
+{{ 'design-system.css' | asset_url | stylesheet_tag }}
+{{ 'map-preview-approval.css' | asset_url | stylesheet_tag }}
+
+<!-- Include authentication utilities -->
+{{ 'auth-utils.js' | asset_url | script_tag }}
+
+
+<div class="map-preview-container">
+  <!-- Loading State -->
+  <div class="map-preview-loading" id="preview-loading">
+    <div class="card map-preview-loading-card">
+      <div class="card-body">
+        <div class="loading-spinner loading-spinner-lg"></div>
+        <h3 class="heading-3">Loading Your Map Preview...</h3>
+        <p class="text-muted">Please wait while we prepare your custom map for review.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div class="map-preview-error hidden" id="preview-error">
+    <div class="card map-preview-error-card">
+      <div class="card-body">
+        <div class="error-icon-wrapper">
+          <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <circle cx="12" cy="16" r="1" fill="currentColor"/>
+          </svg>
+        </div>
+        <h3 class="heading-4 text-error" id="error-title">Unable to Load Map Preview</h3>
+        <p class="text-muted" id="error-message">There was an issue loading your map preview.</p>
+        <div class="error-actions">
+          <button type="button" class="btn btn-secondary" id="retry-preview-button">
+            Try Again
+          </button>
+          <a href="/pages/map-design" class="btn btn-primary">
+            Back to Design
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Preview Content -->
+  <div class="hidden" id="preview-content">
+    <!-- Main Header -->
+    <div class="preview-main-header">
+      <h1 class="main-preview-title">YOUR MAP PREVIEW</h1>
+      <p class="main-preview-subtitle">Here's exactly how your custom poster will look. Review every detail and make any final adjustments before ordering.</p>
+    </div>
+
+    <!-- Navigation Header -->
+    <div class="preview-header">
+      <div class="header-content">
+        <div class="header-inner">
+          <nav class="nav-breadcrumb">
+            <a href="/pages/strava-activities" class="breadcrumb-link">My Activities</a>
+            <span class="breadcrumb-separator">›</span>
+            <a href="/pages/map-design" class="breadcrumb-link">Design</a>
+            <span class="breadcrumb-separator">›</span>
+            <span class="breadcrumb-current">Preview & Order</span>
+          </nav>
+          <button class="btn btn-secondary btn-sm" id="back-to-edit-btn">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15,18 9,12 15,6"/>
+            </svg>
+            Back to Design
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="preview-layout">
+      <div class="preview-content-grid">
+        
+        <!-- Left Panel: Map Preview -->
+        <div class="preview-panel">
+          <div class="card">
+            <div class="card-header">
+              <div class="poster-preview-header">
+                <h2 class="heading-3">POSTER PREVIEW</h2>
+                <div class="poster-size-badge">
+                  <span id="poster-size-badge">A2</span>
+                </div>
+              </div>
+              <div class="poster-size-info">
+                <span id="poster-actual-size">Actual size: 59.4 x 42.0 cm</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div id="preview-container" class="preview-image-container" data-print-size="" data-orientation="">
+                <img id="preview-image" src="" alt="Map Preview">
+
+                <!-- Preview Loading Placeholder -->
+                <div id="image-loading-placeholder" class="image-loading-placeholder">
+                  <div>
+                    <div class="loading-spinner"></div>
+                    <p class="text-muted">Generating preview...</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Aspect Ratio Info -->
+              <div id="aspect-ratio-display" class="aspect-ratio-info hidden">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <path d="M9 9h6v6H9z"/>
+                </svg>
+                <span id="aspect-ratio-text">Preview shown at actual print proportions</span>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="preview-action-buttons">
+                <button class="btn btn-secondary" id="edit-map-btn">
+                  <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                  EDIT MAP
+                </button>
+                <button class="btn btn-secondary" id="save-btn">
+                  <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                  </svg>
+                  SAVE
+                </button>
+                <button class="btn btn-primary btn-lg" id="add-to-cart-btn">
+                  <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 7M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17M17 13v4a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-4m8 0V9a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v4.01"/>
+                  </svg>
+                  ADD TO CART
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel: Details & Pricing -->
+        <div class="details-panel">
+          <!-- Pricing Section -->
+          <div class="pricing-section">
+            <div class="pricing-header">
+              <span class="main-price" id="main-price">£65.00</span>
+              <span class="original-price" id="original-price">£76.00</span>
+            </div>
+            <div class="size-info" id="size-info">59.4 x 42.0 cm</div>
+            <div class="shipping-badge">
+              FREE Worldwide Shipping
+            </div>
+          </div>
+
+          <!-- Route Details -->
+          <div class="card route-details-card">
+            <div class="card-header">
+              <h3 class="heading-5">ROUTE DETAILS</h3>
+            </div>
+            <div class="card-body">
+              <div class="route-location">
+                <svg class="location-icon" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                </svg>
+                <div>
+                  <div class="activity-name" id="activity-location">Morning Mountain Climb</div>
+                  <div class="activity-location" id="activity-location-detail">Boulder, Colorado</div>
+                </div>
+              </div>
+
+              <div class="route-stats-grid">
+                <div class="route-stat">
+                  <div class="stat-label">
+                    <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M9 11H1l8-8 8 8h-8z"/>
+                      <path d="M9 21v-10"/>
+                    </svg>
+                    <span>Distance</span>
+                  </div>
+                  <div class="stat-value" id="route-distance">53.3km</div>
+                </div>
+                <div class="route-stat">
+                  <div class="stat-label">
+                    <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="15,3 21,9 15,15"/>
+                      <line x1="4" y1="9" x2="21" y2="9"/>
+                    </svg>
+                    <span>Elevation</span>
+                  </div>
+                  <div class="stat-value" id="route-elevation">743m</div>
+                </div>
+              </div>
+
+              <div class="route-stats-grid">
+                <div class="route-stat">
+                  <div class="stat-label">
+                    <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="12,6 12,12 16,14"/>
+                    </svg>
+                    <span>Duration</span>
+                  </div>
+                  <div class="stat-value" id="route-duration">2h 15m</div>
+                </div>
+                <div class="route-stat">
+                  <div class="stat-label">
+                    <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="13,2 3,14 12,14 11,22 21,10 12,10 13,2"/>
+                    </svg>
+                    <span>Avg Speed</span>
+                  </div>
+                  <div class="stat-value" id="route-speed">23.7 km/h</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Design Settings -->
+          <div class="card design-settings-card">
+            <div class="card-header">
+              <h3 class="heading-5">DESIGN SETTINGS</h3>
+            </div>
+            <div class="card-body">
+              <div class="settings-list">
+                <div class="setting-row">
+                  <span class="setting-label">Title</span>
+                  <span class="setting-value" id="design-title">"EPIC RIDE"</span>
+                </div>
+                <div class="setting-row">
+                  <span class="setting-label">Color Scheme</span>
+                  <span class="setting-value" id="design-color">Synthwave</span>
+                </div>
+                <div class="setting-row">
+                  <span class="setting-label">Line Style</span>
+                  <span class="setting-value" id="design-line">Thickness 4</span>
+                </div>
+                <div class="setting-row">
+                  <span class="setting-label">Grid Style</span>
+                  <span class="setting-value" id="design-grid">Retro Grid</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Print Quality -->
+          <div class="card print-quality-card">
+            <div class="card-header">
+              <h3 class="heading-5">PRINT QUALITY</h3>
+            </div>
+            <div class="card-body">
+              <div class="settings-list">
+                <div class="setting-row">
+                  <span class="setting-label">Size</span>
+                  <span class="setting-value" id="print-size">A2 (59.4 x 42.0 cm)</span>
+                </div>
+                <div class="setting-row">
+                  <span class="setting-label">Resolution</span>
+                  <span class="setting-value">300 DPI</span>
+                </div>
+                <div class="setting-row">
+                  <span class="setting-label">Paper</span>
+                  <span class="setting-value">Premium Matte</span>
+                </div>
+                <div class="setting-row">
+                  <span class="setting-label">Orientation</span>
+                  <span class="setting-value">Portrait</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quality Promise -->
+          <div class="card quality-promise-card">
+            <div class="card-header">
+              <div class="quality-header">
+                <svg class="quality-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <h3 class="heading-5">QUALITY PROMISE</h3>
+              </div>
+            </div>
+            <div class="card-body">
+              <ul class="quality-list">
+                <li class="quality-item">
+                  <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 6 9 17l-5-5"/>
+                  </svg>
+                  <span>Premium 200gsm matte paper</span>
+                </li>
+                <li class="quality-item">
+                  <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 6 9 17l-5-5"/>
+                  </svg>
+                  <span>Fade-resistant archival inks</span>
+                </li>
+                <li class="quality-item">
+                  <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 6 9 17l-5-5"/>
+                  </svg>
+                  <span>30-day money-back guarantee</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{ 'map-preview-approval.js' | asset_url | script_tag }}
+
+<script>
+  // Initialize the preview approval page when DOM is loaded
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== MAP PREVIEW DEBUG START ===');
+    console.log('Map Preview Approval page: DOM loaded, initializing...');
+    console.log('Shop URL:', '{{ shop.url }}');
+    console.log('Window location:', window.location.href);
+    console.log('URL parameters:', new URLSearchParams(window.location.search).toString());
+    
+    // Debug AuthUtils availability
+    console.log('AuthUtils available:', typeof window.AuthUtils !== 'undefined');
+    if (window.AuthUtils) {
+      console.log('AuthUtils token:', window.AuthUtils.getToken() ? 'PRESENT' : 'MISSING');
+      if (typeof window.AuthUtils.getPreviewData === 'function') {
+        console.log('AuthUtils preview data:', window.AuthUtils.getPreviewData());
+      } else {
+        console.log('AuthUtils.getPreviewData method not available');
+      }
+    }
+    
+    // Debug MapPreviewApproval class availability
+    console.log('MapPreviewApproval available:', typeof MapPreviewApproval !== 'undefined');
+    
+    // Initialize the preview approval handler
+    if (typeof MapPreviewApproval !== 'undefined') {
+      // Determine backend URL dynamically
+      let baseUrl;
+      const currentHost = window.location.hostname;
+      const shopUrl = '{{ shop.url }}';
+      
+      if (currentHost.includes('ngrok') || shopUrl.includes('ngrok')) {
+        baseUrl = 'https://boss-hog-freely.ngrok-free.app';
+      } else if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
+        baseUrl = 'http://localhost:3000';
+      } else if (shopUrl.includes('myshopify.com')) {
+        baseUrl = 'https://boss-hog-freely.ngrok-free.app'; // Production uses ngrok for now
+      } else {
+        baseUrl = 'http://localhost:3000'; // Default fallback
+      }
+      
+      console.log('Detected backend URL:', baseUrl);
+      
+      try {
+        window.mapPreviewApproval = new MapPreviewApproval({
+          baseUrl: baseUrl
+        });
+        console.log('MapPreviewApproval instance created successfully');
+        window.mapPreviewApproval.init();
+        console.log('MapPreviewApproval.init() called');
+      } catch (error) {
+        console.error('Failed to initialize MapPreviewApproval:', error);
+        console.error('Error stack:', error.stack);
+        
+        // Show error to user
+        const loadingElement = document.getElementById('preview-loading');
+        const errorElement = document.getElementById('preview-error');
+        const errorTitle = document.getElementById('error-title');
+        const errorMessage = document.getElementById('error-message');
+        
+        if (loadingElement) loadingElement.style.display = 'none';
+        if (errorElement) {
+          errorElement.classList.remove('hidden');
+          if (errorTitle) errorTitle.textContent = 'Initialization Error';
+          if (errorMessage) errorMessage.textContent = `Failed to start map preview: ${error.message}`;
+        }
+      }
+    } else {
+      console.error('MapPreviewApproval class not found. Make sure map-preview-approval.js is loaded.');
+      
+      // Show error to user
+      const loadingElement = document.getElementById('preview-loading');
+      const errorElement = document.getElementById('preview-error');
+      const errorTitle = document.getElementById('error-title');
+      const errorMessage = document.getElementById('error-message');
+      
+      if (loadingElement) loadingElement.style.display = 'none';
+      if (errorElement) {
+        errorElement.classList.remove('hidden');
+        if (errorTitle) errorTitle.textContent = 'Script Loading Error';
+        if (errorMessage) errorMessage.textContent = 'Map preview script failed to load. Please refresh the page.';
+      }
+    }
+    
+    console.log('=== MAP PREVIEW DEBUG END ===');
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Map Preview Approval",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "default": "Preview Your Custom Map",
+      "label": "Heading"
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "default": "Review your custom map design and approve for purchase.",
+      "label": "Description"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_breadcrumb",
+      "default": true,
+      "label": "Show navigation breadcrumb"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_trust_indicators",
+      "default": true,
+      "label": "Show trust indicators"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_whats_included",
+      "default": true,
+      "label": "Show what's included section"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Top padding",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Bottom padding",
+      "default": 40
+    }
+  ],
+  "presets": [
+    {
+      "name": "Map Preview Approval"
+    }
+  ]
+}
+{% endschema %}

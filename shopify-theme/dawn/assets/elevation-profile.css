@@ -1,0 +1,366 @@
+/**
+ * Elevation Profile Visualization Styles
+ * Responsive styling for elevation profile charts
+ */
+
+/* Elevation Profile Container */
+.elevation-profile {
+  position: relative;
+  width: 100%;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin: 1rem 0;
+}
+
+.elevation-profile.loading {
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.elevation-profile .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #4A90E2;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Chart Header */
+.elevation-profile-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+  background: #fafafa;
+}
+
+.elevation-profile-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.elevation-profile-subtitle {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0.25rem 0 0 0;
+}
+
+/* Stats Display */
+.elevation-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.elevation-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-width: 80px;
+}
+
+.elevation-stat-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #4A90E2;
+  line-height: 1;
+}
+
+.elevation-stat-label {
+  font-size: 0.8rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 0.25rem;
+}
+
+/* Chart Container */
+.elevation-chart-container {
+  position: relative;
+  padding: 1.5rem;
+  min-height: 300px;
+}
+
+.elevation-chart-container canvas {
+  max-width: 100%;
+  height: auto !important;
+}
+
+/* Interactive Elements */
+.elevation-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.elevation-tooltip.visible {
+  opacity: 1;
+}
+
+/* Controls */
+.elevation-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  background: #f8f9fa;
+  border-top: 1px solid #e0e0e0;
+}
+
+.elevation-units-toggle {
+  display: flex;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.elevation-unit-option {
+  padding: 0.5rem 0.75rem;
+  background: white;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.elevation-unit-option.active {
+  background: #4A90E2;
+  color: white;
+}
+
+.elevation-unit-option:hover:not(.active) {
+  background: #f0f0f0;
+}
+
+.elevation-export-btn {
+  padding: 0.5rem 1rem;
+  background: #4A90E2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s ease;
+}
+
+.elevation-export-btn:hover {
+  background: #357abd;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .elevation-profile-header {
+    padding: 0.75rem 1rem;
+  }
+  
+  .elevation-profile-title {
+    font-size: 1.1rem;
+  }
+  
+  .elevation-stats {
+    padding: 0.75rem 1rem;
+    gap: 0.75rem;
+  }
+  
+  .elevation-stat {
+    min-width: 70px;
+  }
+  
+  .elevation-stat-value {
+    font-size: 1.2rem;
+  }
+  
+  .elevation-chart-container {
+    padding: 1rem;
+    min-height: 250px;
+  }
+  
+  .elevation-controls {
+    padding: 0.5rem 1rem;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: stretch;
+  }
+  
+  .elevation-units-toggle {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .elevation-stats {
+    justify-content: center;
+  }
+  
+  .elevation-stat {
+    min-width: 60px;
+  }
+  
+  .elevation-stat-value {
+    font-size: 1.1rem;
+  }
+  
+  .elevation-chart-container {
+    padding: 0.75rem;
+    min-height: 200px;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .elevation-profile {
+    background: #1a1a1a;
+    color: #ffffff;
+  }
+  
+  .elevation-profile-header {
+    background: #2a2a2a;
+    border-bottom-color: #444;
+  }
+  
+  .elevation-profile-title {
+    color: #ffffff;
+  }
+  
+  .elevation-profile-subtitle {
+    color: #cccccc;
+  }
+  
+  .elevation-stats {
+    background: #2a2a2a;
+    border-bottom-color: #444;
+  }
+  
+  .elevation-stat-label {
+    color: #cccccc;
+  }
+  
+  .elevation-controls {
+    background: #2a2a2a;
+    border-top-color: #444;
+  }
+  
+  .elevation-units-toggle {
+    background: #333;
+    border-color: #555;
+  }
+  
+  .elevation-unit-option {
+    background: #333;
+    color: #ffffff;
+  }
+  
+  .elevation-unit-option:hover:not(.active) {
+    background: #444;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .elevation-profile {
+    box-shadow: none;
+    border: 1px solid #ddd;
+    page-break-inside: avoid;
+  }
+  
+  .elevation-controls {
+    display: none;
+  }
+  
+  .elevation-chart-container {
+    min-height: 250px;
+  }
+}
+
+/* High DPI Support */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .elevation-chart-container canvas {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Focus and Accessibility */
+.elevation-unit-option:focus,
+.elevation-export-btn:focus {
+  outline: 2px solid #4A90E2;
+  outline-offset: 2px;
+}
+
+.elevation-profile[aria-hidden="true"] {
+  display: none;
+}
+
+/* Animation for chart loading */
+.elevation-chart-container.loading {
+  opacity: 0.6;
+}
+
+.elevation-chart-container.loaded {
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+/* Gradient Legend (optional) */
+.elevation-gradient-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1.5rem;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.elevation-gradient-bar {
+  width: 100px;
+  height: 8px;
+  background: linear-gradient(to right, #4CAF50, #FFEB3B, #F44336);
+  border-radius: 4px;
+  margin: 0 0.5rem;
+}
+
+.elevation-gradient-label {
+  font-size: 0.75rem;
+}
+
+/* Error States */
+.elevation-profile.error {
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+}
+
+.elevation-profile.error .error-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.elevation-profile.error .error-message {
+  text-align: center;
+  font-size: 0.9rem;
+}

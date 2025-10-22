@@ -1,0 +1,24 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-page",
+      "settings": {
+        "padding_top": 28,
+        "padding_bottom": 28
+      }
+    },
+    "strava-login-section": {
+      "type": "strava-login",
+      "settings": {
+        "heading": "Connect Your Strava Account",
+        "description": "Connect your Strava account to access your cycling activities and create personalized maps of your rides.",
+        "padding_top": 40,
+        "padding_bottom": 40
+      }
+    }
+  },
+  "order": [
+    "main", 
+    "strava-login-section"
+  ]
+}

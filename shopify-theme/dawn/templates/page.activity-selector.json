@@ -1,0 +1,26 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-page",
+      "settings": {
+        "padding_top": 28,
+        "padding_bottom": 28
+      }
+    },
+    "activity-selector-section": {
+      "type": "activity-selector",
+      "settings": {
+        "heading": "Choose Your Ride",
+        "description": "Select from your recent Strava activities to create a personalized map print.",
+        "activities_per_page": 12,
+        "show_activity_stats": true,
+        "padding_top": 40,
+        "padding_bottom": 40
+      }
+    }
+  },
+  "order": [
+    "main", 
+    "activity-selector-section"
+  ]
+}
