@@ -62,11 +62,18 @@ class MapDesign {
       routeDistance: document.getElementById('route-distance'),
       routeElevation: document.getElementById('route-elevation'),
       routeDate: document.getElementById('route-date'),
-      
-      // Step navigation
-      stepItems: document.querySelectorAll('.step-item'),
+
+      // NEW: Header elements
+      routeBadgeToggle: document.getElementById('route-badge-toggle'),
+      routeDetailsExpandable: document.getElementById('route-details-expandable'),
+      summarySelectionText: document.getElementById('summary-selection-text'),
+      summarySizeText: document.getElementById('summary-size-text'),
+
+      // Step navigation (updated for tabs)
+      stepTabs: document.querySelectorAll('.step-tab'),
       stepPanels: document.querySelectorAll('.step-panel'),
-      currentStepNumber: document.getElementById('current-step-number'),
+      footerStepCount: document.getElementById('footer-step-count'),
+      footerPrice: document.getElementById('footer-price'),
       prevStepBtn: document.getElementById('prev-step-btn'),
       nextStepBtn: document.getElementById('next-step-btn'),
       
@@ -99,7 +106,20 @@ class MapDesign {
       
       // Action buttons
       saveButton: document.getElementById('save-button'),
-      shareButton: document.getElementById('share-button')
+      shareButton: document.getElementById('share-button'),
+
+      // Summary bar elements
+      summaryBar: document.querySelector('.selection-summary-bar'),
+      summaryStyleText: document.getElementById('summary-style-text'),
+      summarySizeText: document.getElementById('summary-size-text'),
+      summaryPriceText: document.getElementById('summary-price-text'),
+
+      // Gallery modal elements
+      browseStylesBtn: document.getElementById('browse-all-styles-btn'),
+      galleryModal: document.getElementById('styles-gallery-modal'),
+      galleryOverlay: document.getElementById('gallery-overlay'),
+      galleryCloseBtn: document.getElementById('gallery-close-btn'),
+      galleryGrid: document.getElementById('gallery-grid')
     };
 
     this.extractSessionToken();
@@ -273,8 +293,10 @@ class MapDesign {
 
       // Initialize Mapbox integration
       await this.initializeMap();
-      
-      
+
+      // Update summary bar with initial values
+      this.updateSummaryBar();
+
     } catch (error) {
       console.error('Failed to initialize map design:', error);
       this.showError('Initialization Failed', error.message);
@@ -628,48 +650,57 @@ class MapDesign {
    */
   
   /**
-   * Navigate to a specific step
+   * Navigate to a specific step (updated for horizontal tabs)
    */
   navigateToStep(stepName) {
     console.log(`Navigating to step: ${stepName}`);
-    
+
     const steps = ['style', 'text', 'layout'];
     const stepIndex = steps.indexOf(stepName);
-    
+
     if (stepIndex === -1) {
       console.error(`Invalid step: ${stepName}`);
       return;
     }
-    
+
     this.currentStep = stepName;
-    
-    // Update step indicators
-    this.elements.stepItems.forEach((item, index) => {
-      const step = steps[index];
-      item.classList.toggle('active', step === stepName);
-      
-      // Mark completed steps
-      if (index < stepIndex) {
-        item.classList.add('completed');
-      } else {
-        item.classList.remove('completed');
-      }
-    });
-    
+
+    // Update tab states (instead of step-item)
+    if (this.elements.stepTabs) {
+      this.elements.stepTabs.forEach((tab, index) => {
+        const step = steps[index];
+        const isActive = step === stepName;
+        const isCompleted = index < stepIndex;
+
+        tab.classList.toggle('active', isActive);
+        tab.classList.toggle('completed', isCompleted);
+        tab.setAttribute('aria-selected', isActive);
+
+        // Show/hide checkmark for completed tabs
+        const checkmark = tab.querySelector('.tab-checkmark');
+        if (checkmark) {
+          checkmark.classList.toggle('hidden', !isCompleted);
+        }
+      });
+    }
+
     // Update step panels
     this.elements.stepPanels.forEach((panel) => {
       const panelStep = panel.id.replace('-step', '');
       panel.classList.toggle('active', panelStep === stepName);
     });
-    
-    // Update step number
-    if (this.elements.currentStepNumber) {
-      this.elements.currentStepNumber.textContent = stepIndex + 1;
+
+    // Update footer step count (instead of currentStepNumber)
+    if (this.elements.footerStepCount) {
+      this.elements.footerStepCount.textContent = `${stepIndex + 1}/3`;
     }
-    
+
     // Update navigation buttons
     this.updateNavigationButtons(stepIndex, steps.length);
-    
+
+    // Update selection summary in header
+    this.updateSelectionSummary();
+
     // Add animation
     const activePanel = document.getElementById(`${stepName}-step`);
     if (activePanel) {
@@ -679,25 +710,101 @@ class MapDesign {
   }
   
   /**
-   * Update navigation button states
+   * Update navigation button states (updated for new footer)
    */
   updateNavigationButtons(currentIndex, totalSteps) {
+    // Update previous button state
     if (this.elements.prevStepBtn) {
       this.elements.prevStepBtn.disabled = currentIndex === 0;
     }
-    
+
+    // Update next button text and state
     if (this.elements.nextStepBtn) {
       const isLastStep = currentIndex === totalSteps - 1;
-      this.elements.nextStepBtn.textContent = isLastStep ? 'Preview Poster' : 'Next';
-      
-      // Update icon
-      const icon = this.elements.nextStepBtn.querySelector('svg');
-      if (icon && isLastStep) {
-        icon.innerHTML = '<polyline points="6,9 12,15 18,9" fill="none" stroke="currentColor" stroke-width="2"/>';
-      } else if (icon) {
-        icon.innerHTML = '<polyline points="9,18 15,12 9,6" fill="none" stroke="currentColor" stroke-width="2"/>';
+      const buttonText = this.elements.nextStepBtn.querySelector('span');
+
+      if (buttonText) {
+        buttonText.textContent = isLastStep ? 'Create Poster' : 'Next';
       }
     }
+
+    // Update footer price (call pricing update)
+    this.updateFooterPrice();
+  }
+
+  /**
+   * Toggle route details expansion in header
+   */
+  toggleRouteDetails() {
+    const expandable = this.elements.routeDetailsExpandable;
+    const toggle = this.elements.routeBadgeToggle;
+
+    if (expandable && toggle) {
+      const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+      toggle.setAttribute('aria-expanded', !isExpanded);
+      expandable.classList.toggle('hidden', isExpanded);
+    }
+  }
+
+  /**
+   * Update inline selection summary in header
+   */
+  updateSelectionSummary() {
+    // Update style selection text
+    if (this.elements.summarySelectionText) {
+      const displayText = this.getStyleDisplayName();
+      this.elements.summarySelectionText.textContent = displayText;
+    }
+
+    // Update size text
+    if (this.elements.summarySizeText) {
+      const size = (this.currentSettings.printSize || 'a3').toUpperCase();
+      const orientation = this.currentSettings.layout || 'portrait';
+      const orientationText = orientation.charAt(0).toUpperCase() + orientation.slice(1);
+      this.elements.summarySizeText.textContent = `${size} ${orientationText}`;
+    }
+  }
+
+  /**
+   * Get display name for current style selection
+   */
+  getStyleDisplayName() {
+    const mapType = this.currentSettings.mapType;
+    const mapColor = this.currentSettings.mapColor;
+
+    // If using new theme/color system
+    if (mapType && window.mapboxCustomization) {
+      const themeStyles = window.mapboxCustomization.getThemeStyles();
+      const themeName = themeStyles[mapType]?.name || mapType;
+
+      if (mapColor) {
+        const colorInfo = themeStyles[mapType]?.colors[mapColor];
+        const colorName = colorInfo?.name || mapColor;
+        return `${themeName} ${colorName}`;
+      }
+      return themeName;
+    }
+
+    // Fallback to color scheme
+    return this.currentSettings.colorScheme || 'Classic Blue';
+  }
+
+  /**
+   * Update footer price display
+   */
+  updateFooterPrice() {
+    if (!this.elements.footerPrice) return;
+
+    const size = (this.currentSettings.printSize || 'a3').toLowerCase();
+    const prices = {
+      'a4': '£45',
+      'a3': '£55',
+      'a2': '£65',
+      'a1': '£75'
+    };
+
+    const price = prices[size] || '£55';
+    this.elements.footerPrice.textContent = price;
   }
   
   /**
@@ -2457,24 +2564,33 @@ class MapDesign {
    * Bind event handlers
    */
   bindEvents() {
-    // Step navigation events
+    // NEW: Tab navigation events
+    if (this.elements.stepTabs) {
+      this.elements.stepTabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+          const stepName = tab.dataset.step;
+          if (stepName) {
+            this.navigateToStep(stepName);
+          }
+        });
+      });
+    }
+
+    // NEW: Route badge toggle
+    if (this.elements.routeBadgeToggle) {
+      this.elements.routeBadgeToggle.addEventListener('click', () => {
+        this.toggleRouteDetails();
+      });
+    }
+
+    // Step navigation buttons
     if (this.elements.prevStepBtn) {
       this.elements.prevStepBtn.addEventListener('click', () => this.prevStep());
     }
-    
+
     if (this.elements.nextStepBtn) {
       this.elements.nextStepBtn.addEventListener('click', () => this.nextStep());
     }
-    
-    // Step item click events
-    this.elements.stepItems.forEach((item) => {
-      item.addEventListener('click', () => {
-        const stepName = item.dataset.step;
-        if (stepName) {
-          this.navigateToStep(stepName);
-        }
-      });
-    });
     
     // Style controls events
     this.bindStyleEvents();
@@ -2511,8 +2627,165 @@ class MapDesign {
         this.mapboxIntegration.map.resize();
       }
     }, 250));
+
+    // Add scroll listener for summary bar shadow effect
+    const sidebar = document.querySelector('.poster-sidebar');
+    if (sidebar && this.elements.summaryBar) {
+      sidebar.addEventListener('scroll', () => {
+        if (sidebar.scrollTop > 10) {
+          this.elements.summaryBar.classList.add('scrolled');
+        } else {
+          this.elements.summaryBar.classList.remove('scrolled');
+        }
+      });
+    }
+
+    // Gallery modal events
+    if (this.elements.browseStylesBtn) {
+      this.elements.browseStylesBtn.addEventListener('click', () => {
+        this.openStylesGallery();
+      });
+    }
+
+    if (this.elements.galleryCloseBtn) {
+      this.elements.galleryCloseBtn.addEventListener('click', () => {
+        this.closeStylesGallery();
+      });
+    }
+
+    if (this.elements.galleryOverlay) {
+      this.elements.galleryOverlay.addEventListener('click', () => {
+        this.closeStylesGallery();
+      });
+    }
+
+    // Keyboard support for gallery (Escape key)
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.elements.galleryModal && this.elements.galleryModal.classList.contains('active')) {
+        this.closeStylesGallery();
+      }
+    });
   }
-  
+
+  /**
+   * Update the sticky summary bar with current selections
+   */
+  updateSummaryBar() {
+    if (!this.elements.summaryStyleText || !this.elements.summarySizeText || !this.elements.summaryPriceText) {
+      return;
+    }
+
+    // Update style text (theme + color)
+    let styleText = 'Select theme';
+    if (this.currentSettings.mapType && window.mapboxCustomization) {
+      const themeStyles = window.mapboxCustomization.getThemeStyles();
+      const themeName = themeStyles[this.currentSettings.mapType]?.name || this.currentSettings.mapType;
+
+      if (this.currentSettings.mapColor) {
+        const colorInfo = themeStyles[this.currentSettings.mapType]?.colors[this.currentSettings.mapColor];
+        const colorName = colorInfo?.name || this.currentSettings.mapColor;
+        styleText = `${themeName} ${colorName}`;
+      } else {
+        styleText = themeName;
+      }
+    }
+    this.elements.summaryStyleText.textContent = styleText;
+
+    // Update size text
+    const size = this.currentSettings.printSize || 'a3';
+    const orientation = this.currentSettings.layout || 'portrait';
+    const sizeText = `${size.toUpperCase()} ${orientation.charAt(0).toUpperCase() + orientation.slice(1)}`;
+    this.elements.summarySizeText.textContent = sizeText;
+
+    // Update price based on size
+    const prices = {
+      'a4': '£45',
+      'a3': '£55',
+      'a2': '£65',
+      'a1': '£75'
+    };
+    const price = prices[size.toLowerCase()] || '£55';
+    this.elements.summaryPriceText.textContent = price;
+
+    console.log('Summary bar updated:', { style: styleText, size: sizeText, price });
+  }
+
+  /**
+   * Open the styles gallery modal
+   */
+  openStylesGallery() {
+    if (!this.elements.galleryModal) return;
+
+    // Populate gallery with all styles
+    this.populateStylesGallery();
+
+    // Show modal
+    this.elements.galleryModal.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+  }
+
+  /**
+   * Close the styles gallery modal
+   */
+  closeStylesGallery() {
+    if (!this.elements.galleryModal) return;
+
+    this.elements.galleryModal.classList.remove('active');
+    document.body.style.overflow = ''; // Restore scrolling
+  }
+
+  /**
+   * Populate the gallery with all theme and color combinations
+   */
+  populateStylesGallery() {
+    if (!this.elements.galleryGrid || !window.mapboxCustomization) return;
+
+    const themeStyles = window.mapboxCustomization.getThemeStyles();
+    const galleryItems = [];
+
+    // Current selection for highlighting
+    const currentTheme = this.currentSettings.mapType;
+    const currentColor = this.currentSettings.mapColor;
+
+    // Generate gallery items for each theme+color combination
+    Object.entries(themeStyles).forEach(([themeKey, themeInfo]) => {
+      Object.entries(themeInfo.colors).forEach(([colorKey, colorInfo]) => {
+        const isSelected = themeKey === currentTheme && colorKey === currentColor;
+
+        galleryItems.push(`
+          <div class="gallery-item ${isSelected ? 'selected' : ''}"
+               data-theme="${themeKey}"
+               data-color="${colorKey}">
+            <div class="gallery-item-preview">
+              <div class="style-preview-circle" style="background-color: ${colorInfo.previewColor}"></div>
+            </div>
+            <div class="gallery-item-info">
+              <div class="gallery-item-theme">${themeInfo.name}</div>
+              <div class="gallery-item-name">${colorInfo.name}</div>
+            </div>
+          </div>
+        `);
+      });
+    });
+
+    this.elements.galleryGrid.innerHTML = galleryItems.join('');
+
+    // Add click handlers to gallery items
+    this.elements.galleryGrid.querySelectorAll('.gallery-item').forEach(item => {
+      item.addEventListener('click', async () => {
+        const themeKey = item.dataset.theme;
+        const colorKey = item.dataset.color;
+
+        // Apply the selected style
+        await this.setTheme(themeKey);
+        await this.setThemeColor(themeKey, colorKey);
+
+        // Close the gallery
+        this.closeStylesGallery();
+      });
+    });
+  }
+
   /**
    * Bind style control events
    */
@@ -2845,6 +3118,9 @@ class MapDesign {
         // Update map canvas dimensions for new print size
         this.updateMapLayout();
 
+        // Update summary bar
+        this.updateSummaryBar();
+
         console.log('Print size changed to:', sizeKey);
       });
     });
@@ -2859,10 +3135,13 @@ class MapDesign {
           
           // Update settings
           this.currentSettings.layout = layout.dataset.layout;
-          
+
           // Update map dimensions
           this.updateMapLayout();
-          
+
+          // Update summary bar
+          this.updateSummaryBar();
+
           console.log('Layout changed to:', this.currentSettings.layout);
         });
       });
@@ -2884,6 +3163,9 @@ class MapDesign {
 
           // Update map canvas dimensions for new print size
           this.updateMapLayout();
+
+          // Update summary bar
+          this.updateSummaryBar();
 
           console.log('Print size changed to:', this.currentSettings.printSize);
         });
@@ -3648,10 +3930,16 @@ class MapDesign {
     `).join('');
     
     themeContainer.innerHTML = themeButtons;
-    
-    // Render colors for default theme (classic)
-    this.renderColorSelector('classic');
-    
+
+    // Render colors for default theme and show color section
+    this.renderColorSelector(activeTheme);
+
+    // Progressive disclosure: Show color section for default/active theme
+    const colorSection = document.querySelector('.map-style-section');
+    if (colorSection && activeTheme) {
+      colorSection.classList.add('visible');
+    }
+
     // Add theme button event listeners
     themeContainer.querySelectorAll('.map-type-option').forEach(btn => {
       btn.addEventListener('click', async (e) => {
@@ -3700,24 +3988,30 @@ class MapDesign {
    */
   async setTheme(themeKey) {
     console.log('Setting theme to:', themeKey);
-    
+
     // Update internal state tracking
     this.currentSettings.mapType = themeKey;
-    
+
     // Update theme button active state - remove active from all, then add to selected
     document.querySelectorAll('.map-type-option').forEach(btn => {
       btn.classList.remove('active');
     });
-    
+
     // Add active class to the selected theme button
     const selectedThemeBtn = document.querySelector(`[data-theme="${themeKey}"]`);
     if (selectedThemeBtn) {
       selectedThemeBtn.classList.add('active');
     }
-    
+
+    // Progressive disclosure: Show color section when theme is selected
+    const colorSection = document.querySelector('.map-style-section');
+    if (colorSection) {
+      colorSection.classList.add('visible');
+    }
+
     // Update color options for new theme
     this.renderColorSelector(themeKey);
-    
+
     // Set the first color of the new theme
     if (window.mapboxCustomization) {
       const themeStyles = window.mapboxCustomization.getThemeStyles();
@@ -3726,6 +4020,9 @@ class MapDesign {
         await this.setThemeColor(themeKey, firstColorKey);
       }
     }
+
+    // Update summary bar
+    this.updateSummaryBar();
   }
   
   /**
@@ -3773,7 +4070,10 @@ class MapDesign {
       } else {
         console.error('Could not apply theme - missing style URL or map integration');
       }
-      
+
+      // Update summary bar
+      this.updateSummaryBar();
+
     } catch (error) {
       console.error('Failed to set theme color:', error);
     }

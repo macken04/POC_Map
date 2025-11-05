@@ -9,28 +9,28 @@
       "permanent": {
         "files": 0,
         "size": 0,
-        "path": "/Users/davedev/Desktop/dev/map_site_vibe/backend/generated-maps/permanent"
+        "path": "/Users/davedev/Desktop/dev/map/working/map_site_vibe/backend/generated-maps/permanent"
       },
       "temporary": {
         "files": 0,
         "size": 0,
-        "path": "/Users/davedev/Desktop/dev/map_site_vibe/backend/generated-maps/temporary"
+        "path": "/Users/davedev/Desktop/dev/map/working/map_site_vibe/backend/generated-maps/temporary"
       },
       "processing": {
         "files": 0,
         "size": 0,
-        "path": "/Users/davedev/Desktop/dev/map_site_vibe/backend/generated-maps/processing"
+        "path": "/Users/davedev/Desktop/dev/map/working/map_site_vibe/backend/generated-maps/processing"
       },
       "metadata": {
         "files": 0,
         "size": 0,
-        "path": "/Users/davedev/Desktop/dev/map_site_vibe/backend/generated-maps/metadata"
+        "path": "/Users/davedev/Desktop/dev/map/working/map_site_vibe/backend/generated-maps/metadata"
       }
     },
-    "lastUpdated": "2025-08-06T12:32:40.347Z",
+    "lastUpdated": "2025-11-05T14:12:11.519Z",
     "compressionSavings": 0
   },
   "hourlyStats": {},
   "dailyStats": {},
-  "lastPersisted": "2025-08-06T14:12:49.342Z"
+  "lastPersisted": "2025-11-05T14:12:11.522Z"
 }
