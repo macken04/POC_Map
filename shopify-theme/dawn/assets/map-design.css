@@ -1658,6 +1658,10 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   width: 100%;
 }
 
+.map-type-section {
+  margin-top: 1.5rem; /* Add spacing between tab nav and style cards */
+}
+
 /* Progressive disclosure: Hide color section until theme is selected */
 .map-style-section {
   max-height: 0;

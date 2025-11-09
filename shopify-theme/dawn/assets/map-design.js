@@ -4035,24 +4035,37 @@ class MapDesign {
    */
   async setThemeColor(themeKey, colorKey) {
     console.log('Setting theme color:', themeKey, colorKey);
-    
+
     try {
       // Update color button active state - remove active from all, then add to selected
-      document.querySelectorAll('.style-option').forEach(btn => {
+      document.querySelectorAll('.color-swatch').forEach(btn => {
         btn.classList.remove('active');
       });
-      
+
       // Add active class to the selected color button
       const selectedColorBtn = document.querySelector(`[data-color="${colorKey}"]`);
       if (selectedColorBtn) {
         selectedColorBtn.classList.add('active');
       }
-      
+
       // Update current settings with proper state tracking
       this.currentSettings.mapType = themeKey; // Keep consistent with theme selection
       this.currentSettings.mapTheme = themeKey;
       this.currentSettings.mapColor = colorKey;
       this.currentSettings.mapStyle = `${themeKey}_${colorKey}`; // For backward compatibility
+
+      // Update the "Selected: [Color]" text display
+      const selectedTextContainer = document.getElementById('color-selected-text');
+      if (selectedTextContainer && window.mapboxCustomization) {
+        const themeStyles = window.mapboxCustomization.getThemeStyles();
+        const colorInfo = themeStyles[themeKey]?.colors[colorKey];
+        if (colorInfo) {
+          const span = selectedTextContainer.querySelector('span');
+          if (span) {
+            span.textContent = colorInfo.name;
+          }
+        }
+      }
       
       // Get the style URL
       let styleUrl;
