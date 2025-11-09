@@ -1,0 +1,359 @@
+{{ 'homepage-sections.css' | asset_url | stylesheet_tag }}
+
+{%- style -%}
+  .map-examples-gallery-{{ section.id }} {
+    padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .map-examples-gallery-{{ section.id }} {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+{%- endstyle -%}
+
+<div class="map-examples-gallery map-examples-gallery-{{ section.id }} {% if section.settings.color_scheme %}color-{{ section.settings.color_scheme }}{% endif %}">
+  <div class="page-width">
+    <!-- Section Header -->
+    <div class="gallery-header">
+      {% if section.settings.heading != blank %}
+        <h2 class="gallery-heading">{{ section.settings.heading }}</h2>
+      {% endif %}
+
+      {% if section.settings.description != blank %}
+        <p class="gallery-description">{{ section.settings.description }}</p>
+      {% endif %}
+    </div>
+
+    <!-- Examples Grid -->
+    <div class="examples-grid {% if section.settings.grid_style == '3-column' %}grid-3-col{% else %}grid-2-col{% endif %}">
+      {% for block in section.blocks %}
+        <div class="example-card" {{ block.shopify_attributes }}>
+          <div class="example-image-wrapper">
+            {% if block.settings.image != blank %}
+              {{
+                block.settings.image
+                | image_url: width: 800
+                | image_tag: class: 'example-image', loading: 'lazy', alt: block.settings.title
+              }}
+            {% else %}
+              <!-- Placeholder map poster -->
+              <div class="example-placeholder">
+                <svg viewBox="0 0 400 600" fill="none" class="placeholder-svg">
+                  <rect width="400" height="600" fill="#f8f9fa"/>
+
+                  <!-- Map Route Path -->
+                  {% case forloop.index %}
+                    {% when 1 %}
+                      <path d="M80,400 Q120,300 160,350 T240,400 T320,350" stroke="#FC4C02" stroke-width="5" fill="none"/>
+                    {% when 2 %}
+                      <path d="M100,200 L150,300 L200,250 L250,350 L300,300" stroke="#2E7D32" stroke-width="5" fill="none"/>
+                    {% when 3 %}
+                      <path d="M200,150 Q250,200 200,250 Q150,300 200,350 Q250,400 200,450" stroke="#1976D2" stroke-width="5" fill="none"/>
+                    {% when 4 %}
+                      <path d="M100,500 C150,400 250,400 300,500 S200,300 250,200" stroke="#9C27B0" stroke-width="5" fill="none"/>
+                    {% when 5 %}
+                      <path d="M150,150 L200,250 L150,350 L200,450 L250,400" stroke="#F57C00" stroke-width="5" fill="none"/>
+                    {% else %}
+                      <path d="M100,300 Q150,200 200,250 T300,300" stroke="#00796B" stroke-width="5" fill="none"/>
+                  {% endcase %}
+
+                  <!-- Start/End Points -->
+                  <circle cx="80" cy="400" r="8" fill="#FC4C02"/>
+                  <circle cx="320" cy="350" r="8" fill="#FC4C02"/>
+
+                  <!-- Text Overlay -->
+                  <text x="200" y="520" font-family="Arial" font-size="24" font-weight="bold" text-anchor="middle" fill="#333">
+                    {{ block.settings.title | default: "EPIC RIDE" }}
+                  </text>
+                  <text x="200" y="550" font-family="Arial" font-size="14" text-anchor="middle" fill="#666">
+                    {{ block.settings.subtitle | default: "53.3km • 743m" }}
+                  </text>
+                </svg>
+              </div>
+            {% endif %}
+
+            <!-- Hover Overlay -->
+            <div class="example-overlay">
+              <div class="example-overlay-content">
+                {% if block.settings.style_name != blank %}
+                  <span class="example-style-badge">{{ block.settings.style_name }}</span>
+                {% endif %}
+
+                {% if section.settings.show_view_button %}
+                  <a href="{{ section.settings.cta_link }}" class="example-cta-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.599h4.172L10.463 0l-7 13.828h4.172" />
+                    </svg>
+                    Create Yours
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          {% if section.settings.show_titles %}
+            <div class="example-info">
+              {% if block.settings.title != blank %}
+                <h3 class="example-title">{{ block.settings.title }}</h3>
+              {% endif %}
+
+              {% if block.settings.subtitle != blank %}
+                <p class="example-subtitle">{{ block.settings.subtitle }}</p>
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Gallery CTA -->
+    {% if section.settings.show_cta and section.settings.cta_label != blank %}
+      <div class="gallery-cta">
+        <a href="{{ section.settings.cta_link }}" class="gallery-cta-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.599h4.172L10.463 0l-7 13.828h4.172" />
+          </svg>
+          {{ section.settings.cta_label }}
+        </a>
+
+        {% if section.settings.show_trust_signal %}
+          <p class="gallery-trust-signal">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="trust-icon">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            {{ section.settings.trust_signal_text | default: "Free shipping • 300 DPI quality • 30-day guarantee" }}
+          </p>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Map Examples Gallery",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Section Header"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Get Inspired"
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "label": "Description",
+      "default": "See what's possible with custom map posters from your Strava routes"
+    },
+    {
+      "type": "header",
+      "content": "Gallery Settings"
+    },
+    {
+      "type": "select",
+      "id": "grid_style",
+      "label": "Grid Layout",
+      "options": [
+        {
+          "value": "2-column",
+          "label": "2 Columns"
+        },
+        {
+          "value": "3-column",
+          "label": "3 Columns"
+        }
+      ],
+      "default": "3-column"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_titles",
+      "label": "Show Example Titles",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_view_button",
+      "label": "Show 'Create Yours' on Hover",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Call to Action"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_cta",
+      "label": "Show CTA Button",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "cta_label",
+      "label": "CTA Button Label",
+      "default": "Start Creating Your Map"
+    },
+    {
+      "type": "url",
+      "id": "cta_link",
+      "label": "CTA Link"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_trust_signal",
+      "label": "Show Trust Signal",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "trust_signal_text",
+      "label": "Trust Signal Text",
+      "default": "Free shipping • 300 DPI quality • 30-day guarantee"
+    },
+    {
+      "type": "header",
+      "content": "Styling"
+    },
+    {
+      "type": "select",
+      "id": "color_scheme",
+      "label": "Color Scheme",
+      "options": [
+        {
+          "value": "scheme-1",
+          "label": "Scheme 1"
+        },
+        {
+          "value": "scheme-2",
+          "label": "Scheme 2"
+        },
+        {
+          "value": "background-1",
+          "label": "Background 1"
+        },
+        {
+          "value": "background-2",
+          "label": "Background 2"
+        }
+      ],
+      "default": "scheme-1"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Top Padding",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Bottom Padding",
+      "default": 60
+    }
+  ],
+  "blocks": [
+    {
+      "type": "example",
+      "name": "Example Map",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Example Image"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "Mountain Climb"
+        },
+        {
+          "type": "text",
+          "id": "subtitle",
+          "label": "Subtitle",
+          "default": "Boulder, CO • 53.3km"
+        },
+        {
+          "type": "text",
+          "id": "style_name",
+          "label": "Style Badge",
+          "default": "Classic Blue"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Map Examples Gallery",
+      "category": "Custom",
+      "blocks": [
+        {
+          "type": "example",
+          "settings": {
+            "title": "Mountain Climb",
+            "subtitle": "Boulder, CO • 53.3km",
+            "style_name": "Classic Blue"
+          }
+        },
+        {
+          "type": "example",
+          "settings": {
+            "title": "City Circuit",
+            "subtitle": "San Francisco, CA • 42.1km",
+            "style_name": "Urban Minimal"
+          }
+        },
+        {
+          "type": "example",
+          "settings": {
+            "title": "Coastal Ride",
+            "subtitle": "Big Sur, CA • 68.5km",
+            "style_name": "Ocean Breeze"
+          }
+        },
+        {
+          "type": "example",
+          "settings": {
+            "title": "Forest Trail",
+            "subtitle": "Portland, OR • 35.7km",
+            "style_name": "Nature Green"
+          }
+        },
+        {
+          "type": "example",
+          "settings": {
+            "title": "Desert Loop",
+            "subtitle": "Phoenix, AZ • 91.2km",
+            "style_name": "Sunset Orange"
+          }
+        },
+        {
+          "type": "example",
+          "settings": {
+            "title": "Alpine Adventure",
+            "subtitle": "Chamonix, France • 127.8km",
+            "style_name": "Mountain Purple"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

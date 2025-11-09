@@ -1,0 +1,461 @@
+/* ====================================
+   HOMEPAGE SECTIONS STYLES
+   How It Works & Example Gallery
+   ==================================== */
+
+/* =============================
+   HOW IT WORKS SECTION
+   ============================= */
+
+.how-it-works {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Section Header */
+.how-it-works-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.how-it-works-heading {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 1rem 0;
+  letter-spacing: -0.02em;
+}
+
+@media screen and (min-width: 750px) {
+  .how-it-works-heading {
+    font-size: 3rem;
+  }
+}
+
+.how-it-works-description {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: #666;
+  margin: 0;
+}
+
+/* Steps Grid */
+.how-it-works-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  position: relative;
+}
+
+@media screen and (min-width: 750px) {
+  .how-it-works-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2.5rem;
+  }
+}
+
+@media screen and (min-width: 990px) {
+  .how-it-works-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
+}
+
+/* Individual Step Card */
+.how-it-works-step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2rem 1.5rem;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.how-it-works-step:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  border-color: #FC4C02;
+}
+
+/* Step Number Badge */
+.step-number {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #FC4C02, #E03E00);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+  box-shadow: 0 4px 8px rgba(252, 76, 2, 0.3);
+}
+
+/* Step Icon */
+.step-icon {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 1.5rem;
+  color: #FC4C02;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-icon svg {
+  width: 40px;
+  height: 40px;
+}
+
+/* Step Content */
+.step-content {
+  flex: 1;
+}
+
+.step-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 0.75rem 0;
+}
+
+.step-description {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: #666;
+  margin: 0;
+}
+
+/* Connector Arrow (Desktop Only) */
+.step-connector {
+  display: none;
+}
+
+@media screen and (min-width: 990px) {
+  .step-connector {
+    display: block;
+    position: absolute;
+    top: 50%;
+    right: -2rem;
+    transform: translate(50%, -50%);
+    color: #e0e0e0;
+    z-index: 1;
+  }
+
+  .how-it-works-step:last-child .step-connector {
+    display: none;
+  }
+}
+
+/* How It Works CTA */
+.how-it-works-cta {
+  margin-top: 3rem;
+  text-align: center;
+}
+
+.how-it-works-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2.5rem;
+  background: linear-gradient(135deg, #FC4C02, #E03E00);
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px rgba(252, 76, 2, 0.3);
+}
+
+.how-it-works-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(252, 76, 2, 0.4);
+}
+
+
+/* =============================
+   MAP EXAMPLES GALLERY SECTION
+   ============================= */
+
+.map-examples-gallery {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Gallery Header */
+.gallery-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.gallery-heading {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 1rem 0;
+  letter-spacing: -0.02em;
+}
+
+@media screen and (min-width: 750px) {
+  .gallery-heading {
+    font-size: 3rem;
+  }
+}
+
+.gallery-description {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: #666;
+  margin: 0;
+}
+
+/* Examples Grid */
+.examples-grid {
+  display: grid;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.examples-grid.grid-2-col {
+  grid-template-columns: 1fr;
+}
+
+@media screen and (min-width: 750px) {
+  .examples-grid.grid-2-col {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.examples-grid.grid-3-col {
+  grid-template-columns: 1fr;
+}
+
+@media screen and (min-width: 750px) {
+  .examples-grid.grid-3-col {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media screen and (min-width: 990px) {
+  .examples-grid.grid-3-col {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Example Card */
+.example-card {
+  position: relative;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.example-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Example Image Wrapper */
+.example-image-wrapper {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  background: #f8f9fa;
+}
+
+.example-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.example-card:hover .example-image {
+  transform: scale(1.05);
+}
+
+/* Example Placeholder */
+.example-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholder-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Hover Overlay */
+.example-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 2rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.example-card:hover .example-overlay {
+  opacity: 1;
+}
+
+.example-overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.example-style-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.example-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: white;
+  color: #FC4C02;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.example-cta-btn:hover {
+  background: #FC4C02;
+  color: white;
+  transform: scale(1.05);
+}
+
+/* Example Info (Below Image) */
+.example-info {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.example-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 0.5rem 0;
+}
+
+.example-subtitle {
+  font-size: 0.875rem;
+  color: #666;
+  margin: 0;
+}
+
+/* Gallery CTA Section */
+.gallery-cta {
+  margin-top: 3rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.gallery-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2.5rem;
+  background: linear-gradient(135deg, #FC4C02, #E03E00);
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px rgba(252, 76, 2, 0.3);
+}
+
+.gallery-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(252, 76, 2, 0.4);
+}
+
+.gallery-trust-signal {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #666;
+  margin: 0;
+}
+
+.trust-icon {
+  color: #2E7D32;
+  width: 16px;
+  height: 16px;
+}
+
+/* Color Scheme Support */
+.color-scheme-1 {
+  background: #ffffff;
+}
+
+.color-background-1 {
+  background: #f8f9fa;
+}
+
+.color-background-2 {
+  background: #f1f3f5;
+}
+
+/* Mobile Adjustments */
+@media screen and (max-width: 749px) {
+  .how-it-works-heading,
+  .gallery-heading {
+    font-size: 2rem;
+  }
+
+  .step-title,
+  .example-title {
+    font-size: 1.125rem;
+  }
+
+  .example-overlay {
+    opacity: 1;
+  }
+}

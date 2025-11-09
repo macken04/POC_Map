@@ -1,210 +1,156 @@
 {
   "sections": {
-    "image_banner": {
-      "type": "image-banner",
-      "blocks": {
-        "heading": {
-          "type": "heading",
-          "settings": {
-            "heading": "Image banner",
-            "heading_size": "h0"
-          }
-        },
-        "text": {
-          "type": "text",
-          "settings": {
-            "text": "Give customers details about the banner image(s) or content on the template.",
-            "text_style": "body"
-          }
-        },
-        "button": {
-          "type": "buttons",
-          "settings": {
-            "button_label_1": "Shop all",
-            "button_link_1": "shopify://collections/all",
-            "button_style_secondary_1": true,
-            "button_label_2": "",
-            "button_link_2": "",
-            "button_style_secondary_2": false
-          }
-        }
-      },
-      "block_order": [
-        "heading",
-        "text",
-        "button"
-      ],
+    "hero_map_printing": {
+      "type": "hero-map-printing",
       "settings": {
-        "image_overlay_opacity": 40,
-        "image_height": "large",
-        "desktop_content_position": "bottom-center",
-        "show_text_box": false,
-        "desktop_content_alignment": "center",
-        "color_scheme": "scheme-3",
-        "mobile_content_alignment": "center",
-        "stack_images_on_mobile": false,
-        "show_text_below": false
-      }
-    },
-    "rich_text": {
-      "type": "rich-text",
-      "blocks": {
-        "heading": {
-          "type": "heading",
-          "settings": {
-            "heading": "Talk about your brand",
-            "heading_size": "h1"
-          }
-        },
-        "text": {
-          "type": "text",
-          "settings": {
-            "text": "<p>Share information about your brand with your customers. Describe a product, make announcements, or welcome customers to your store.<\/p>"
-          }
-        }
-      },
-      "block_order": [
-        "heading",
-        "text"
-      ],
-      "settings": {
-        "color_scheme": "scheme-1",
-        "full_width": true,
-        "padding_top": 40,
-        "padding_bottom": 0
-      }
-    },
-    "featured_collection": {
-      "type": "featured-collection",
-      "settings": {
-        "title": "Featured products",
-        "heading_size": "h2",
-        "collection": "all",
-        "products_to_show": 8,
-        "columns_desktop": 4,
-        "color_scheme": "scheme-1",
-        "show_view_all": false,
-        "swipe_on_mobile": false,
-        "image_ratio": "adapt",
-        "show_secondary_image": true,
-        "show_vendor": false,
-        "show_rating": false,
-        "columns_mobile": "2",
-        "padding_top": 28,
-        "padding_bottom": 36
-      }
-    },
-    "collage": {
-      "type": "collage",
-      "blocks": {
-        "collection-0": {
-          "type": "collection",
-          "settings": {
-            "collection": ""
-          }
-        },
-        "product": {
-          "type": "product",
-          "settings": {
-            "product": "",
-            "second_image": false
-          }
-        },
-        "collection-1": {
-          "type": "collection",
-          "settings": {
-            "collection": ""
-          }
-        }
-      },
-      "block_order": [
-        "collection-0",
-        "product",
-        "collection-1"
-      ],
-      "settings": {
-        "heading": "Multimedia collage",
-        "heading_size": "h2",
-        "desktop_layout": "left",
-        "mobile_layout": "collage",
-        "color_scheme": "scheme-1",
-        "padding_top": 36,
-        "padding_bottom": 36
-      }
-    },
-    "video": {
-      "type": "video",
-      "settings": {
-        "heading": "",
-        "video_url": "https://www.youtube.com/watch?v=_9VUPq3SxOc",
-        "heading_size": "h1",
-        "description": "",
+        "eyebrow_text": "Powered by Strava",
+        "heading": "Turn Your Rides Into Beautiful Art",
+        "subheading": "Transform your Strava cycling routes into stunning, high-quality map posters. Perfect for remembering your favorite rides and epic adventures.",
+        "button_label": "Connect with Strava",
+        "button_link": "/pages/strava-login",
+        "button_label_2": "See Examples",
+        "button_link_2": "#examples",
+        "show_example_preview": true,
+        "show_social_proof": true,
+        "social_proof_text": "Loved by 12,000+ cyclists worldwide",
         "full_width": false,
-        "color_scheme": "scheme-1",
-        "padding_top": 36,
-        "padding_bottom": 36
+        "padding_top": 80,
+        "padding_bottom": 80
       }
     },
-    "multicolumn": {
-      "type": "multicolumn",
+    "how_it_works": {
+      "type": "how-it-works",
       "blocks": {
-        "column1": {
-          "type": "column",
+        "step_1": {
+          "type": "step",
           "settings": {
-            "title": "Column",
-            "text": "<p>Pair text with an image to focus on your chosen product, collection, or blog post. Add details on availability, style, or even provide a review.<\/p>",
-            "link_label": "",
-            "link": ""
+            "icon": "connect",
+            "title": "Connect",
+            "description": "Link your Strava account to access your cycling activities securely"
           }
         },
-        "column2": {
-          "type": "column",
+        "step_2": {
+          "type": "step",
           "settings": {
-            "title": "Column",
-            "text": "<p>Pair text with an image to focus on your chosen product, collection, or blog post. Add details on availability, style, or even provide a review.<\/p>",
-            "link_label": "",
-            "link": ""
+            "icon": "select",
+            "title": "Select",
+            "description": "Choose your favorite route from your Strava activities"
           }
         },
-        "column3": {
-          "type": "column",
+        "step_3": {
+          "type": "step",
           "settings": {
-            "title": "Column",
-            "text": "<p>Pair text with an image to focus on your chosen product, collection, or blog post. Add details on availability, style, or even provide a review.<\/p>",
-            "link_label": "",
-            "link": ""
+            "icon": "customize",
+            "title": "Customize",
+            "description": "Design your map with themes, colors, and personalized text"
+          }
+        },
+        "step_4": {
+          "type": "step",
+          "settings": {
+            "icon": "print",
+            "title": "Print",
+            "description": "Order your high-quality 300 DPI poster in A4, A3, or A2"
           }
         }
       },
       "block_order": [
-        "column1",
-        "column2",
-        "column3"
+        "step_1",
+        "step_2",
+        "step_3",
+        "step_4"
       ],
       "settings": {
-        "title": "",
-        "heading_size": "h1",
-        "image_width": "third",
-        "image_ratio": "adapt",
-        "columns_desktop": 3,
-        "column_alignment": "center",
-        "background_style": "none",
-        "button_label": "",
-        "button_link": "",
-        "swipe_on_mobile": false,
+        "heading": "How It Works",
+        "description": "Create your custom map poster in just 4 simple steps",
+        "show_cta": true,
+        "button_label": "Get Started Now",
+        "button_link": "/pages/strava-login",
+        "color_scheme": "background-1",
+        "padding_top": 60,
+        "padding_bottom": 60
+      }
+    },
+    "map_examples_gallery": {
+      "type": "map-examples-gallery",
+      "blocks": {
+        "example_1": {
+          "type": "example",
+          "settings": {
+            "title": "Mountain Climb",
+            "subtitle": "Boulder, CO • 53.3km",
+            "style_name": "Classic Blue"
+          }
+        },
+        "example_2": {
+          "type": "example",
+          "settings": {
+            "title": "City Circuit",
+            "subtitle": "San Francisco, CA • 42.1km",
+            "style_name": "Urban Minimal"
+          }
+        },
+        "example_3": {
+          "type": "example",
+          "settings": {
+            "title": "Coastal Ride",
+            "subtitle": "Big Sur, CA • 68.5km",
+            "style_name": "Ocean Breeze"
+          }
+        },
+        "example_4": {
+          "type": "example",
+          "settings": {
+            "title": "Forest Trail",
+            "subtitle": "Portland, OR • 35.7km",
+            "style_name": "Nature Green"
+          }
+        },
+        "example_5": {
+          "type": "example",
+          "settings": {
+            "title": "Desert Loop",
+            "subtitle": "Phoenix, AZ • 91.2km",
+            "style_name": "Sunset Orange"
+          }
+        },
+        "example_6": {
+          "type": "example",
+          "settings": {
+            "title": "Alpine Adventure",
+            "subtitle": "Chamonix, France • 127.8km",
+            "style_name": "Mountain Purple"
+          }
+        }
+      },
+      "block_order": [
+        "example_1",
+        "example_2",
+        "example_3",
+        "example_4",
+        "example_5",
+        "example_6"
+      ],
+      "settings": {
+        "heading": "Get Inspired",
+        "description": "See what's possible with custom map posters from your Strava routes",
+        "grid_style": "3-column",
+        "show_titles": true,
+        "show_view_button": true,
+        "show_cta": true,
+        "cta_label": "Start Creating Your Map",
+        "cta_link": "/pages/strava-login",
+        "show_trust_signal": true,
+        "trust_signal_text": "Free shipping • 300 DPI quality • 30-day guarantee",
         "color_scheme": "scheme-1",
-        "columns_mobile": "1",
-        "padding_top": 36,
-        "padding_bottom": 36
+        "padding_top": 60,
+        "padding_bottom": 60
       }
     }
   },
   "order": [
-    "image_banner",
-    "rich_text",
-    "featured_collection",
-    "collage",
-    "video",
-    "multicolumn"
+    "hero_map_printing",
+    "how_it_works",
+    "map_examples_gallery"
   ]
 }
