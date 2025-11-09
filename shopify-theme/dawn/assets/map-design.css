@@ -439,7 +439,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 }
 
 /* ==========================================================================
-   HORIZONTAL TAB NAVIGATION - NEW
+   HORIZONTAL TAB NAVIGATION - 4 TABS
    ========================================================================== */
 
 .step-tabs-container {
@@ -460,13 +460,13 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.375rem; /* Reduced from 0.5rem for tighter tab content */
-  padding: 0.75rem 0.875rem; /* Reduced from 0.875rem 1rem for more compact tabs */
+  gap: 0.375rem; /* Compact spacing for 4 tabs */
+  padding: 0.75rem 0.625rem; /* More compact for 4-tab layout */
   background: transparent;
   border: none;
   border-bottom: 3px solid transparent;
   color: var(--poster-text-muted);
-  font-size: 0.8125rem; /* Reduced from 0.875rem for better fit */
+  font-size: 0.8125rem; /* Slightly smaller for 4 tabs */
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -496,7 +496,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 .tab-icon {
   flex-shrink: 0;
-  width: 14px; /* Reduced from default 16px for more compact tabs */
+  width: 14px; /* Compact icon size for 4 tabs */
   height: 14px;
 }
 
@@ -510,6 +510,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 .tab-label {
   font-weight: inherit;
+  white-space: nowrap; /* Prevent wrapping on smaller screens */
 }
 
 .tab-checkmark {
@@ -519,12 +520,12 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   height: 14px;
 }
 
-/* Mobile responsive tabs */
+/* Mobile responsive tabs - 4 tabs */
 @media (max-width: 768px) {
   .step-tab {
     flex-direction: column;
     gap: 0.25rem;
-    padding: 0.75rem 0.5rem;
+    padding: 0.75rem 0.375rem; /* More compact for 4 tabs on mobile */
     font-size: 0.75rem;
   }
 
@@ -541,6 +542,10 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 @media (max-width: 480px) {
   .step-tabs {
     justify-content: space-evenly;
+  }
+
+  .step-tab {
+    padding: 0.75rem 0.25rem; /* Even more compact on very small screens */
   }
 }
 
@@ -1016,12 +1021,17 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 /* Layout Options */
 .layout-options {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
   margin-bottom: 1.5rem;
   width: 100%; /* Ensure full container width */
   min-width: 0; /* Prevent overflow */
+}
+
+.layout-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
 }
 
 .layout-option {
@@ -1792,6 +1802,93 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   font-weight: 700;
 }
 
+/* ==========================================================================
+   NEW DESIGN: LARGE THEME PREVIEW CARDS
+   ========================================================================== */
+
+/* Theme Cards Grid - 2-column layout for large preview cards */
+.theme-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  width: 100%;
+  margin-bottom: 1.5rem;
+  min-width: 0;
+}
+
+.theme-card {
+  display: flex;
+  flex-direction: column;
+  border: 2px solid var(--poster-border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #FFFFFF;
+}
+
+.theme-card:hover {
+  border-color: var(--poster-border-hover);
+  box-shadow: var(--poster-shadow);
+  transform: translateY(-2px);
+}
+
+.theme-card.active {
+  border-color: var(--poster-accent-primary);
+  box-shadow: 0 0 0 3px rgba(252, 76, 2, 0.15);
+}
+
+.theme-preview-area {
+  width: 100%;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-preview-area svg {
+  width: 48px;
+  height: 48px;
+  color: rgba(0, 0, 0, 0.3);
+}
+
+.theme-card-info {
+  padding: 1rem;
+  background: #FFFFFF;
+}
+
+.theme-card-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--poster-text-primary);
+  margin-bottom: 0.25rem;
+  line-height: 1.3;
+}
+
+.theme-card-description {
+  font-size: 0.875rem;
+  color: var(--poster-text-muted);
+  line-height: 1.4;
+}
+
+.theme-card.active .theme-card-name {
+  color: var(--poster-accent-primary);
+}
+
+/* Mobile responsive for theme cards */
+@media (max-width: 768px) {
+  .theme-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .theme-preview-area {
+    height: 140px;
+  }
+}
+
 /* Color Selection Grid - Second Tier (Colors within selected theme) */
 /* 2-column grid layout for compact display of color variations */
 .map-style-grid {
@@ -1854,6 +1951,84 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .style-option.active .style-name {
   color: var(--poster-accent-primary);
   font-weight: 700;
+}
+
+/* ==========================================================================
+   NEW DESIGN: LARGE COLOR SWATCHES
+   ========================================================================== */
+
+/* Color Swatches Grid - 3-column layout for large color blocks */
+.color-swatches-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  width: 100%;
+  margin-bottom: 1rem;
+  min-width: 0;
+}
+
+.color-swatch {
+  position: relative;
+  height: 80px;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 3px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.color-swatch:hover {
+  transform: scale(1.05);
+  box-shadow: var(--poster-shadow);
+}
+
+.color-swatch.active {
+  border-color: var(--poster-text-primary);
+  box-shadow: var(--poster-shadow-lg);
+}
+
+.color-swatch-checkmark {
+  width: 32px;
+  height: 32px;
+  color: #FFFFFF;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  display: none;
+}
+
+.color-swatch.active .color-swatch-checkmark {
+  display: block;
+}
+
+.color-selected-text {
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--poster-text-secondary);
+  font-weight: 500;
+  margin-top: 0.5rem;
+}
+
+.color-selected-text span {
+  font-weight: 600;
+  color: var(--poster-accent-primary);
+}
+
+/* Mobile responsive for color swatches */
+@media (max-width: 768px) {
+  .color-swatches-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .color-swatches-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .color-swatch {
+    height: 60px;
+  }
 }
 
 /* Responsive adjustments for two-tier selector */

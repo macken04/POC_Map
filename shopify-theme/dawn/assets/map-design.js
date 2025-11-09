@@ -650,12 +650,12 @@ class MapDesign {
    */
   
   /**
-   * Navigate to a specific step (updated for horizontal tabs)
+   * Navigate to a specific step (updated for 4-tab horizontal layout)
    */
   navigateToStep(stepName) {
     console.log(`Navigating to step: ${stepName}`);
 
-    const steps = ['style', 'text', 'layout'];
+    const steps = ['style', 'colors', 'text', 'size'];
     const stepIndex = steps.indexOf(stepName);
 
     if (stepIndex === -1) {
@@ -690,9 +690,9 @@ class MapDesign {
       panel.classList.toggle('active', panelStep === stepName);
     });
 
-    // Update footer step count (instead of currentStepNumber)
+    // Update footer step count for 4 tabs
     if (this.elements.footerStepCount) {
-      this.elements.footerStepCount.textContent = `${stepIndex + 1}/3`;
+      this.elements.footerStepCount.textContent = `${stepIndex + 1}/4`;
     }
 
     // Update navigation buttons
@@ -808,12 +808,12 @@ class MapDesign {
   }
   
   /**
-   * Navigate to next step
+   * Navigate to next step (updated for 4-tab layout)
    */
   nextStep() {
-    const steps = ['style', 'text', 'layout'];
+    const steps = ['style', 'colors', 'text', 'size'];
     const currentIndex = steps.indexOf(this.currentStep);
-    
+
     if (currentIndex < steps.length - 1) {
       this.navigateToStep(steps[currentIndex + 1]);
     } else {
@@ -822,14 +822,14 @@ class MapDesign {
       this.previewPoster();
     }
   }
-  
+
   /**
-   * Navigate to previous step
+   * Navigate to previous step (updated for 4-tab layout)
    */
   prevStep() {
-    const steps = ['style', 'text', 'layout'];
+    const steps = ['style', 'colors', 'text', 'size'];
     const currentIndex = steps.indexOf(this.currentStep);
-    
+
     if (currentIndex > 0) {
       this.navigateToStep(steps[currentIndex - 1]);
     }
@@ -2415,10 +2415,10 @@ class MapDesign {
         this.nextStep();
       }
       
-      // Number keys for direct step navigation
-      if (e.key >= '1' && e.key <= '3') {
+      // Number keys for direct step navigation (1-4 for 4 tabs)
+      if (e.key >= '1' && e.key <= '4') {
         e.preventDefault();
-        const steps = ['style', 'text', 'layout'];
+        const steps = ['style', 'colors', 'text', 'size'];
         const stepIndex = parseInt(e.key) - 1;
         if (steps[stepIndex]) {
           this.navigateToStep(steps[stepIndex]);
@@ -3905,44 +3905,37 @@ class MapDesign {
    */
   renderThemeSelector() {
     if (!window.mapboxCustomization) return;
-    
+
     const themeStyles = window.mapboxCustomization.getThemeStyles();
-    const themeContainer = document.getElementById('map-theme-selector');
-    const colorContainer = document.getElementById('map-color-selector');
-    
-    if (!themeContainer || !colorContainer) return;
-    
+    const themeContainer = document.getElementById('theme-color-selector');
+
+    if (!themeContainer) return;
+
     // Get the current active theme from settings (default to 'classic' if not set)
     const activeTheme = this.currentSettings.mapType || 'classic';
-    
-    // Render theme buttons with dynamic active state
-    const themeButtons = Object.entries(themeStyles).map(([themeKey, themeInfo]) => `
-      <button class="map-type-option ${themeKey === activeTheme ? 'active' : ''}" 
-              data-theme="${themeKey}">
-        <div class="type-icon">
+
+    // Render large theme preview cards
+    const themeCards = Object.entries(themeStyles).map(([themeKey, themeInfo]) => `
+      <div class="theme-card ${themeKey === activeTheme ? 'active' : ''}"
+           data-theme="${themeKey}">
+        <div class="theme-preview-area" style="background: ${this.getThemePreviewGradient(themeKey)}">
           ${this.getThemeIcon(themeKey)}
         </div>
-        <div class="type-info">
-          <span class="type-name">${themeInfo.name}</span>
-          <span class="type-description">${themeInfo.description}</span>
+        <div class="theme-card-info">
+          <div class="theme-card-name">${themeInfo.name}</div>
+          <div class="theme-card-description">${themeInfo.description}</div>
         </div>
-      </button>
+      </div>
     `).join('');
-    
-    themeContainer.innerHTML = themeButtons;
 
-    // Render colors for default theme and show color section
+    themeContainer.innerHTML = themeCards;
+
+    // Render colors for Tab 2 (will be shown when user navigates to Colors tab)
     this.renderColorSelector(activeTheme);
 
-    // Progressive disclosure: Show color section for default/active theme
-    const colorSection = document.querySelector('.map-style-section');
-    if (colorSection && activeTheme) {
-      colorSection.classList.add('visible');
-    }
-
-    // Add theme button event listeners
-    themeContainer.querySelectorAll('.map-type-option').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
+    // Add theme card event listeners
+    themeContainer.querySelectorAll('.theme-card').forEach(card => {
+      card.addEventListener('click', async (e) => {
         const themeKey = e.currentTarget.dataset.theme;
         await this.setTheme(themeKey);
       });
@@ -3954,29 +3947,41 @@ class MapDesign {
    */
   renderColorSelector(selectedTheme) {
     if (!window.mapboxCustomization) return;
-    
+
     const themeStyles = window.mapboxCustomization.getThemeStyles();
-    const colorContainer = document.getElementById('map-color-selector');
-    
+    const colorContainer = document.getElementById('map-style-options');
+    const selectedTextContainer = document.getElementById('color-selected-text');
+
     if (!colorContainer || !themeStyles[selectedTheme]) return;
-    
+
     const themeColors = themeStyles[selectedTheme].colors;
     // Get the currently active color from settings, default to first available
     const activeColor = this.currentSettings.mapColor || Object.keys(themeColors)[0];
-    
-    const colorButtons = Object.entries(themeColors).map(([colorKey, colorInfo]) => `
-      <button class="style-option ${colorKey === activeColor ? 'active' : ''}" 
-              data-color="${colorKey}">
-        <div class="style-preview" style="background-color: ${colorInfo.previewColor}"></div>
-        <span class="style-name">${colorInfo.name}</span>
-      </button>
+
+    // Render large color swatches
+    const colorSwatches = Object.entries(themeColors).map(([colorKey, colorInfo]) => `
+      <div class="color-swatch ${colorKey === activeColor ? 'active' : ''}"
+           data-color="${colorKey}"
+           style="background-color: ${colorInfo.previewColor}">
+        <svg class="color-swatch-checkmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+          <polyline points="20,6 9,17 4,12"/>
+        </svg>
+      </div>
     `).join('');
-    
-    colorContainer.innerHTML = colorButtons;
-    
-    // Add color button event listeners
-    colorContainer.querySelectorAll('.style-option').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
+
+    colorContainer.innerHTML = colorSwatches;
+
+    // Update selected color text
+    if (selectedTextContainer && themeColors[activeColor]) {
+      const span = selectedTextContainer.querySelector('span');
+      if (span) {
+        span.textContent = themeColors[activeColor].name;
+      }
+    }
+
+    // Add color swatch event listeners
+    colorContainer.querySelectorAll('.color-swatch').forEach(swatch => {
+      swatch.addEventListener('click', async (e) => {
         const colorKey = e.currentTarget.dataset.color;
         await this.setThemeColor(selectedTheme, colorKey);
       });
@@ -3992,15 +3997,15 @@ class MapDesign {
     // Update internal state tracking
     this.currentSettings.mapType = themeKey;
 
-    // Update theme button active state - remove active from all, then add to selected
-    document.querySelectorAll('.map-type-option').forEach(btn => {
-      btn.classList.remove('active');
+    // Update theme card active state - remove active from all, then add to selected
+    document.querySelectorAll('.theme-card').forEach(card => {
+      card.classList.remove('active');
     });
 
-    // Add active class to the selected theme button
-    const selectedThemeBtn = document.querySelector(`[data-theme="${themeKey}"]`);
-    if (selectedThemeBtn) {
-      selectedThemeBtn.classList.add('active');
+    // Add active class to the selected theme card
+    const selectedThemeCard = document.querySelector(`.theme-card[data-theme="${themeKey}"]`);
+    if (selectedThemeCard) {
+      selectedThemeCard.classList.add('active');
     }
 
     // Progressive disclosure: Show color section when theme is selected
@@ -4101,7 +4106,19 @@ class MapDesign {
     };
     return icons[theme] || icons.classic;
   }
-  
+
+  /**
+   * Get theme preview gradient for large theme cards
+   */
+  getThemePreviewGradient(theme) {
+    const gradients = {
+      classic: 'linear-gradient(135deg, #f8f8f8 0%, #e0e0e0 100%)',
+      minimal: 'linear-gradient(135deg, #f5f5f5 0%, #d5d5d5 100%)',
+      bubble: 'linear-gradient(135deg, #e8e8ff 0%, #c8c8ff 100%)'
+    };
+    return gradients[theme] || gradients.classic;
+  }
+
   /**
    * Create fallback theme selector if MapboxCustomization is not available
    */
