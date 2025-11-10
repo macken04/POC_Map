@@ -1,6 +1,6 @@
 /* ============================================
- Strava Activities - Dark Gradient Theme
- Based on v0 reference design
+ Strava Activities - Production Light Theme
+ Fully redesigned to match website design system
  ============================================ */
 
 /* Reset and Base Styles */
@@ -8,23 +8,23 @@
   box-sizing: border-box;
 }
 
-/* Main Section Container with Tailwind bg-slate-900 Background */
+/* ============================================
+ Main Section Container - Light Theme
+ ============================================ */
 .strava-activities-section {
-  /* Tailwind-style bg-slate-900 with CSS custom properties */
-  --tw-bg-opacity: 1;
-  background-color: rgb(15 23 42 / var(--tw-bg-opacity, 1));
-  
+  /* Light gradient background matching homepage */
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
   min-height: 100vh;
-  padding: 60px 0;
+  padding: var(--space-12) 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  color: white;
+  color: var(--text-primary);
 }
 
-/* Content Wrapper */
+/* Content Wrapper - Responsive Padding */
 .strava-content-wrapper {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 var(--space-6);
 }
 
 /* ============================================
@@ -32,62 +32,68 @@
  ============================================ */
 .strava-activities-header {
   text-align: center;
-  margin-bottom: 48px;
+  margin-bottom: var(--space-12);
+  animation: fadeInDown 0.6s ease-out;
 }
 
 .strava-header-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
 }
 
 .strava-logo {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #FC4C02 0%, #FF6B35 100%);
-  border-radius: 12px;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-light) 100%);
+  border-radius: var(--radius-xl);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(252, 76, 2, 0.25);
+  box-shadow: 0 4px 12px rgba(252, 76, 2, 0.2);
+  animation: scaleIn 0.5s ease-out 0.2s backwards;
 }
 
 .strava-icon {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   color: white;
 }
 
 .strava-activities-heading {
-  font-size: 48px;
-  font-weight: 900;
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-bold);
   margin: 0;
-  letter-spacing: 2px;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+  animation: fadeInUp 0.6s ease-out 0.3s backwards;
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #a855f7 0%, #06b6d4 100%);
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-light) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .user-connection-status {
-  color: #94a3b8;
-  font-size: 16px;
-  font-weight: 500;
+  color: var(--text-muted);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  animation: fadeIn 0.6s ease-out 0.4s backwards;
 }
 
 .strava-activities-description {
-  font-size: 18px;
-  color: #e2e8f0;
-  line-height: 1.6;
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+  line-height: var(--line-height-relaxed);
   margin: 0;
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
+  animation: fadeIn 0.6s ease-out 0.5s backwards;
 }
 
 /* ============================================
@@ -96,74 +102,77 @@
 .statistics-dashboard {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 40px;
+  gap: var(--space-5);
+  margin-bottom: var(--space-10);
 }
 
 .stat-card {
-  background: rgba(30, 41, 59, 0.8);
-  border-radius: 12px;
-  padding: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
   text-align: center;
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  transition: all 0.3s ease;
-  min-height: 100px;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+  min-height: 120px;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  animation: fadeInUp 0.6s ease-out backwards;
 }
 
+/* Staggered animation delays for stats */
+.stat-card:nth-child(1) { animation-delay: 0.6s; }
+.stat-card:nth-child(2) { animation-delay: 0.7s; }
+.stat-card:nth-child(3) { animation-delay: 0.8s; }
+.stat-card:nth-child(4) { animation-delay: 0.9s; }
+
 .stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--brand-primary);
 }
 
 .stat-number {
-  font-size: 36px;
-  font-weight: 700;
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-bold);
   line-height: 1;
-  margin-bottom: 6px;
+  margin-bottom: var(--space-2);
+  color: var(--brand-primary);
 }
 
 .stat-label {
-  font-size: 13px;
-  color: #94a3b8;
-  font-weight: 400;
-  opacity: 0.8;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-/* Stat Card Color Accents */
-.stat-activities .stat-number {
-  color: #a855f7;
-}
-
-.stat-distance .stat-number {
-  color: #06b6d4;
-}
-
-.stat-elevation .stat-number {
-  color: #a855f7;
-}
-
+/* Stat Card Color Accents - All brand orange for consistency */
+.stat-activities .stat-number,
+.stat-distance .stat-number,
+.stat-elevation .stat-number,
 .stat-time .stat-number {
-  color: #10b981;
+  color: var(--brand-primary);
 }
 
 /* ============================================
  Search and Filter Controls
  ============================================ */
 .strava-activities-controls {
-  background: rgba(51, 65, 85, 0.6);
-  border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 48px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(148, 163, 184, 0.1);
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  margin-bottom: var(--space-12);
+  box-shadow: var(--shadow-sm);
+  animation: fadeIn 0.6s ease-out 1s backwards;
 }
 
 .controls-body {
   display: flex;
-  gap: 16px;
+  gap: var(--space-4);
   align-items: center;
   flex-wrap: wrap;
 }
@@ -177,61 +186,72 @@
 
 .search-icon {
   position: absolute;
-  left: 16px;
+  left: var(--space-4);
   top: 50%;
   transform: translateY(-50%);
   width: 20px;
   height: 20px;
-  color: #64748b;
+  color: var(--text-muted);
   z-index: 1;
+  transition: color var(--transition-fast);
 }
 
 .strava-search-input {
   width: 100%;
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 12px;
-  padding: 16px 16px 16px 48px;
-  color: white;
-  font-size: 16px;
-  transition: all 0.3s ease;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-12);
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  transition: all var(--transition-normal);
 }
 
 .strava-search-input:focus {
   outline: none;
-  border-color: #06b6d4;
-  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px rgba(252, 76, 2, 0.1);
+}
+
+.strava-search-input:focus + .search-icon {
+  color: var(--brand-primary);
 }
 
 .strava-search-input::placeholder {
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 /* Filter Buttons */
 .strava-activities-filters {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   align-items: center;
 }
 
 .filter-button {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 12px;
-  padding: 12px 16px;
-  color: #e2e8f0;
-  font-size: 14px;
-  font-weight: 500;
+  gap: var(--space-2);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
 }
 
 .filter-button:hover {
-  background: rgba(30, 41, 59, 1);
-  border-color: rgba(148, 163, 184, 0.4);
+  background: var(--bg-secondary);
+  border-color: var(--brand-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.filter-button:focus {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
 }
 
 .filter-icon,
@@ -239,7 +259,14 @@
 .chevron-icon {
   width: 16px;
   height: 16px;
-  color: #94a3b8;
+  color: var(--text-muted);
+  transition: color var(--transition-fast);
+}
+
+.filter-button:hover .filter-icon,
+.filter-button:hover .calendar-icon,
+.filter-button:hover .chevron-icon {
+  color: var(--brand-primary);
 }
 
 /* ============================================
@@ -248,37 +275,52 @@
 .activities-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  margin-bottom: 48px;
+  gap: var(--space-6);
+  margin-bottom: var(--space-12);
 }
 
 .activity-card {
-  background: rgba(51, 65, 85, 0.9);
-  border-radius: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
   overflow: hidden;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  height: 420px;
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
+  animation: fadeInUp 0.5s ease-out backwards;
 }
+
+/* Staggered animation for cards */
+.activity-card:nth-child(1) { animation-delay: 1.1s; }
+.activity-card:nth-child(2) { animation-delay: 1.2s; }
+.activity-card:nth-child(3) { animation-delay: 1.3s; }
+.activity-card:nth-child(4) { animation-delay: 1.15s; }
+.activity-card:nth-child(5) { animation-delay: 1.25s; }
+.activity-card:nth-child(6) { animation-delay: 1.35s; }
+.activity-card:nth-child(n+7) { animation-delay: 1.4s; }
 
 .activity-card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-  border-color: rgba(148, 163, 184, 0.2);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--brand-primary);
 }
 
 /* Activity Card Preview (Route Visualization) */
 .activity-card-preview {
   position: relative;
-  height: 140px;
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+  height: 160px;
+  background: linear-gradient(135deg, var(--neutral-100) 0%, var(--neutral-50) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
+  transition: background var(--transition-normal);
+}
+
+.activity-card:hover .activity-card-preview {
+  background: linear-gradient(135deg, rgba(252, 76, 2, 0.05) 0%, var(--neutral-50) 100%);
 }
 
 .activity-route-svg {
@@ -295,24 +337,33 @@
   stroke-linecap: round;
   stroke-linejoin: round;
   opacity: 0.9;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  transition: all var(--transition-normal);
+}
+
+.activity-card:hover .activity-route-path {
+  stroke-width: 5;
+  opacity: 1;
+  filter: drop-shadow(0 3px 6px rgba(252, 76, 2, 0.3));
 }
 
 /* Activity Type Badge */
 .activity-type-badge {
   position: absolute;
-  top: 16px;
-  left: 16px;
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
+  top: var(--space-4);
+  left: var(--space-4);
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--text-primary);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
   backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
 }
 
 .activity-type-badge::before {
@@ -323,13 +374,15 @@
 /* GPS Indicator */
 .activity-gps-indicator {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  background: rgba(16, 185, 129, 0.9);
+  top: var(--space-4);
+  right: var(--space-4);
+  background: rgba(16, 185, 129, 0.95);
   color: white;
-  padding: 8px;
+  padding: var(--space-2);
   border-radius: 50%;
   backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-sm);
+  border: 2px solid white;
 }
 
 .activity-gps-icon {
@@ -339,27 +392,32 @@
 
 /* Activity Card Details */
 .activity-card-details {
-  padding: 20px;
+  padding: var(--space-5);
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
 .activity-name {
-  font-size: 18px;
-  font-weight: 700;
-  color: white;
-  margin: 0 0 8px 0;
-  line-height: 1.3;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-2) 0;
+  line-height: var(--line-height-snug);
+  transition: color var(--transition-fast);
+}
+
+.activity-card:hover .activity-name {
+  color: var(--brand-primary);
 }
 
 .activity-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #94a3b8;
-  font-size: 14px;
-  margin-bottom: 20px;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-5);
 }
 
 .activity-meta svg {
@@ -368,16 +426,16 @@
 }
 
 .activity-meta-separator {
-  color: #64748b;
-  margin: 0 8px;
+  color: var(--border-medium);
+  margin: 0 var(--space-1);
 }
 
-/* Activity Stats Grid - Plain Text Layout */
+/* Activity Stats Grid */
 .activity-stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px 24px;
-  margin-bottom: 20px;
+  gap: var(--space-3) var(--space-6);
+  margin-bottom: var(--space-5);
   flex: 1;
 }
 
@@ -387,46 +445,75 @@
 
 .stat-value {
   display: block;
-  font-size: 16px;
-  font-weight: 600;
-  color: white;
-  line-height: 1.2;
-  margin-bottom: 2px;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  line-height: var(--line-height-tight);
+  margin-bottom: var(--space-1);
 }
 
 .stat-label {
   display: block;
-  font-size: 11px;
-  color: #94a3b8;
-  font-weight: 400;
-  opacity: 0.8;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-/* Create Poster Button - Gradient Style */
+/* Create Poster Button - Brand Orange */
 .create-poster-button {
   width: 100%;
-  background: linear-gradient(135deg, #ec4899, #06b6d4);
+  background: var(--brand-primary);
   color: white;
   border: none;
-  border-radius: 8px;
-  padding: 14px 20px;
-  font-size: 13px;
-  font-weight: 600;
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   letter-spacing: 0.5px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-2);
   text-transform: uppercase;
   margin-top: auto;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.create-poster-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.create-poster-button:hover::before {
+  left: 100%;
 }
 
 .create-poster-button:hover {
-  background: linear-gradient(135deg, #db2777, #0284c7);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+  background: var(--brand-primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.create-poster-button:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.create-poster-button:focus {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
 }
 
 .create-poster-button svg {
@@ -441,36 +528,195 @@
 .activities-error,
 .activities-empty {
   text-align: center;
-  padding: 80px 20px;
-  color: #94a3b8;
+  padding: var(--space-20) var(--space-5);
+  color: var(--text-secondary);
+  animation: fadeIn 0.6s ease-out;
 }
 
 .activities-loading h3,
 .activities-error h3,
 .activities-empty h3 {
-  color: white;
-  font-size: 24px;
-  margin-bottom: 12px;
+  color: var(--text-primary);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-3);
 }
 
 .activities-loading p,
 .activities-error p,
 .activities-empty p {
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-relaxed);
+  color: var(--text-secondary);
+  max-width: 500px;
+  margin: 0 auto;
 }
 
-.loading-spinner svg,
-.error-icon svg,
-.empty-icon svg {
-  width: 48px;
-  height: 48px;
-  color: #64748b;
-  margin-bottom: 24px;
+.loading-spinner {
+  width: 64px;
+  height: 64px;
+  border: 4px solid var(--neutral-200);
+  border-top: 4px solid var(--brand-primary);
+  border-radius: 50%;
+  margin: 0 auto var(--space-6);
+  animation: spin 1s linear infinite;
 }
 
-.loading-spinner svg {
-  animation: spin 2s linear infinite;
+.error-icon,
+.empty-icon {
+  width: 64px;
+  height: 64px;
+  color: var(--text-muted);
+  margin: 0 auto var(--space-6);
+  opacity: 0.7;
+}
+
+/* Skeleton Loading States */
+.skeleton-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.skeleton-preview {
+  height: 160px;
+  background: linear-gradient(
+    90deg,
+    var(--neutral-200) 25%,
+    var(--neutral-100) 50%,
+    var(--neutral-200) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-details {
+  padding: var(--space-5);
+}
+
+.skeleton-line {
+  height: 16px;
+  background: var(--neutral-200);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-3);
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-line:last-child {
+  width: 60%;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* ============================================
+ Load More Section
+ ============================================ */
+.load-more-section {
+  text-align: center;
+  padding: var(--space-10) 0;
+}
+
+.load-more-button {
+  background: var(--bg-card);
+  color: var(--brand-primary);
+  border: 2px solid var(--brand-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: var(--shadow-sm);
+}
+
+.load-more-button:hover {
+  background: var(--brand-primary);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.load-more-button:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.load-more-button:focus {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.load-more-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.pagination-info {
+  color: var(--text-muted);
+  margin-bottom: var(--space-5);
+  font-size: var(--font-size-sm);
+}
+
+/* ============================================
+ Page Load Animations
+ ============================================ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes spin {
@@ -479,128 +725,181 @@
 }
 
 /* ============================================
- Load More Section
+ Responsive Design - Mobile First
  ============================================ */
-.load-more-section {
-  text-align: center;
-  padding: 40px 0;
-}
 
-.load-more-button {
-  background: rgba(30, 41, 59, 0.8);
-  color: white;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 12px;
-  padding: 16px 32px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.load-more-button:hover {
-  background: rgba(30, 41, 59, 1);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-}
-
-.pagination-info {
-  color: #94a3b8;
-  margin-bottom: 20px;
-  font-size: 14px;
-}
-
-/* ============================================
- Responsive Design
- ============================================ */
-@media (max-width: 1200px) {
-  .activities-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-  }
-}
-
+/* Tablet: 768px and below */
 @media (max-width: 768px) {
+  .strava-activities-section {
+    padding: var(--space-8) 0;
+  }
+
   .strava-content-wrapper {
-    padding: 0 16px;
+    padding: 0 var(--space-4);
   }
-  
+
+  .strava-activities-header {
+    margin-bottom: var(--space-8);
+  }
+
+  .strava-logo {
+    width: 48px;
+    height: 48px;
+  }
+
+  .strava-icon {
+    width: 24px;
+    height: 24px;
+  }
+
   .strava-activities-heading {
-    font-size: 32px;
-    letter-spacing: 1px;
+    font-size: var(--font-size-3xl);
+    letter-spacing: -0.25px;
   }
-  
+
+  .strava-activities-description {
+    font-size: var(--font-size-base);
+  }
+
   .statistics-dashboard {
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    gap: var(--space-4);
+    margin-bottom: var(--space-8);
   }
-  
+
+  .stat-card {
+    padding: var(--space-4);
+    min-height: 100px;
+  }
+
   .stat-number {
-    font-size: 28px;
+    font-size: var(--font-size-3xl);
   }
-  
+
   .activities-grid {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: var(--space-5);
   }
-  
-  .activity-card {
-    height: auto;
-    min-height: 380px;
+
+  .activity-card-preview {
+    height: 140px;
   }
-  
+
   .controls-body {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .strava-activities-search {
     min-width: unset;
   }
-  
+
   .strava-activities-filters {
     justify-content: center;
+    flex-wrap: wrap;
   }
 }
 
+/* Large Tablet: 1024px to 1200px */
+@media (max-width: 1200px) and (min-width: 769px) {
+  .activities-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-5);
+  }
+}
+
+/* Mobile: 480px and below */
 @media (max-width: 480px) {
   .strava-activities-section {
-    padding: 40px 0;
+    padding: var(--space-6) 0;
   }
-  
+
+  .strava-content-wrapper {
+    padding: 0 var(--space-3);
+  }
+
+  .strava-logo {
+    width: 40px;
+    height: 40px;
+  }
+
+  .strava-icon {
+    width: 20px;
+    height: 20px;
+  }
+
   .strava-activities-heading {
-    font-size: 24px;
+    font-size: var(--font-size-2xl);
   }
-  
+
+  .strava-activities-description {
+    font-size: var(--font-size-sm);
+  }
+
   .statistics-dashboard {
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: var(--space-3);
   }
-  
+
   .stat-card {
-    padding: 16px;
-    min-height: 80px;
+    padding: var(--space-3);
+    min-height: 90px;
   }
-  
+
   .stat-number {
-    font-size: 24px;
+    font-size: var(--font-size-2xl);
   }
-  
+
+  .stat-label {
+    font-size: 11px;
+  }
+
   .activity-card-details {
-    padding: 16px;
+    padding: var(--space-4);
   }
-  
+
+  .activity-name {
+    font-size: var(--font-size-base);
+  }
+
   .activity-stats {
-    gap: 8px 16px;
+    gap: var(--space-2) var(--space-4);
   }
-  
+
+  .stat-value {
+    font-size: var(--font-size-base);
+  }
+
   .activity-card-preview {
     height: 120px;
+  }
+
+  .create-poster-button {
+    padding: var(--space-3) var(--space-4);
+    font-size: 11px;
+  }
+
+  .strava-activities-controls {
+    padding: var(--space-4);
+  }
+
+  .filter-button {
+    padding: var(--space-2) var(--space-3);
+    font-size: 12px;
+  }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .create-poster-button,
+  .load-more-button,
+  .filter-button {
+    min-height: 44px; /* iOS touch target size */
+    min-width: 44px;
+  }
+
+  .activity-card:active {
+    transform: scale(0.98);
   }
 }
 
@@ -615,23 +914,79 @@
   display: block !important;
 }
 
-/* Auth Status (keep existing functionality) */
+/* Auth Status */
 .auth-status-container {
   display: flex;
   justify-content: center;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 
 .auth-status-message {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #94a3b8;
-  font-size: 14px;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  background: var(--bg-card);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
 }
 
 .auth-status-icon {
   width: 16px;
   height: 16px;
-  color: #10b981;
+  color: var(--color-success);
+}
+
+/* ============================================
+ Accessibility Enhancements
+ ============================================ */
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .activity-card {
+    border-width: 2px;
+  }
+
+  .create-poster-button {
+    border: 2px solid transparent;
+  }
+
+  .create-poster-button:focus {
+    border-color: white;
+  }
+}
+
+/* Focus Visible for Keyboard Navigation */
+.activity-card:focus-visible,
+.create-poster-button:focus-visible,
+.filter-button:focus-visible,
+.load-more-button:focus-visible {
+  outline: 3px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+/* Screen Reader Only Content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
