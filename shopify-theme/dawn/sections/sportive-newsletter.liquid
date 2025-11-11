@@ -1,0 +1,98 @@
+{{ 'design-system.css' | asset_url | stylesheet_tag }}
+{{ 'sportive-prints-page.css' | asset_url | stylesheet_tag }}
+
+<div class="sportive-newsletter">
+  <div class="page-width">
+    <div class="sportive-newsletter-content">
+      {%- if section.settings.heading != blank -%}
+        <h2 class="sportive-newsletter-heading">
+          {{ section.settings.heading }}
+        </h2>
+      {%- endif -%}
+
+      {%- if section.settings.description != blank -%}
+        <p class="sportive-newsletter-description">
+          {{ section.settings.description }}
+        </p>
+      {%- endif -%}
+
+      {%- form 'customer', class: 'sportive-newsletter-form' -%}
+        {%- if form.posted_successfully? -%}
+          <div class="sportive-newsletter-success">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M16.667 5L7.5 14.167L3.333 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>{{ section.settings.success_message | default: 'Thanks for subscribing!' }}</span>
+          </div>
+        {%- endif -%}
+
+        {%- if form.errors -%}
+          <div class="sportive-newsletter-error">
+            {{ form.errors | default_errors }}
+          </div>
+        {%- endif -%}
+
+        <input type="hidden" name="contact[tags]" value="newsletter">
+
+        <div class="sportive-newsletter-input-wrapper">
+          <input
+            type="email"
+            name="contact[email]"
+            class="sportive-newsletter-input"
+            placeholder="{{ section.settings.placeholder | default: 'Enter your email' }}"
+            required
+            aria-label="Email address"
+          >
+          <button type="submit" class="sportive-newsletter-btn">
+            {{ section.settings.button_label | default: 'Subscribe' }}
+          </button>
+        </div>
+      {%- endform -%}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Sportive Newsletter",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Subscribe to our emails"
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "label": "Description",
+      "default": "Get updates on new routes, special offers, and cycling inspiration"
+    },
+    {
+      "type": "text",
+      "id": "placeholder",
+      "label": "Input placeholder",
+      "default": "Enter your email"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button label",
+      "default": "Subscribe"
+    },
+    {
+      "type": "text",
+      "id": "success_message",
+      "label": "Success message",
+      "default": "Thanks for subscribing!"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Sportive Newsletter"
+    }
+  ]
+}
+{% endschema %}

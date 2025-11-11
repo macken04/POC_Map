@@ -1,0 +1,126 @@
+{{ 'sportive-prints-page.css' | asset_url | stylesheet_tag }}
+
+<div class="sportive-trust-signals">
+  <div class="sportive-trust-content">
+    {%- for block in section.blocks -%}
+      <div class="sportive-trust-item" {{ block.shopify_attributes }}>
+        <div class="sportive-trust-icon">
+          {%- case block.settings.icon -%}
+            {%- when 'shipping' -%}
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 2H13V13H1V2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                <path d="M13 6H17L19 8V13H13V6Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                <circle cx="4.5" cy="15" r="1.5" stroke="currentColor" stroke-width="1.5"/>
+                <circle cx="15" cy="15" r="1.5" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+            {%- when 'quality' -%}
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 2L12.09 7.26L18 8.27L14 13.14L15.18 19.02L10 16.27L4.82 19.02L6 13.14L2 8.27L7.91 7.26L10 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            {%- when 'guarantee' -%}
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M7 10L9 12L13 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            {%- when 'returns' -%}
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 7L7 3L11 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M7 3V13C7 14.1046 7.89543 15 9 15H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            {%- else -%}
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 2L12.09 7.26L18 8.27L14 13.14L15.18 19.02L10 16.27L4.82 19.02L6 13.14L2 8.27L7.91 7.26L10 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+          {%- endcase -%}
+        </div>
+
+        <div class="sportive-trust-text">
+          <div class="sportive-trust-title">{{ block.settings.title }}</div>
+          {%- if block.settings.description != blank -%}
+            <div class="sportive-trust-description">{{ block.settings.description }}</div>
+          {%- endif -%}
+        </div>
+      </div>
+    {%- endfor -%}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Sportive Trust Signals",
+  "tag": "section",
+  "class": "section",
+  "settings": [],
+  "blocks": [
+    {
+      "type": "trust_item",
+      "name": "Trust Signal",
+      "settings": [
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "options": [
+            { "value": "shipping", "label": "Shipping (Truck)" },
+            { "value": "quality", "label": "Quality (Star)" },
+            { "value": "guarantee", "label": "Guarantee (Check)" },
+            { "value": "returns", "label": "Returns (Arrow)" }
+          ],
+          "default": "shipping"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "Free Shipping"
+        },
+        {
+          "type": "text",
+          "id": "description",
+          "label": "Description",
+          "default": "On all orders over $50"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Sportive Trust Signals",
+      "blocks": [
+        {
+          "type": "trust_item",
+          "settings": {
+            "icon": "shipping",
+            "title": "Free Shipping",
+            "description": "On all orders over $50"
+          }
+        },
+        {
+          "type": "trust_item",
+          "settings": {
+            "icon": "quality",
+            "title": "300 DPI Quality",
+            "description": "Museum-grade printing"
+          }
+        },
+        {
+          "type": "trust_item",
+          "settings": {
+            "icon": "guarantee",
+            "title": "30-Day Guarantee",
+            "description": "100% satisfaction guaranteed"
+          }
+        },
+        {
+          "type": "trust_item",
+          "settings": {
+            "icon": "returns",
+            "title": "Easy Returns",
+            "description": "Hassle-free return policy"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

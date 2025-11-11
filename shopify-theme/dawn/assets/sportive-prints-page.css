@@ -1,0 +1,1256 @@
+/**
+ * Sportive Prints Collection Page
+ * Production-quality styling for the sportive prints browse page
+ * Uses design system tokens from design-system.css
+ */
+
+/* =============================
+   SPORTIVE HERO SECTION
+   ============================= */
+
+.sportive-hero {
+  position: relative;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  overflow: hidden;
+  padding: 3rem 0;
+}
+
+@media screen and (min-width: 750px) {
+  .sportive-hero {
+    padding: 4rem 0;
+  }
+}
+
+.sportive-hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(252, 76, 2, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.sportive-hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+  text-align: center;
+}
+
+.sportive-hero-eyebrow {
+  display: inline-block;
+  background: linear-gradient(135deg, #FC4C02 0%, #E03E00 100%);
+  color: white;
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-4);
+  box-shadow: 0 4px 12px rgba(252, 76, 2, 0.3);
+}
+
+.sportive-hero-heading {
+  font-size: 2.5rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-4) 0;
+  letter-spacing: -0.02em;
+  line-height: var(--line-height-tight);
+}
+
+@media screen and (min-width: 750px) {
+  .sportive-hero-heading {
+    font-size: 3.5rem;
+  }
+}
+
+.sportive-hero-description {
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-relaxed);
+  color: var(--text-secondary);
+  margin: 0 auto var(--space-6) auto;
+  max-width: 700px;
+}
+
+.sportive-hero-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+@media screen and (min-width: 750px) {
+  .sportive-hero-cta {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
+.sportive-hero-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-8);
+  background: linear-gradient(135deg, #FC4C02, #E03E00);
+  color: white;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  transition: all var(--transition-normal);
+  box-shadow: 0 4px 14px rgba(252, 76, 2, 0.3);
+  border: none;
+  cursor: pointer;
+}
+
+.sportive-hero-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(252, 76, 2, 0.4);
+}
+
+.sportive-hero-btn-secondary {
+  background: white;
+  color: var(--brand-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.sportive-hero-btn-secondary:hover {
+  background: var(--neutral-50);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Hero Integrated Search */
+.sportive-hero-search {
+  margin-top: var(--space-6);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.sportive-hero-search .sportive-search-form {
+  width: 100%;
+}
+
+.sportive-hero-search .sportive-search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.sportive-hero-search .sportive-search-icon {
+  position: absolute;
+  left: 1.25rem;
+  color: var(--text-muted);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.sportive-hero-search .sportive-search-input {
+  width: 100%;
+  padding: 1rem 1rem 1rem 3.5rem;
+  font-size: var(--font-size-base);
+  border: 2px solid var(--neutral-300);
+  border-radius: var(--radius-full);
+  background: white;
+  transition: all var(--transition-fast);
+  font-family: inherit;
+}
+
+.sportive-hero-search .sportive-search-input:focus {
+  outline: none;
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px rgba(252, 76, 2, 0.1);
+}
+
+.sportive-hero-search .sportive-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* =============================
+   SPORTIVE CATEGORIES SECTION
+   ============================= */
+
+.sportive-categories {
+  padding: 4rem 0;
+  background: white;
+}
+
+.sportive-categories-header {
+  text-align: center;
+  margin-bottom: var(--space-12);
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 var(--space-6);
+}
+
+.sportive-categories-heading {
+  font-size: 2.5rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-4) 0;
+  letter-spacing: -0.02em;
+}
+
+@media screen and (min-width: 750px) {
+  .sportive-categories-heading {
+    font-size: 3rem;
+  }
+}
+
+.sportive-categories-description {
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: var(--line-height-relaxed);
+}
+
+.sportive-categories-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+}
+
+@media screen and (min-width: 750px) {
+  .sportive-categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+  }
+}
+
+@media screen and (min-width: 990px) {
+  .sportive-categories-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+  }
+}
+
+/* Category Card */
+.sportive-category-card {
+  position: relative;
+  background: white;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  transition: all var(--transition-normal);
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  isolation: isolate;
+}
+
+.sportive-category-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+}
+
+.sportive-category-image-wrapper {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--neutral-100) 0%, var(--neutral-200) 100%);
+}
+
+.sportive-category-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-slow);
+}
+
+.sportive-category-card:hover .sportive-category-image {
+  transform: scale(1.08);
+}
+
+/* Category Image Overlay */
+.sportive-category-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, transparent 60%);
+  display: flex;
+  align-items: flex-end;
+  padding: var(--space-6);
+}
+
+.sportive-category-badge {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--brand-primary);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  backdrop-filter: blur(10px);
+}
+
+.sportive-category-content {
+  padding: 1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  min-height: 140px;
+}
+
+.sportive-category-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-3) 0;
+}
+
+.sportive-category-description {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: var(--line-height-relaxed);
+  margin: 0 0 var(--space-4) 0;
+  flex: 1;
+}
+
+.sportive-category-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--brand-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  transition: gap var(--transition-fast);
+}
+
+.sportive-category-card:hover .sportive-category-link {
+  gap: var(--space-3);
+}
+
+.sportive-category-arrow {
+  transition: transform var(--transition-fast);
+}
+
+.sportive-category-card:hover .sportive-category-arrow {
+  transform: translateX(4px);
+}
+
+/* =============================
+   ENHANCED PRODUCT GRID
+   ============================= */
+
+.sportive-products-section {
+  padding: 6rem 0;
+  background: var(--bg-secondary);
+}
+
+.sportive-products-header {
+  text-align: center;
+  margin-bottom: var(--space-12);
+  padding: 0 var(--space-6);
+}
+
+.sportive-products-heading {
+  font-size: 2.5rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-4) 0;
+  letter-spacing: -0.02em;
+}
+
+@media screen and (min-width: 750px) {
+  .sportive-products-heading {
+    font-size: 3rem;
+  }
+}
+
+.sportive-products-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-8);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+}
+
+@media screen and (min-width: 640px) {
+  .sportive-products-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media screen and (min-width: 990px) {
+  .sportive-products-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media screen and (min-width: 1280px) {
+  .sportive-products-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Enhanced Product Card */
+.sportive-product-card {
+  position: relative;
+  background: white;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-normal);
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.sportive-product-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-xl);
+}
+
+/* Product Badge */
+.sportive-product-badge {
+  position: absolute;
+  top: var(--space-4);
+  left: var(--space-4);
+  background: linear-gradient(135deg, #FC4C02, #E03E00);
+  color: white;
+  padding: 0.375rem 0.875rem;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(252, 76, 2, 0.4);
+}
+
+.sportive-product-image-wrapper {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  background: var(--neutral-100);
+}
+
+.sportive-product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-slow);
+}
+
+.sportive-product-card:hover .sportive-product-image {
+  transform: scale(1.05);
+}
+
+/* Quick View Overlay */
+.sportive-quick-view {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--space-4);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
+  display: flex;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(100%);
+  transition: all var(--transition-normal);
+}
+
+.sportive-product-card:hover .sportive-quick-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.sportive-quick-view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  background: white;
+  color: var(--brand-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  border: none;
+  cursor: pointer;
+}
+
+.sportive-quick-view-btn:hover {
+  background: var(--brand-primary);
+  color: white;
+  transform: scale(1.05);
+}
+
+.sportive-product-info {
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sportive-product-category {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: var(--font-weight-medium);
+}
+
+.sportive-product-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0;
+  line-height: var(--line-height-snug);
+}
+
+.sportive-product-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.sportive-product-rating {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-sm);
+  color: var(--color-warning);
+}
+
+.sportive-product-reviews {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.sportive-product-price-wrapper {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.sportive-product-price {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.sportive-product-price-from {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  font-weight: var(--font-weight-normal);
+}
+
+/* =============================
+   FEATURES / USP SECTION
+   ============================= */
+
+.sportive-features {
+  padding: 4rem 0;
+  background: white;
+}
+
+.sportive-features-header {
+  text-align: center;
+  margin-bottom: var(--space-12);
+  padding: 0 var(--space-6);
+}
+
+.sportive-features-heading {
+  font-size: 2.5rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-4) 0;
+  letter-spacing: -0.02em;
+}
+
+@media screen and (min-width: 750px) {
+  .sportive-features-heading {
+    font-size: 3rem;
+  }
+}
+
+.sportive-features-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-8);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+}
+
+@media screen and (min-width: 750px) {
+  .sportive-features-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.sportive-feature-card {
+  text-align: center;
+  padding: var(--space-8) var(--space-6);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-xl);
+  transition: all var(--transition-normal);
+}
+
+.sportive-feature-card:hover {
+  transform: translateY(-4px);
+  background: white;
+  box-shadow: var(--shadow-lg);
+}
+
+.sportive-feature-icon {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto var(--space-5);
+  background: linear-gradient(135deg, rgba(252, 76, 2, 0.1) 0%, rgba(224, 62, 0, 0.1) 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-primary);
+  font-size: 1.5rem;
+  transition: all var(--transition-normal);
+}
+
+.sportive-feature-card:hover .sportive-feature-icon {
+  background: linear-gradient(135deg, #FC4C02, #E03E00);
+  color: white;
+  transform: scale(1.1);
+}
+
+.sportive-feature-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-3) 0;
+}
+
+.sportive-feature-description {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+  line-height: var(--line-height-relaxed);
+  margin: 0;
+}
+
+/* =============================
+   TRUST SIGNALS SECTION
+   ============================= */
+
+.sportive-trust-signals {
+  background: var(--neutral-900);
+  color: white;
+  padding: 5rem 0;
+}
+
+.sportive-trust-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  align-items: center;
+}
+
+@media screen and (min-width: 750px) {
+  .sportive-trust-content {
+    flex-direction: row;
+    justify-content: space-around;
+  }
+}
+
+.sportive-trust-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  text-align: left;
+}
+
+.sportive-trust-icon {
+  width: 40px;
+  height: 40px;
+  background: rgba(252, 76, 2, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-primary);
+  flex-shrink: 0;
+}
+
+.sportive-trust-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sportive-trust-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+}
+
+.sportive-trust-description {
+  font-size: var(--font-size-sm);
+  color: var(--neutral-400);
+  margin: 0;
+}
+
+/* =============================
+   SOCIAL PROOF SECTION
+   ============================= */
+
+.sportive-social-proof {
+  padding: var(--space-16) 0;
+  background: var(--bg-secondary);
+}
+
+.sportive-social-proof-content {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+  text-align: center;
+}
+
+.sportive-social-proof-heading {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-3) 0;
+}
+
+.sportive-social-proof-subheading {
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-12) 0;
+}
+
+.sportive-reviews-preview {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+}
+
+@media screen and (min-width: 750px) {
+  .sportive-reviews-preview {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.sportive-review-card {
+  background: white;
+  padding: var(--space-6);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-normal);
+}
+
+.sportive-review-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.sportive-review-stars {
+  color: var(--color-warning);
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--space-3);
+}
+
+.sportive-review-text {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+  line-height: var(--line-height-relaxed);
+  margin: 0 0 var(--space-4) 0;
+  font-style: italic;
+}
+
+.sportive-review-author {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  font-weight: var(--font-weight-medium);
+}
+
+/* =============================
+   RESPONSIVE ADJUSTMENTS
+   ============================= */
+
+@media screen and (max-width: 749px) {
+  .sportive-hero-heading,
+  .sportive-categories-heading,
+  .sportive-products-heading,
+  .sportive-features-heading {
+    font-size: 2rem;
+  }
+
+  .sportive-category-overlay {
+    opacity: 1;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 70%);
+  }
+
+  .sportive-quick-view {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =============================
+   LOADING STATES
+   ============================= */
+
+.sportive-product-skeleton {
+  background: white;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.sportive-skeleton-image {
+  aspect-ratio: 2 / 3;
+  background: linear-gradient(
+    90deg,
+    var(--neutral-200) 25%,
+    var(--neutral-100) 50%,
+    var(--neutral-200) 75%
+  );
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+.sportive-skeleton-content {
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sportive-skeleton-line {
+  height: 12px;
+  background: linear-gradient(
+    90deg,
+    var(--neutral-200) 25%,
+    var(--neutral-100) 50%,
+    var(--neutral-200) 75%
+  );
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+.sportive-skeleton-line.short {
+  width: 60%;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* =============================
+   STYLED PLACEHOLDERS
+   ============================= */
+
+/* Better placeholder for category images */
+.sportive-category-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #FC4C02 0%, #E03E00 50%, #FF6B2B 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.sportive-category-placeholder::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(255, 255, 255, 0.05) 10px,
+      rgba(255, 255, 255, 0.05) 20px
+    );
+}
+
+.sportive-category-placeholder-icon {
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  backdrop-filter: blur(10px);
+}
+
+.sportive-category-placeholder-icon svg {
+  width: 40px;
+  height: 40px;
+  color: white;
+  opacity: 0.9;
+}
+
+.sportive-category-placeholder-text {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  right: 24px;
+  color: white;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-align: center;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-full);
+  backdrop-filter: blur(10px);
+  z-index: 2;
+}
+
+/* Better placeholder for product images */
+.sportive-product-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--neutral-100) 0%, var(--neutral-200) 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  position: relative;
+  overflow: hidden;
+}
+
+.sportive-product-placeholder::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200%;
+  height: 200%;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 20px,
+      rgba(252, 76, 2, 0.03) 20px,
+      rgba(252, 76, 2, 0.03) 40px
+    );
+}
+
+.sportive-product-placeholder-icon {
+  width: 100px;
+  height: 100px;
+  background: white;
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  z-index: 2;
+}
+
+.sportive-product-placeholder-icon svg {
+  width: 50px;
+  height: 50px;
+  color: var(--brand-primary);
+  opacity: 0.6;
+}
+
+.sportive-product-placeholder-text {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  text-align: center;
+  position: relative;
+  z-index: 2;
+  padding: 0 var(--space-4);
+}
+
+/* =============================
+   SEARCH SECTION
+   ============================= */
+
+.sportive-search-section {
+  padding: 3rem 0;
+  background: white;
+}
+
+.sportive-search-wrapper {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+}
+
+.sportive-search-form {
+  width: 100%;
+}
+
+.sportive-search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.sportive-search-icon {
+  position: absolute;
+  left: 1.25rem;
+  color: var(--text-muted);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.sportive-search-input {
+  width: 100%;
+  padding: 1rem 1rem 1rem 3.5rem;
+  font-size: var(--font-size-base);
+  border: 2px solid var(--neutral-300);
+  border-radius: var(--radius-full);
+  background: white;
+  transition: all var(--transition-fast);
+  font-family: inherit;
+}
+
+.sportive-search-input:focus {
+  outline: none;
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px rgba(252, 76, 2, 0.1);
+}
+
+.sportive-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* =============================
+   CATEGORY ROUTE COUNTS
+   ============================= */
+
+.sportive-category-count {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  font-weight: var(--font-weight-medium);
+  margin: var(--space-2) 0 0 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* =============================
+   CUSTOM CTA SECTION
+   ============================= */
+
+.sportive-cta-custom {
+  padding: 3.5rem 0;
+  background: linear-gradient(135deg, #E8F5E9 0%, #E0F2F1 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.sportive-cta-custom::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -10%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(76, 175, 80, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.sportive-cta-content {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 0 var(--space-6);
+  position: relative;
+  z-index: 2;
+}
+
+.sportive-cta-heading {
+  font-size: 2.5rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-4) 0;
+  letter-spacing: -0.02em;
+}
+
+@media screen and (min-width: 750px) {
+  .sportive-cta-heading {
+    font-size: 3rem;
+  }
+}
+
+.sportive-cta-description {
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+  line-height: var(--line-height-relaxed);
+  margin: 0 0 var(--space-8) 0;
+}
+
+.sportive-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-8);
+  background: linear-gradient(135deg, #FC4C02, #E03E00);
+  color: white;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  transition: all var(--transition-normal);
+  box-shadow: 0 4px 14px rgba(252, 76, 2, 0.3);
+  border: none;
+  cursor: pointer;
+}
+
+.sportive-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(252, 76, 2, 0.4);
+}
+
+.sportive-cta-btn-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* =============================
+   NEWSLETTER SECTION
+   ============================= */
+
+.sportive-newsletter {
+  padding: 4rem 0;
+  background: white;
+  border-top: 1px solid var(--neutral-200);
+}
+
+.sportive-newsletter-content {
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 0 var(--space-6);
+}
+
+.sportive-newsletter-heading {
+  font-size: 2rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-3) 0;
+}
+
+@media screen and (min-width: 750px) {
+  .sportive-newsletter-heading {
+    font-size: 2.5rem;
+  }
+}
+
+.sportive-newsletter-description {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-8) 0;
+  line-height: var(--line-height-relaxed);
+}
+
+.sportive-newsletter-form {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.sportive-newsletter-input-wrapper {
+  display: flex;
+  gap: var(--space-3);
+  flex-direction: column;
+}
+
+@media screen and (min-width: 640px) {
+  .sportive-newsletter-input-wrapper {
+    flex-direction: row;
+  }
+}
+
+.sportive-newsletter-input {
+  flex: 1;
+  padding: var(--space-4) var(--space-5);
+  font-size: var(--font-size-base);
+  border: 2px solid var(--neutral-300);
+  border-radius: var(--radius-lg);
+  background: white;
+  transition: all var(--transition-fast);
+  font-family: inherit;
+}
+
+.sportive-newsletter-input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.sportive-newsletter-btn {
+  padding: var(--space-4) var(--space-8);
+  background: linear-gradient(135deg, #4CAF50, #388E3C);
+  color: white;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-lg);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  box-shadow: 0 4px 14px rgba(76, 175, 80, 0.3);
+  white-space: nowrap;
+}
+
+.sportive-newsletter-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+.sportive-newsletter-success {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: #E8F5E9;
+  color: #2E7D32;
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-4);
+  font-weight: var(--font-weight-medium);
+}
+
+.sportive-newsletter-success svg {
+  color: #4CAF50;
+}
+
+.sportive-newsletter-error {
+  padding: var(--space-4);
+  background: #FFEBEE;
+  color: #C62828;
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-sm);
+}
