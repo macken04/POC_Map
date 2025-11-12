@@ -1,0 +1,117 @@
+
+# Backend Deep Dive
+
+This document provides a deep dive into the backend of the map printing application. It covers the role of each file and function in the backend.
+
+## `backend/package.json`
+
+This file defines the project's dependencies and scripts.
+
+### Dependencies
+
+The main dependencies are:
+- `express`: A web framework for Node.js.
+- `@mapbox/mapbox-gl-geocoder`: A geocoder control for Mapbox GL JS.
+- `@mapbox/polyline`: A library to encode and decode polylines.
+- `@mapbox/togeojson`: A library to convert KML and GPX to GeoJSON.
+- `axios`: A promise-based HTTP client for the browser and node.js.
+- `canvas`: A library to use the Canvas API in Node.js.
+- `compression`: A middleware to compress response bodies.
+- `cookie-parser`: A middleware to parse `Cookie` header and populate `req.cookies`.
+- `cors`: A middleware to enable Cross-Origin Resource Sharing.
+- `dotenv`: A module to load environment variables from a `.env` file.
+- `express-session`: A session middleware for Express.
+- `helmet`: A middleware to help secure Express apps by setting various HTTP headers.
+- `mapbox-gl`: A library for interactive, customizable vector maps on the web.
+- `morgan`: A middleware for logging HTTP requests.
+- `multer`: A middleware for handling `multipart/form-data`.
+- `puppeteer`: A Node library which provides a high-level API to control Chrome or Chromium over the DevTools Protocol.
+- `session-file-store`: A session store for Express that uses local files.
+- `sharp`: A high performance Node.js image processing library.
+- `socket.io`: A library that enables real-time, bidirectional and event-based communication between the browser and the server.
+- `xml2js`: A library to convert XML to JavaScript objects.
+- `xmldom`: A W3C DOM Level 2 compatible DOM implementation for Node.js.
+
+### Scripts
+
+The main scripts are:
+- `start`: Starts the server in production mode.
+- `dev`: Starts the server in development mode using `nodemon`.
+- `tunnel`: Creates a tunnel to the local server using `ngrok`.
+- `capture-ngrok`: Captures the `ngrok` URL and saves it to the `.env` file.
+- `dev:full`: Runs the `dev` and `tunnel:capture` scripts concurrently.
+- `test`: Runs the test suite.
+
+## `backend/server.js`
+
+This is the main entry point of the backend application. It sets up the Express server, middleware, and routes.
+
+### Middleware
+
+The middleware used in this file are:
+- `helmet`: For security.
+- `morgan`: For logging.
+- `compression`: For response compression.
+- `cors`: For enabling CORS.
+- `express.json` and `express.urlencoded`: For parsing request bodies.
+- `cookie-parser`: For parsing cookies.
+- `express-session`: For session management.
+- `sessionSecurity`: For enhanced session security.
+
+### Routes
+
+The routes mounted in this file are:
+- `/auth`: Authentication routes.
+- `/api/strava`: Strava API routes.
+- `/api/maps`: Map generation routes.
+- `/api/shopify-integration`: Shopify integration routes.
+
+### Health Check
+
+It has a health check endpoint at `/health` that returns the status of the server.
+
+## `backend/config/index.js`
+
+This file loads configuration from environment variables and configuration files. It has different configurations for `development`, `production`, and `test` environments. It exposes a `getConfig` function to get the configuration for the current environment.
+
+## `backend/routes/auth.js`
+
+This file handles authentication with Strava using OAuth2. It has routes for initiating the OAuth flow, handling the callback, checking the authentication status, and logging out. It uses the `tokenManager` service to manage the access and refresh tokens.
+
+## `backend/routes/strava.js`
+
+This file provides routes for interacting with the Strava API. It has routes for getting the authenticated athlete's information, activities, and activity streams. It uses the `stravaApiRequest` helper function to make authenticated requests to the Strava API. It uses the `refreshTokenIfNeeded` middleware to automatically refresh the access token.
+
+## `backend/routes/maps.js`
+
+This file handles the generation of maps. It has routes for generating a map from a Strava activity, checking the status of a map generation job, and downloading a generated map. It uses the `mapService` to generate the maps.
+
+## `backend/routes/shopifyIntegration.js`
+
+This file handles the integration with Shopify. It has routes for handling webhooks from Shopify.
+
+## `backend/services/stravaService.js`
+
+This is a service for interacting with the Strava API. It provides methods for getting athlete information, activities, and activity streams. It uses the `stravaApiRequest` helper function to make authenticated requests to the Strava API.
+
+## `backend/services/mapService.js`
+
+This is a service for generating maps. It uses `puppeteer` and `mapbox-gl` to generate high-resolution map images. It has a `generateMap` method that takes map options and returns the generated map image.
+
+## `backend/services/shopifyIntegration.js`
+
+This is a service for handling the integration with Shopify. It has methods for processing webhooks from Shopify.
+
+## `backend/helpers/authHelpers.js`
+
+This file provides helper functions for authentication. It has functions for creating and verifying JWTs.
+
+## `backend/middleware/`
+
+This directory contains the middleware for the application.
+
+- **`enhancedErrorHandling.js`**, **`errorHandler.js`**, **`errorResponseHandler.js`**: These files define the error handling middleware for the application. They provide a centralized way to handle and format errors.
+- **`fileValidation.js`**: Middleware for validating file uploads.
+- **`rateLimiting.js`**: Middleware for rate limiting requests to the API.
+- **`sessionSecurity.js`**, **`sessionValidation.js`**: Middleware for enhancing session security and validation.
+- **`tokenRefresh.js`**: Middleware for automatically refreshing the Strava access token.

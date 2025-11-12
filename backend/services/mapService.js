@@ -328,7 +328,12 @@ class MapService {
       'navigation-night': 'navigation-night-v1',
       
       // Custom styles from frontend (these need special handling)
-      'grey': 'macken04/cm9qvmy7500hr01s5h4h67lsr'
+      'grey': 'macken04/cm9qvmy7500hr01s5h4h67lsr',
+      'classic_pink': 'macken04/cme063epj00rq01pjamus26ma',
+      'classic_orange': 'macken04/cmdowyoaj004i01sb9i27ene8',
+      'classic_grey': 'macken04/cmdowoyfi003o01r5h90e8r6l',
+      'classic_dark': 'macken04/cmdowqfh4004h01sb14fe6x3u',
+      'classic_blue': 'macken04/cmdowyoil001d01sh5937dt1p'
     };
 
     // Normalize the style name
@@ -2324,14 +2329,12 @@ class MapService {
     const page = await this.browser.newPage();
 
     try {
-      // Calculate device scale factor for 300 DPI
-      const scaleFactor = highResConfig.dpi / 96; // 96 DPI is standard web DPI
-      
-      // Set high-resolution viewport
+      // Set viewport to target dimensions (already calculated for 300 DPI in PRINT_CONFIG)
+      // No scaling needed - use dimensions directly for correct output resolution
       await page.setViewport({
-        width: Math.round(highResConfig.width / scaleFactor),
-        height: Math.round(highResConfig.height / scaleFactor),
-        deviceScaleFactor: scaleFactor
+        width: highResConfig.width,
+        height: highResConfig.height,
+        deviceScaleFactor: 1
       });
 
       // Create HTML for map rendering using validated config
@@ -3568,13 +3571,12 @@ class MapService {
     const page = await this.browser.newPage();
     
     try {
-      // Set viewport for high-resolution (300 DPI)
-      const scaleFactor = highResConfig.dpi / 96; // Scale factor for 300 DPI
-      
+      // Set viewport to target dimensions (already calculated for 300 DPI in PRINT_CONFIG)
+      // No scaling needed - use dimensions directly for correct output resolution
       await page.setViewport({
-        width: Math.round(highResConfig.width / scaleFactor),
-        height: Math.round(highResConfig.height / scaleFactor),
-        deviceScaleFactor: scaleFactor
+        width: highResConfig.width,
+        height: highResConfig.height,
+        deviceScaleFactor: 1
       });
 
       // Create HTML for map rendering
