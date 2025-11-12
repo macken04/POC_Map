@@ -14,8 +14,9 @@
       <span id="connection-text">Connected as <strong id="user-name">Loading...</strong></span>
     </div>
 
+    {%- comment -%}
+    Section Header removed per user request
     {%- if section.settings.heading != blank or section.settings.description != blank -%}
-    <!-- Section Header -->
     <div class="section-header">
       {%- if section.settings.heading != blank -%}
         <h2 class="section-heading">{{ section.settings.heading }}</h2>
@@ -25,6 +26,7 @@
       {%- endif -%}
     </div>
     {%- endif -%}
+    {%- endcomment -%}
 
     <!-- Statistics Dashboard -->
     <div class="statistics-dashboard">

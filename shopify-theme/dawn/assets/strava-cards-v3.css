@@ -215,7 +215,9 @@
   min-height: 120px;
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
+  gap: var(--space-2);
 }
 
 .stat-card:hover {
@@ -228,8 +230,9 @@
   width: 32px;
   height: 32px;
   color: var(--text-muted);
-  margin-bottom: var(--space-3);
+  margin: 0 auto var(--space-3);
   transition: color var(--transition-normal);
+  display: block;
 }
 
 .stat-card:hover .stat-icon {
@@ -239,9 +242,11 @@
 .stat-number {
   font-size: var(--font-size-4xl);
   font-weight: var(--font-weight-bold);
-  line-height: 1;
-  margin-bottom: var(--space-2);
+  line-height: 1.2;
+  margin: 0;
   color: var(--text-primary);
+  text-align: center;
+  width: 100%;
 }
 
 .stat-label {
@@ -250,6 +255,9 @@
   font-weight: var(--font-weight-medium);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  margin: 0;
+  text-align: center;
+  width: 100%;
 }
 
 /* ============================================
@@ -321,6 +329,8 @@
   display: flex;
   gap: var(--space-3);
   align-items: center;
+  position: relative;
+  flex-wrap: wrap;
 }
 
 .filter-button {
@@ -336,6 +346,7 @@
   font-weight: var(--font-weight-medium);
   cursor: pointer;
   transition: all var(--transition-normal);
+  position: relative;
 }
 
 .filter-button:hover {
@@ -658,8 +669,8 @@
   transition: all var(--transition-normal);
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
+  justify-content: space-between;
+  gap: var(--space-3);
   text-transform: uppercase;
   margin-top: auto;
   box-shadow: 0 1px 3px rgba(252, 76, 2, 0.2);
@@ -719,6 +730,32 @@
   position: relative;
   z-index: 1;
   transition: all var(--transition-normal);
+}
+
+.create-poster-button .button-text {
+  flex: 1;
+  text-align: left;
+  position: relative;
+  z-index: 1;
+}
+
+.create-poster-button .button-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.create-poster-button .button-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.create-poster-button .button-icon .activity-type-icon {
+  width: 20px;
+  height: 20px;
 }
 
 /* ============================================
@@ -1554,17 +1591,18 @@
 /* Activity Type Filter Dropdown */
 .strava-filter-select {
   position: absolute;
-  top: 100%;
-  left: 0;
-  margin-top: var(--space-2);
+  top: calc(100% + var(--space-1));
+  left: auto;
+  right: 0;
   background: var(--bg-primary);
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-lg);
-  padding: var(--space-3);
-  min-width: 200px;
-  box-shadow: var(--shadow-md);
+  padding: var(--space-4);
+  min-width: 220px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   z-index: 1000;
-  transition: all var(--transition-normal);
+  transition: all var(--transition-fast);
+  transform-origin: top right;
 }
 
 .strava-filter-select.hidden {

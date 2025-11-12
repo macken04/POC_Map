@@ -2317,6 +2317,9 @@ input[type='checkbox'] {
 .shopify-section-header-sticky {
   position: sticky;
   top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.2s ease;
 }
 
 .shopify-section-header-hidden {
@@ -2329,6 +2332,15 @@ input[type='checkbox'] {
 
 .section-header.animate {
   transition: top 0.15s ease-out;
+}
+
+/* Compact header adjustments */
+body {
+  padding-top: var(--header-height, 60px);
+}
+
+body:has(.announcement-bar-section) {
+  padding-top: calc(var(--header-height, 60px) + var(--announcement-height, 0px));
 }
 
 .shopify-section-group-header-group {
@@ -2436,7 +2448,7 @@ input[type='checkbox'] {
 
 .header__heading-link {
   display: inline-block;
-  padding: 0.75rem;
+  padding: 0.4rem;
   text-decoration: none;
   word-break: break-word;
 }
@@ -2532,8 +2544,8 @@ input[type='checkbox'] {
 }
 
 .header__icon .svg-wrapper {
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
 }
 
 .header__icon::after {
@@ -2546,16 +2558,16 @@ input[type='checkbox'] {
 }
 
 .header__icon .icon {
-  height: 2rem;
-  width: 2rem;
+  height: 1.8rem;
+  width: 1.8rem;
   fill: none;
   vertical-align: middle;
 }
 
 .header__icon,
 .header__icon--cart .icon {
-  height: 4.4rem;
-  width: 4.4rem;
+  height: 3.6rem;
+  width: 3.6rem;
   padding: 0;
 }
 
@@ -2792,13 +2804,16 @@ details[open] > .header__submenu {
 }
 
 .header__menu-item {
-  padding: 1.2rem;
+  padding: 0.6rem 0.8rem;
   text-decoration: none;
   color: rgba(var(--color-foreground), 0.75);
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: color 0.2s ease;
 }
 
 .header__menu-item:hover {
-  color: rgb(var(--color-foreground));
+  color: #FC4C02;
 }
 
 .header__menu-item span {
@@ -2807,6 +2822,7 @@ details[open] > .header__submenu {
 
 .header__menu-item:hover span {
   text-decoration: underline;
+  text-decoration-color: #FC4C02;
   text-underline-offset: 0.3rem;
 }
 
@@ -2824,8 +2840,9 @@ details[open] > .header__menu-item .icon-caret {
 
 .header__active-menu-item {
   transition: text-decoration-thickness var(--duration-short) ease;
-  color: rgb(var(--color-foreground));
+  color: #FC4C02;
   text-decoration: underline;
+  text-decoration-color: #FC4C02;
   text-underline-offset: 0.3rem;
 }
 
@@ -2864,7 +2881,7 @@ details[open] > .header__menu-item .icon-caret {
 
 .header__submenu .header__menu-item {
   justify-content: space-between;
-  padding: 0.8rem 2rem;
+  padding: 0.6rem 1.5rem;
 }
 
 .header__submenu .header__menu-item:hover {

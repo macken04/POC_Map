@@ -1,36 +1,39 @@
 /*
  * Navigation CTA Button Styles
  * Styles the "Create Map" navigation link as a prominent call-to-action button
- * Maintains the minimalist design system with the orange accent color (#FC5200)
+ * Maintains the design system with Strava orange accent color (#FC4C02)
  */
 
 /* Desktop Navigation CTA Button */
 .header__menu-item .nav-cta-button {
   display: inline-block;
-  background-color: #FC5200;
+  background: linear-gradient(135deg, #FC4C02, #E03E00);
   color: #FFFFFF !important;
-  padding: 12px 24px;
+  padding: 8px 16px;
   border-radius: 6px;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 0.95rem;
   text-decoration: none;
-  transition: background-color 0.2s ease, transform 0.1s ease;
-  border: 2px solid #FC5200;
+  transition: all 0.2s ease;
+  border: none;
   line-height: 1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .header__menu-item .nav-cta-button:hover {
-  background-color: #E04700;
-  border-color: #E04700;
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #E03E00, #C83800);
+  transform: translateY(-2px);
   text-decoration: none;
+  box-shadow: 0 6px 16px rgba(252, 76, 2, 0.25);
 }
 
 .header__menu-item .nav-cta-button:active {
   transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .header__menu-item .nav-cta-button:focus-visible {
-  outline: 2px solid #FC5200;
+  outline: 2px solid #FC4C02;
   outline-offset: 2px;
 }
 
@@ -42,22 +45,24 @@
 /* Mobile Drawer CTA Button */
 .menu-drawer__menu-item .nav-cta-button {
   display: block;
-  background-color: #FC5200;
+  background: linear-gradient(135deg, #FC4C02, #E03E00);
   color: #FFFFFF !important;
   padding: 16px 24px;
   border-radius: 6px;
-  font-weight: 500;
+  font-weight: 600;
   text-decoration: none;
   text-align: center;
-  transition: background-color 0.2s ease;
-  border: 2px solid #FC5200;
+  transition: all 0.2s ease;
+  border: none;
   margin: 12px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .menu-drawer__menu-item .nav-cta-button:hover {
-  background-color: #E04700;
-  border-color: #E04700;
+  background: linear-gradient(135deg, #E03E00, #C83800);
   text-decoration: none;
+  box-shadow: 0 6px 16px rgba(252, 76, 2, 0.25);
+  transform: translateY(-1px);
 }
 
 .menu-drawer__menu-item .nav-cta-button:focus-visible {
@@ -91,32 +96,35 @@
 /* Mega menu specific styles */
 .mega-menu__link.nav-cta-button {
   display: inline-block;
-  background-color: #FC5200;
+  background: linear-gradient(135deg, #FC4C02, #E03E00);
   color: #FFFFFF !important;
-  padding: 12px 24px;
+  padding: 8px 16px;
   border-radius: 6px;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 0.95rem;
   text-decoration: none;
-  transition: background-color 0.2s ease;
-  border: 2px solid #FC5200;
+  transition: all 0.2s ease;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .mega-menu__link.nav-cta-button:hover {
-  background-color: #E04700;
-  border-color: #E04700;
+  background: linear-gradient(135deg, #E03E00, #C83800);
   text-decoration: none;
+  box-shadow: 0 6px 16px rgba(252, 76, 2, 0.25);
+  transform: translateY(-2px);
 }
 
 /* Ensure proper spacing in header */
 .header__inline-menu .header__menu-item:has(.nav-cta-button) {
-  margin-left: 12px;
+  margin-left: 8px;
 }
 
 /* Responsive adjustments */
 @media screen and (max-width: 989px) {
   .header__menu-item .nav-cta-button {
-    padding: 10px 20px;
-    font-size: 14px;
+    padding: 7px 14px;
+    font-size: 0.9rem;
   }
 }
 
