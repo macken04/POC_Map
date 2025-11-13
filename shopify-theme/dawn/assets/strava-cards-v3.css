@@ -1,6 +1,7 @@
 /* ============================================
  Strava Activities - Production Light Theme
  Fully redesigned to match website design system
+ POLISHED VERSION with all UI enhancements
  ============================================ */
 
 /* Reset and Base Styles */
@@ -18,7 +19,7 @@
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.3);
-  --shadow-brand: 0 4px 12px rgba(255, 86, 13, 0.3);
+  --shadow-brand: 0 4px 14px rgba(252, 76, 2, 0.3);
 
   /* Border Radius */
   --radius-xs: 2px;
@@ -129,7 +130,7 @@
 }
 
 /* ============================================
- Statistics Dashboard
+ Statistics Dashboard - ENHANCED
  ============================================ */
 .statistics-dashboard {
   display: grid;
@@ -204,13 +205,14 @@
   margin-right: auto;
 }
 
+/* ENHANCED: Statistics Cards with Color Accents */
 .stat-card {
   background: var(--bg-card);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
   padding: var(--space-6);
   text-align: center;
-  box-shadow: none;
+  box-shadow: var(--shadow-sm);
   transition: all var(--transition-normal);
   min-height: 120px;
   display: flex;
@@ -218,12 +220,66 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Gradient accent on top (hidden by default) */
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--brand-primary), var(--brand-primary-light));
+  transform: scaleX(0);
+  transition: transform var(--transition-normal);
+}
+
+/* Bottom accent bar with different colors per stat type */
+.stat-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--stat-accent, var(--brand-primary));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  border-color: var(--border-medium);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--brand-primary);
+}
+
+.stat-card:hover::before {
+  transform: scaleX(1);
+}
+
+.stat-card:hover::after {
+  transform: scaleX(1);
+}
+
+/* Different accent colors for each stat type */
+.stat-card:nth-child(1) {
+  --stat-accent: var(--brand-primary);
+}
+
+.stat-card:nth-child(2) {
+  --stat-accent: #3B82F6;
+}
+
+.stat-card:nth-child(3) {
+  --stat-accent: #10B981;
+}
+
+.stat-card:nth-child(4) {
+  --stat-accent: #F59E0B;
 }
 
 .stat-icon {
@@ -236,7 +292,7 @@
 }
 
 .stat-card:hover .stat-icon {
-  color: var(--brand-primary);
+  color: var(--stat-accent, var(--brand-primary));
 }
 
 .stat-number {
@@ -247,30 +303,43 @@
   color: var(--text-primary);
   text-align: center;
   width: 100%;
+  font-variant-numeric: tabular-nums;
+  transition: color var(--transition-normal);
+}
+
+.stat-card:hover .stat-number {
+  color: var(--stat-accent, var(--brand-primary));
 }
 
 .stat-label {
   font-size: var(--font-size-sm);
   color: var(--text-muted);
-  font-weight: var(--font-weight-medium);
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.06em;
   margin: 0;
   text-align: center;
   width: 100%;
 }
 
 /* ============================================
- Search and Filter Controls
+ Search and Filter Controls - ENHANCED
  ============================================ */
 .strava-activities-controls {
-  background: #F9F9F9;
-  border: 1px solid var(--border-light);
+  background: white;
+  border: 1px solid var(--border-medium);
   border-radius: var(--radius-lg);
-  padding: var(--space-5);
+  padding: var(--space-6);
   margin-bottom: var(--space-8);
-  box-shadow: none;
+  box-shadow: var(--shadow-sm);
   position: relative;
+  transition: all var(--transition-normal);
+}
+
+/* Active filters indicator */
+.strava-activities-controls.has-active-filters {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 1px var(--brand-primary), var(--shadow-md);
 }
 
 .controls-body {
@@ -280,7 +349,7 @@
   flex-wrap: wrap;
 }
 
-/* Search Input */
+/* ENHANCED: Search Input with Better Feedback */
 .strava-activities-search {
   flex: 1;
   position: relative;
@@ -296,28 +365,32 @@
   height: 20px;
   color: var(--text-muted);
   z-index: 1;
-  transition: color var(--transition-fast);
+  transition: all var(--transition-normal);
+  pointer-events: none;
 }
 
 .strava-search-input {
   width: 100%;
   background: var(--bg-primary);
-  border: 1px solid var(--border-medium);
+  border: 2px solid var(--border-medium);
   border-radius: var(--radius-lg);
-  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-12);
+  padding: var(--space-4) var(--space-4) var(--space-4) var(--space-12);
   color: var(--text-primary);
   font-size: var(--font-size-base);
   transition: all var(--transition-normal);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .strava-search-input:focus {
   outline: none;
   border-color: var(--brand-primary);
-  box-shadow: 0 0 0 3px rgba(252, 76, 2, 0.1);
+  box-shadow: 0 0 0 3px rgba(252, 76, 2, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
 }
 
-.strava-search-input:focus + .search-icon {
+.strava-search-input:focus ~ .search-icon {
   color: var(--brand-primary);
+  transform: translateY(-50%) scale(1.1);
 }
 
 .strava-search-input::placeholder {
@@ -360,6 +433,20 @@
   outline-offset: 2px;
 }
 
+/* ENHANCED: Filter active indicator */
+.filter-button.filter-active::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  background: var(--brand-primary);
+  border-radius: 50%;
+  border: 2px solid white;
+  animation: pulse 2s infinite;
+}
+
 .filter-icon,
 .calendar-icon,
 .chevron-icon {
@@ -398,6 +485,33 @@
   position: relative;
 }
 
+/* ENHANCED: Card number indicator on hover */
+.activity-card::before {
+  content: attr(data-index);
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  width: 24px;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all var(--transition-fast);
+  z-index: 5;
+}
+
+.activity-card:hover::before {
+  opacity: 1;
+  transform: scale(1);
+}
+
 .activity-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
@@ -413,7 +527,7 @@
   opacity: 0.4;
 }
 
-/* Activity Card Preview (Route Visualization) */
+/* ENHANCED: Activity Card Preview with Pattern Overlay */
 .activity-card-preview {
   position: relative;
   height: 160px;
@@ -423,7 +537,22 @@
   justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
-  transition: background var(--transition-normal);
+  transition: all var(--transition-normal);
+}
+
+/* Subtle pattern overlay */
+.activity-card-preview::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image:
+    repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* Darkening overlay on hover */
@@ -438,6 +567,12 @@
   opacity: 0;
   transition: opacity var(--transition-normal);
   pointer-events: none;
+  z-index: 2;
+}
+
+/* Gradient overlay on hover for depth */
+.activity-card:hover .activity-card-preview {
+  background: linear-gradient(135deg, rgba(252, 76, 2, 0.03) 0%, var(--neutral-50) 100%);
 }
 
 /* Quick Actions Overlay */
@@ -493,19 +628,24 @@
   position: absolute;
   top: 0;
   left: 0;
+  z-index: 3;
 }
 
+/* ENHANCED: Route path with shadow */
 .activity-route-path {
-  stroke-width: 3;
+  stroke-width: 3.5;
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
   opacity: 0.85;
-  transition: opacity var(--transition-normal);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  transition: all var(--transition-normal);
 }
 
 .activity-card:hover .activity-route-path {
   opacity: 1;
+  stroke-width: 4;
+  filter: drop-shadow(0 2px 6px rgba(252, 76, 2, 0.3));
 }
 
 /* Activity Type Badge */
@@ -525,6 +665,7 @@
   border: 1px solid var(--border-light);
   width: 36px;
   height: 36px;
+  z-index: 4;
 }
 
 .activity-type-icon {
@@ -547,6 +688,7 @@
   border: 2px solid white;
   cursor: help;
   transition: all var(--transition-fast);
+  z-index: 4;
 }
 
 .activity-gps-indicator:hover {
@@ -591,13 +733,18 @@
   flex-direction: column;
 }
 
+/* ENHANCED: Better typography hierarchy */
 .activity-name {
   font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
+  font-weight: 600;
   color: var(--text-primary);
-  margin: 0 0 var(--space-2) 0;
-  line-height: var(--line-height-snug);
+  margin: 0 0 var(--space-3) 0;
+  line-height: 1.4;
   transition: color var(--transition-fast);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .activity-card:hover .activity-name {
@@ -623,7 +770,7 @@
   margin: 0 var(--space-1);
 }
 
-/* Activity Stats Grid */
+/* ENHANCED: Activity Stats with Subtle Backgrounds */
 .activity-stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -634,34 +781,46 @@
 
 .activity-stat {
   text-align: left;
+  padding: var(--space-3);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border-left: 3px solid transparent;
+  transition: all var(--transition-fast);
+}
+
+.activity-card:hover .activity-stat {
+  border-left-color: var(--brand-primary);
+  background: rgba(252, 76, 2, 0.05);
 }
 
 .stat-value {
   display: block;
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
   line-height: var(--line-height-tight);
   margin-bottom: var(--space-1);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 .stat-label {
   display: block;
   font-size: var(--font-size-xs);
   color: var(--text-muted);
-  font-weight: var(--font-weight-medium);
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.06em;
 }
 
-/* Create Poster Button - Solid Primary Style */
+/* ENHANCED: Create Poster Button with Gradient (matching homepage) */
 .create-poster-button {
   width: 100%;
-  background: var(--brand-primary);
+  background: linear-gradient(135deg, var(--brand-primary), #e44502);
   color: white;
   border: none;
   border-radius: var(--radius-lg);
-  padding: var(--space-3) var(--space-5);
+  padding: var(--space-4) var(--space-5);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   letter-spacing: 0.5px;
@@ -669,11 +828,11 @@
   transition: all var(--transition-normal);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
+  justify-content: center;
+  gap: var(--space-2);
   text-transform: uppercase;
   margin-top: auto;
-  box-shadow: 0 1px 3px rgba(252, 76, 2, 0.2);
+  box-shadow: 0 4px 14px rgba(252, 76, 2, 0.3);
   position: relative;
   overflow: hidden;
 }
@@ -697,9 +856,8 @@
 }
 
 .create-poster-button:hover {
-  background: #e44502;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(252, 76, 2, 0.3);
+  box-shadow: 0 6px 20px rgba(252, 76, 2, 0.4);
 }
 
 .create-poster-button:active {
@@ -734,7 +892,7 @@
 
 .create-poster-button .button-text {
   flex: 1;
-  text-align: left;
+  text-align: center;
   position: relative;
   z-index: 1;
 }
@@ -884,7 +1042,7 @@
 }
 
 /* ============================================
- Loading, Error, and Empty States
+ ENHANCED: Loading, Error, and Empty States
  ============================================ */
 .activities-loading,
 .activities-error,
@@ -893,44 +1051,87 @@
   padding: var(--space-20) var(--space-5);
   color: var(--text-secondary);
   animation: fadeIn 0.6s ease-out;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* Decorative element for empty state */
+.activities-empty::before {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, var(--brand-primary), transparent);
+  margin: 0 auto var(--space-6);
+  border-radius: var(--radius-full);
 }
 
 .activities-loading h3,
 .activities-error h3,
 .activities-empty h3 {
   color: var(--text-primary);
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-size-3xl);
   font-weight: var(--font-weight-bold);
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 .activities-loading p,
 .activities-error p,
 .activities-empty p {
-  font-size: var(--font-size-base);
-  line-height: var(--line-height-relaxed);
+  font-size: var(--font-size-lg);
+  line-height: 1.6;
   color: var(--text-secondary);
   max-width: 500px;
-  margin: 0 auto;
+  margin: 0 auto var(--space-8);
 }
 
+/* ENHANCED: Loading spinner with pulsing glow */
 .loading-spinner {
   width: 64px;
   height: 64px;
   border: 4px solid var(--neutral-200);
   border-top: 4px solid var(--brand-primary);
+  border-right: 4px solid var(--brand-primary-light);
   border-radius: 50%;
   margin: 0 auto var(--space-6);
-  animation: spin 1s linear infinite;
+  animation: spin 0.8s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  position: relative;
 }
 
+/* Pulsing glow effect */
+.loading-spinner::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(252, 76, 2, 0.2) 0%, transparent 70%);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Animated loading text */
+.activities-loading h3 {
+  animation: fadeInOut 2s ease-in-out infinite;
+}
+
+@keyframes fadeInOut {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ENHANCED: Empty state icon with floating animation */
 .error-icon,
 .empty-icon {
-  width: 64px;
-  height: 64px;
-  color: var(--text-muted);
-  margin: 0 auto var(--space-6);
-  opacity: 0.7;
+  width: 120px;
+  height: 120px;
+  color: var(--neutral-300);
+  margin: 0 auto var(--space-8);
+  opacity: 0.6;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
 /* Enhanced Empty State */
@@ -1486,6 +1687,83 @@
 }
 
 /* ============================================
+ ENHANCED: Accessibility Features
+ ============================================ */
+
+/* Skip to content link */
+.skip-to-content {
+  position: absolute;
+  top: -100px;
+  left: 0;
+  background: var(--brand-primary);
+  color: white;
+  padding: var(--space-3) var(--space-5);
+  z-index: 100;
+  transition: top var(--transition-fast);
+  text-decoration: none;
+  font-weight: var(--font-weight-semibold);
+}
+
+.skip-to-content:focus {
+  top: 0;
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .activity-card {
+    border-width: 2px;
+    border-color: currentColor;
+  }
+
+  .stat-card {
+    border-width: 2px;
+  }
+
+  .create-poster-button {
+    border: 2px solid transparent;
+  }
+
+  .create-poster-button:focus {
+    border-color: white;
+  }
+}
+
+/* Focus Visible for Keyboard Navigation */
+.activity-card:focus-visible,
+.create-poster-button:focus-visible,
+.filter-button:focus-visible,
+.load-more-button:focus-visible,
+.stat-card:focus-visible {
+  outline: 3px solid var(--brand-primary);
+  outline-offset: 3px;
+  border-color: var(--brand-primary);
+}
+
+/* Screen Reader Only Content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ============================================
  Hidden/Show Classes
  ============================================ */
 .hidden {
@@ -1519,58 +1797,6 @@
   width: 16px;
   height: 16px;
   color: var(--color-success);
-}
-
-/* ============================================
- Accessibility Enhancements
- ============================================ */
-
-/* Reduced Motion Support */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* High Contrast Mode Support */
-@media (prefers-contrast: high) {
-  .activity-card {
-    border-width: 2px;
-  }
-
-  .create-poster-button {
-    border: 2px solid transparent;
-  }
-
-  .create-poster-button:focus {
-    border-color: white;
-  }
-}
-
-/* Focus Visible for Keyboard Navigation */
-.activity-card:focus-visible,
-.create-poster-button:focus-visible,
-.filter-button:focus-visible,
-.load-more-button:focus-visible {
-  outline: 3px solid var(--brand-primary);
-  outline-offset: 2px;
-}
-
-/* Screen Reader Only Content */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
 }
 
 /* ============================================
