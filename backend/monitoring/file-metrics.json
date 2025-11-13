@@ -9,22 +9,22 @@
       "permanent": {
         "files": 0,
         "size": 0,
-        "path": "/Users/davedev/Desktop/dev/map_site_vibe/backend/generated-maps/permanent"
+        "path": "/Users/davedev/Desktop/dev/map/working/map_site_vibe/backend/generated-maps/permanent"
       },
       "temporary": {
         "files": 0,
         "size": 0,
-        "path": "/Users/davedev/Desktop/dev/map_site_vibe/backend/generated-maps/temporary"
+        "path": "/Users/davedev/Desktop/dev/map/working/map_site_vibe/backend/generated-maps/temporary"
       },
       "processing": {
         "files": 0,
         "size": 0,
-        "path": "/Users/davedev/Desktop/dev/map_site_vibe/backend/generated-maps/processing"
+        "path": "/Users/davedev/Desktop/dev/map/working/map_site_vibe/backend/generated-maps/processing"
       },
       "metadata": {
         "files": 0,
         "size": 0,
-        "path": "/Users/davedev/Desktop/dev/map_site_vibe/backend/generated-maps/metadata"
+        "path": "/Users/davedev/Desktop/dev/map/working/map_site_vibe/backend/generated-maps/metadata"
       }
     },
     "lastUpdated": "2025-11-13T18:28:14.901Z",

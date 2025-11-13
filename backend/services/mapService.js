@@ -2329,14 +2329,12 @@ class MapService {
     const page = await this.browser.newPage();
 
     try {
-      // Calculate device scale factor for 300 DPI
-      const scaleFactor = highResConfig.dpi / 96; // 96 DPI is standard web DPI
-      
-      // Set high-resolution viewport
+      // Set viewport to target dimensions (already calculated for 300 DPI in PRINT_CONFIG)
+      // No scaling needed - use dimensions directly for correct output resolution
       await page.setViewport({
-        width: Math.round(highResConfig.width / scaleFactor),
-        height: Math.round(highResConfig.height / scaleFactor),
-        deviceScaleFactor: scaleFactor
+        width: highResConfig.width,
+        height: highResConfig.height,
+        deviceScaleFactor: 1
       });
 
       // Create HTML for map rendering using validated config
@@ -3573,13 +3571,12 @@ class MapService {
     const page = await this.browser.newPage();
     
     try {
-      // Set viewport for high-resolution (300 DPI)
-      const scaleFactor = highResConfig.dpi / 96; // Scale factor for 300 DPI
-      
+      // Set viewport to target dimensions (already calculated for 300 DPI in PRINT_CONFIG)
+      // No scaling needed - use dimensions directly for correct output resolution
       await page.setViewport({
-        width: Math.round(highResConfig.width / scaleFactor),
-        height: Math.round(highResConfig.height / scaleFactor),
-        deviceScaleFactor: scaleFactor
+        width: highResConfig.width,
+        height: highResConfig.height,
+        deviceScaleFactor: 1
       });
 
       // Create HTML for map rendering
