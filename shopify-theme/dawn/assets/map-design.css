@@ -870,6 +870,67 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   color: var(--poster-text-muted);
 }
 
+/* Route Color Selection */
+.route-color-section {
+  margin-bottom: 2rem;
+}
+
+.color-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  padding: 0.5rem;
+}
+
+.color-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--poster-bg-secondary);
+  border: 2px solid transparent;
+}
+
+.color-option:hover {
+  background: var(--poster-bg-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--poster-shadow-sm);
+}
+
+.color-option.active {
+  border-color: var(--poster-accent-primary);
+  background: var(--poster-bg-primary);
+  box-shadow: var(--poster-shadow-md);
+}
+
+.color-box {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  border-radius: 0.375rem;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.color-option:hover .color-box {
+  transform: scale(1.05);
+}
+
+.color-name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--poster-text-secondary);
+  text-align: center;
+}
+
+.color-option.active .color-name {
+  color: var(--poster-text-primary);
+  font-weight: 600;
+}
+
 /* Style Presets */
 .style-presets-section {
   margin-bottom: 1.5rem;
