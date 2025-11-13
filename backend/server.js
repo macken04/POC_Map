@@ -80,7 +80,7 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'X-Shopify-Topic', 'X-Shopify-Hmac-Sha256', 'X-Session-Token', 'ngrok-skip-browser-warning'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'X-Shopify-Topic', 'X-Shopify-Hmac-Sha256', 'X-Session-Token', 'ngrok-skip-browser-warning', 'Cache-Control', 'Pragma'],
   optionsSuccessStatus: 200,
   preflightContinue: false
 }));
