@@ -169,32 +169,136 @@ h1.page-title,
 .hero-cta-group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3);
   align-items: center;
   justify-content: center;
   margin-bottom: var(--space-6);
 }
 
+.hero-secondary-link {
+  font-size: var(--text-sm);
+  color: var(--color-neutral-600);
+  text-decoration: none;
+  transition: color 0.2s ease;
+  font-weight: 500;
+}
+
+.hero-secondary-link:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+/* Social Proof Section */
+.hero-social-proof {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  padding: var(--space-6);
+  background: rgba(252, 76, 2, 0.03);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(252, 76, 2, 0.1);
+}
+
 @media screen and (min-width: 640px) {
-  .hero-cta-group {
+  .hero-social-proof {
     flex-direction: row;
+    justify-content: center;
   }
 }
 
-/* Trust signal */
-.hero-trust-signal {
+.testimonial-avatars {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.avatar-circle {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
-  font-size: var(--text-sm);
-  color: var(--color-neutral-600);
+  font-size: 1.25rem;
+  border: 3px solid white;
+  box-shadow: var(--shadow-sm);
+  margin-left: -0.5rem;
 }
 
-.hero-trust-icon {
-  width: 1rem;
-  height: 1rem;
-  color: var(--color-success);
+.avatar-circle:first-child {
+  margin-left: 0;
+}
+
+.avatar-count {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-neutral-700);
+  margin-left: var(--space-2);
+}
+
+.hero-rating {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+@media screen and (min-width: 640px) {
+  .hero-rating {
+    align-items: flex-start;
+  }
+}
+
+.stars {
+  color: #F59E0B;
+  font-size: var(--text-lg);
+  letter-spacing: 0.1em;
+}
+
+.rating-text {
+  font-size: var(--text-sm);
+  color: var(--color-neutral-600);
+  font-weight: 500;
+}
+
+/* Trust Badges */
+.hero-trust-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: center;
+}
+
+.trust-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: white;
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--color-neutral-700);
+  font-weight: 500;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.trust-badge:hover {
+  border-color: var(--color-primary-light);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.trust-badge-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--color-primary);
+  flex-shrink: 0;
 }
 
 /* ============================================
@@ -839,4 +943,202 @@ html {
 .faq-section,
 .final-cta-section {
   scroll-margin-top: var(--space-16);
+}
+
+/* ============================================
+   10. LOADING PROGRESS STEPS
+   ============================================ */
+
+.loading-progress-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  max-width: 24rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.loading-step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--color-neutral-50);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-neutral-200);
+  opacity: 0.5;
+  transition: all 0.3s ease;
+}
+
+.loading-step.active {
+  opacity: 1;
+  background: rgba(252, 76, 2, 0.05);
+  border-color: var(--color-primary-light);
+}
+
+.loading-step .step-number {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--color-neutral-300);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: var(--text-sm);
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.loading-step.active .step-number {
+  background: var(--color-primary);
+  animation: stepPulse 2s ease-in-out infinite;
+}
+
+.loading-step .step-label {
+  font-size: var(--text-sm);
+  color: var(--color-neutral-700);
+  font-weight: 500;
+}
+
+/* ============================================
+   11. ERROR SOLUTIONS LIST
+   ============================================ */
+
+.error-solutions {
+  background: white;
+  border: 1px solid var(--color-error-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin: var(--space-4) 0;
+  text-align: left;
+}
+
+.error-solutions-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.error-solutions-list li {
+  position: relative;
+  padding-left: var(--space-6);
+  font-size: var(--text-sm);
+  color: var(--color-neutral-700);
+  line-height: 1.5;
+}
+
+.error-solutions-list li::before {
+  content: '→';
+  position: absolute;
+  left: var(--space-2);
+  color: var(--color-error);
+  font-weight: bold;
+}
+
+/* ============================================
+   12. ENHANCED MOBILE RESPONSIVENESS
+   ============================================ */
+
+@media screen and (max-width: 640px) {
+  /* Hero adjustments */
+  .hero-heading {
+    font-size: 2rem;
+    line-height: 1.2;
+  }
+
+  .hero-subheading {
+    font-size: 1rem;
+    margin-bottom: var(--space-4);
+  }
+
+  .hero-cta-group {
+    width: 100%;
+  }
+
+  .btn-xl {
+    width: 100%;
+    padding: var(--space-4) var(--space-6);
+    font-size: 1.125rem;
+  }
+
+  /* Social proof mobile */
+  .hero-social-proof {
+    padding: var(--space-4);
+  }
+
+  .avatar-circle {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
+  }
+
+  /* Trust badges mobile */
+  .hero-trust-badges {
+    gap: var(--space-2);
+  }
+
+  .trust-badge {
+    font-size: var(--text-xs);
+    padding: var(--space-1) var(--space-3);
+  }
+
+  .trust-badge-icon {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  /* Benefits cards on mobile */
+  .benefit-card {
+    padding: var(--space-6);
+  }
+
+  /* FAQ on mobile */
+  .faq-question {
+    font-size: var(--text-base);
+    padding: var(--space-4);
+  }
+
+  .faq-answer-content {
+    padding: 0 var(--space-4) var(--space-4);
+  }
+
+  /* Loading steps on mobile */
+  .loading-progress-steps {
+    max-width: 100%;
+  }
+
+  /* Final CTA on mobile */
+  .final-cta-heading {
+    font-size: 1.75rem;
+  }
+
+  .final-cta-button {
+    width: 100%;
+  }
+}
+
+/* Extra small screens */
+@media screen and (max-width: 380px) {
+  .hero-heading {
+    font-size: 1.75rem;
+  }
+
+  .hero-eyebrow {
+    font-size: 0.7rem;
+  }
+
+  .trust-badge span {
+    display: none;
+  }
+
+  .trust-badge-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
 }
