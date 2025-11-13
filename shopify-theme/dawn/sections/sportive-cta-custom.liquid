@@ -1,0 +1,71 @@
+{{ 'design-system.css' | asset_url | stylesheet_tag }}
+{{ 'sportive-prints-page.css' | asset_url | stylesheet_tag }}
+
+<div class="sportive-cta-custom">
+  <div class="page-width">
+    <div class="sportive-cta-content">
+      {%- if section.settings.heading != blank -%}
+        <h2 class="sportive-cta-heading">
+          {{ section.settings.heading }}
+        </h2>
+      {%- endif -%}
+
+      {%- if section.settings.description != blank -%}
+        <p class="sportive-cta-description">
+          {{ section.settings.description }}
+        </p>
+      {%- endif -%}
+
+      {%- if section.settings.button_label != blank -%}
+        <a href="{{ section.settings.button_link }}" class="sportive-cta-btn">
+          <svg class="sportive-cta-btn-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 2C6.13 2 3 5.13 3 9C3 14.25 10 20 10 20C10 20 17 14.25 17 9C17 5.13 13.87 2 10 2ZM10 11C8.89543 11 8 10.1046 8 9C8 7.89543 8.89543 7 10 7C11.1046 7 12 7.89543 12 9C12 10.1046 11.1046 11 10 11Z" fill="currentColor"/>
+          </svg>
+          {{ section.settings.button_label }}
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Sportive Custom CTA",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Can't Find Your Route?"
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "label": "Description",
+      "default": "Connect your Strava account and create a custom print from any of your activities. Design it exactly how you want it."
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button label",
+      "default": "Create Custom Print"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "Button link",
+      "info": "Link for the CTA button (e.g., /pages/custom-print)"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Sportive Custom CTA"
+    }
+  ]
+}
+{% endschema %}

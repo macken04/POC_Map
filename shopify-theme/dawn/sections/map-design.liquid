@@ -49,104 +49,197 @@
   <div class="poster-designer-layout">
     <!-- Left Sidebar -->
     <div class="poster-sidebar">
-      <!-- Selected Route Card -->
-      <div class="selected-route-card">
-        <div class="route-indicator">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <!-- NEW: Consolidated Compact Header -->
+      <div class="poster-sidebar-header">
+        <!-- Route Badge (collapsible) -->
+        <button class="route-badge-toggle" id="route-badge-toggle" aria-expanded="false">
+          <svg class="route-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
             <circle cx="12" cy="10" r="3"/>
           </svg>
-          Selected Route
+          <span class="route-badge-name" id="route-name">Morning Mountain Climb</span>
+          <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6,9 12,15 18,9"/>
+          </svg>
+        </button>
+
+        <!-- Expandable Route Details (hidden by default) -->
+        <div class="route-details-expandable hidden" id="route-details-expandable">
+          <div class="route-location" id="route-location">Boulder, Colorado</div>
+          <div class="route-stats">
+            <span class="route-stat" id="route-distance">53.3km</span>
+            <span class="stat-separator">—</span>
+            <span class="route-stat" id="route-elevation">743m</span>
+            <span class="stat-separator">•</span>
+            <span class="route-stat" id="route-date">January 15, 2024</span>
+          </div>
         </div>
-        <div class="route-name" id="route-name">Morning Mountain Climb</div>
-        <div class="route-location" id="route-location">Boulder, Colorado</div>
-        <div class="route-stats">
-          <span class="route-stat" id="route-distance">53.3km</span>
-          <span class="stat-separator">—</span>
-          <span class="route-stat" id="route-elevation">743m</span>
-          <span class="stat-separator">•</span>
-          <span class="route-stat" id="route-date">January 15, 2024</span>
+
+        <!-- Current Selection Summary (inline) -->
+        <div class="selection-inline-summary">
+          <span class="summary-selection" id="summary-selection-text">Classic Blue</span>
+          <span class="summary-divider">•</span>
+          <span class="summary-size" id="summary-size-text">A3 Portrait</span>
         </div>
       </div>
 
-      <!-- Step Progress Section -->
-      <div class="step-progress-section">
-        <h2 class="section-title">Customize Your Poster</h2>
-        
-        <div class="step-indicators">
-          <div class="step-item active" data-step="style">
-            <div class="step-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"/>
-              </svg>
-            </div>
-            <div class="step-content">
-              <div class="step-label">Style</div>
-              <div class="step-description">Pick colors and visual style</div>
-            </div>
-          </div>
-          
-          <div class="step-item" data-step="text">
-            <div class="step-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="4,7 4,4 20,4 20,7"/>
-                <line x1="9" y1="20" x2="15" y2="20"/>
-                <line x1="12" y1="4" x2="12" y2="20"/>
-              </svg>
-            </div>
-            <div class="step-content">
-              <div class="step-label">Text</div>
-              <div class="step-description">Add titles and customize text</div>
-            </div>
-          </div>
-          
-          <div class="step-item" data-step="layout">
-            <div class="step-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                <line x1="9" y1="9" x2="15" y2="15"/>
-                <line x1="15" y1="9" x2="9" y2="15"/>
-              </svg>
-            </div>
-            <div class="step-content">
-              <div class="step-label">Layout</div>
-              <div class="step-description">Choose size and orientation</div>
-            </div>
-          </div>
+      <!-- NEW: Horizontal Tab Navigation - 4 Tabs -->
+      <div class="step-tabs-container">
+        <div class="step-tabs" role="tablist">
+          <button
+            class="step-tab active"
+            role="tab"
+            aria-selected="true"
+            aria-controls="style-step"
+            data-step="style"
+            id="style-tab">
+            <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"/>
+            </svg>
+            <span class="tab-label">Style</span>
+            <svg class="tab-checkmark hidden" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20,6 9,17 4,12"/>
+            </svg>
+          </button>
+
+          <button
+            class="step-tab"
+            role="tab"
+            aria-selected="false"
+            aria-controls="colors-step"
+            data-step="colors"
+            id="colors-tab">
+            <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 2a10 10 0 0 1 10 10h-10V2z" fill="currentColor" opacity="0.3"/>
+            </svg>
+            <span class="tab-label">Colors</span>
+            <svg class="tab-checkmark hidden" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20,6 9,17 4,12"/>
+            </svg>
+          </button>
+
+          <button
+            class="step-tab"
+            role="tab"
+            aria-selected="false"
+            aria-controls="text-step"
+            data-step="text"
+            id="text-tab">
+            <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="4,7 4,4 20,4 20,7"/>
+              <line x1="9" y1="20" x2="15" y2="20"/>
+              <line x1="12" y1="4" x2="12" y2="20"/>
+            </svg>
+            <span class="tab-label">Text</span>
+            <svg class="tab-checkmark hidden" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20,6 9,17 4,12"/>
+            </svg>
+          </button>
+
+          <button
+            class="step-tab"
+            role="tab"
+            aria-selected="false"
+            aria-controls="size-step"
+            data-step="size"
+            id="size-tab">
+            <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <polyline points="14,10 10,14"/>
+              <polyline points="10,10 14,14"/>
+            </svg>
+            <span class="tab-label">Size</span>
+            <svg class="tab-checkmark hidden" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20,6 9,17 4,12"/>
+            </svg>
+          </button>
         </div>
       </div>
 
       <!-- Step Content Area -->
       <div class="step-content-area">
-        <!-- Style Step Panel -->
+        <!-- Style Step Panel - Tab 1: Map Theme Selection (Large Cards) -->
         <div class="step-panel active" id="style-step">
-          <h3 class="panel-title">Choose Your Style</h3>
-          
-          <!-- Two-Tier Style Selector -->
-          <div class="style-selector-wrapper">
-            <!-- Map Type Selection (First Tier) -->
-            <div class="map-type-section">
-              <label class="selector-label">Map Type</label>
-              <div class="map-type-grid" id="theme-color-selector">
-                <!-- JavaScript will populate this with map type options -->
-                <div class="text-center" style="padding: 1rem; color: var(--poster-text-muted); grid-column: 1 / -1;">
-                  <div class="loading-spinner" style="margin: 0 auto 0.5rem;"></div>
-                  <p style="font-size: 0.875rem;">Loading options...</p>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Map Style Selection (Second Tier) -->
-            <div class="map-style-section">
-              <label class="selector-label">Color Style</label>
-              <div class="map-style-grid" id="map-style-options">
-                <!-- JavaScript will populate this with style options based on selected type -->
+          <h3 class="panel-title">Choose Your Map Style</h3>
+
+          <!-- Map Theme Selection - Large Preview Cards -->
+          <div class="map-type-section">
+            <div class="theme-cards-grid" id="theme-color-selector">
+              <!-- JavaScript will populate this with large theme preview cards -->
+              <div class="text-center" style="padding: 2rem; color: var(--poster-text-muted); grid-column: 1 / -1;">
+                <div class="loading-spinner" style="margin: 0 auto 0.5rem;"></div>
+                <p style="font-size: 0.875rem;">Loading themes...</p>
               </div>
             </div>
           </div>
-          
-          <!-- Route Thickness -->
+
+          <!-- Browse All Themes Button -->
+          <button class="browse-styles-btn" id="browse-all-styles-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            Browse All Themes
+          </button>
+        </div>
+
+        <!-- Colors Step Panel - Tab 2: Color Selection (Large Swatches) -->
+        <div class="step-panel" id="colors-step">
+          <h3 class="panel-title">Pick Your Route Color</h3>
+
+          <!-- Color Selection - Large Color Swatches -->
+          <div class="map-style-section visible">
+            <div class="color-swatches-grid" id="map-style-options">
+              <!-- JavaScript will populate this with large color swatches -->
+              <div class="text-center" style="padding: 2rem; color: var(--poster-text-muted); grid-column: 1 / -1;">
+                <p style="font-size: 0.875rem;">Select a map theme first to see available colors</p>
+              </div>
+            </div>
+            <p class="color-selected-text" id="color-selected-text">
+              Selected: <span>None</span>
+            </p>
+          </div>
+
+          <!-- Social Proof (optional) -->
+          <div class="whats-included" style="margin-top: 2rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: var(--poster-bg-primary); border-radius: 0.75rem;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--poster-accent-primary)" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              <div>
+                <div style="font-weight: 600; color: var(--poster-text-primary);">Join 12,000+ athletes worldwide</div>
+                <div style="font-size: 0.875rem; color: var(--poster-text-muted);">4.9 average rating</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Text Step Panel - Tab 3: Text Customizations and Route Options -->
+        <div class="step-panel" id="text-step">
+          <h3 class="panel-title">Customize Your Text</h3>
+
+          <div class="text-inputs">
+            <div class="input-group">
+              <label class="input-label" for="main-title-input">Map Title</label>
+              <input type="text" id="main-title-input" class="text-input" placeholder="e.g. My Epic Ride" value="EPIC RIDE">
+              <div class="input-help">This will be the main heading on your poster</div>
+            </div>
+
+            <div class="input-group">
+              <label class="input-label" for="subtitle-input">Subtitle</label>
+              <input type="text" id="subtitle-input" class="text-input" placeholder="e.g. Summer Adventure" value="Summer 2023">
+              <div class="input-help">Optional subtitle or date</div>
+            </div>
+          </div>
+
+          <!-- Route Line Width Control -->
           <div class="route-thickness-section">
             <h4 class="control-title">Route Line Width</h4>
             <div class="thickness-control">
@@ -157,95 +250,65 @@
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Text Step Panel -->
-        <div class="step-panel" id="text-step">
-          <h3 class="panel-title">Add Your Text</h3>
-          
-          <div class="text-inputs">
-            <div class="input-group">
-              <label class="input-label" for="main-title-input">Main Title</label>
-              <input type="text" id="main-title-input" class="text-input" placeholder="Enter main title" value="EPIC RIDE">
-              <div class="input-help">This will be the main heading on your poster</div>
-            </div>
-            
-            <div class="input-group">
-              <label class="input-label" for="subtitle-input">Subtitle</label>
-              <input type="text" id="subtitle-input" class="text-input" placeholder="Enter subtitle" value="Summer 2023">
-              <div class="input-help">Optional subtitle or date</div>
-            </div>
-          </div>
-          
-          <div class="text-suggestions">
-            <h4 class="control-title">Quick Suggestions</h4>
-            <div class="suggestion-list">
-              <button class="suggestion-item" data-field="title" data-value="EPIC RIDE">Epic Ride</button>
-              <button class="suggestion-item" data-field="title" data-value="ADVENTURE AWAITS">Adventure Awaits</button>
-              <button class="suggestion-item" data-field="subtitle" data-value="Summer 2023">Summer 2023</button>
-              <button class="suggestion-item" data-field="subtitle" data-value="Mountain Adventure">Mountain Adventure</button>
-            </div>
-          </div>
-          
+          <!-- Stats Preview (kept for reference) -->
           <div class="stats-preview">
-            <h4 class="control-title">Route Stats Preview</h4>
+            <h4 class="control-title">Route Stats</h4>
             <div class="stats-badge" id="overlay-distance">53.3km — 743m</div>
             <div class="stats-help">Distance and elevation will be automatically added</div>
           </div>
         </div>
 
-        <!-- Layout Step Panel -->
-        <div class="step-panel" id="layout-step">
-          <h3 class="panel-title">Choose Size & Layout</h3>
-          
-          <div class="layout-options">
-            <div class="layout-option active" data-layout="portrait">
-              <div class="layout-preview portrait-preview"></div>
-              <div class="layout-info">
-                <div class="layout-name">Portrait</div>
-                <div class="layout-description">Tall format</div>
-              </div>
-            </div>
-            
-            <div class="layout-option" data-layout="landscape">
-              <div class="layout-preview landscape-preview"></div>
-              <div class="layout-info">
-                <div class="layout-name">Landscape</div>
-                <div class="layout-description">Wide format</div>
-              </div>
-            </div>
-          </div>
-          
+        <!-- Size Step Panel - Tab 4: Print Size Selection -->
+        <div class="step-panel" id="size-step">
+          <h3 class="panel-title">Select Print Size</h3>
+
           <div class="print-sizes">
-            <h4 class="control-title">Print Size</h4>
+            <h4 class="control-title">Choose Your Print Size</h4>
             <div class="size-grid">
               <div class="size-option" data-size="a4">
                 <div class="size-name">A4</div>
-                <div class="size-dimensions">21.0 x 29.7 cm</div>
+                <div class="size-dimensions">21 × 30 cm</div>
                 <div class="size-price">£45</div>
               </div>
-              
+
               <div class="size-option active popular" data-size="a3">
                 <div class="size-badge">POPULAR</div>
                 <div class="size-name">A3</div>
-                <div class="size-dimensions">29.7 x 42.0 cm</div>
+                <div class="size-dimensions">30 × 42 cm</div>
                 <div class="size-price">£55</div>
               </div>
-              
+
               <div class="size-option" data-size="a2">
                 <div class="size-name">A2</div>
-                <div class="size-dimensions">42.0 x 59.4 cm</div>
-                <div class="size-price">£65</div>
-              </div>
-              
-              <div class="size-option" data-size="a1">
-                <div class="size-name">A1</div>
-                <div class="size-dimensions">59.4 x 84.1 cm</div>
+                <div class="size-dimensions">42 × 59 cm</div>
                 <div class="size-price">£75</div>
               </div>
             </div>
           </div>
-          
+
+          <!-- Optional: Layout Options (Portrait/Landscape) -->
+          <div class="layout-options" style="margin-top: 1.5rem;">
+            <h4 class="control-title">Orientation</h4>
+            <div class="layout-grid">
+              <div class="layout-option active" data-layout="portrait">
+                <div class="layout-preview portrait-preview"></div>
+                <div class="layout-info">
+                  <div class="layout-name">Portrait</div>
+                  <div class="layout-description">Tall format</div>
+                </div>
+              </div>
+
+              <div class="layout-option" data-layout="landscape">
+                <div class="layout-preview landscape-preview"></div>
+                <div class="layout-info">
+                  <div class="layout-name">Landscape</div>
+                  <div class="layout-description">Wide format</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="whats-included">
             <h4 class="control-title" style="margin-bottom: 0.75rem;">What's Included</h4>
             <ul class="included-list">
@@ -258,31 +321,25 @@
         </div>
       </div>
 
-      <!-- Navigation Footer -->
-      <div class="navigation-footer">
-        <div class="pricing-info">
-          <span class="current-price">£55<span class="size-info">(A3 Portrait)</span></span>
+      <!-- NEW: Streamlined Single-Row Footer -->
+      <div class="navigation-footer navigation-footer-compact">
+        <button class="nav-back-btn" id="prev-step-btn" disabled aria-label="Previous step">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15,18 9,12 15,6"/>
+          </svg>
+        </button>
+
+        <div class="footer-info">
+          <span class="footer-price" id="footer-price">£55</span>
+          <span class="footer-step-count" id="footer-step-count">1/3</span>
         </div>
-        
-        <div class="step-indicator">
-          Step <span id="current-step-number">1</span> of 3
-        </div>
-        
-        <div class="navigation-buttons">
-          <button class="nav-btn nav-btn--secondary" id="prev-step-btn" disabled>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="15,18 9,12 15,6"/>
-            </svg>
-            Previous
-          </button>
-          
-          <button class="nav-btn nav-btn--primary" id="next-step-btn">
-            Next
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="9,18 15,12 9,6"/>
-            </svg>
-          </button>
-        </div>
+
+        <button class="nav-next-btn" id="next-step-btn">
+          <span>Next</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9,18 15,12 9,6"/>
+          </svg>
+        </button>
       </div>
     </div>
 
@@ -335,6 +392,27 @@
       <a href="/pages/strava-activities" class="nav-btn nav-btn--primary">
         Back to Activities
       </a>
+    </div>
+  </div>
+
+  <!-- Styles Gallery Modal -->
+  <div class="styles-gallery-modal" id="styles-gallery-modal">
+    <div class="gallery-overlay" id="gallery-overlay"></div>
+    <div class="gallery-container">
+      <div class="gallery-header">
+        <h3 class="gallery-title">Browse All Styles</h3>
+        <button class="gallery-close-btn" id="gallery-close-btn" aria-label="Close gallery">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="gallery-content">
+        <div class="gallery-grid" id="gallery-grid">
+          <!-- Gallery items will be populated by JavaScript -->
+        </div>
+      </div>
     </div>
   </div>
 </div>

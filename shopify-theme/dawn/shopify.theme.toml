@@ -1,0 +1,64 @@
+# Corrected Metafield Definitions for shopify.theme.toml
+
+[[metafields.product]]
+namespace = "event"
+key = "name"
+type = "single_line_text_field"
+name = "Event Name"
+description = "Full event name"
+
+[[metafields.product]]
+namespace = "event"
+key = "year"
+type = "integer"
+name = "Event Year"
+description = "Year (e.g., 2024)"
+
+[[metafields.product]]
+namespace = "event"
+key = "distance_km"
+type = "decimal"
+name = "Distance (km)"
+description = "Distance in kilometers"
+
+[[metafields.product]]
+namespace = "event"
+key = "elevation_m"
+type = "integer"
+name = "Elevation Gain (m)"
+description = "Elevation in meters"
+
+[[metafields.product]]
+namespace = "event"
+key = "location"
+type = "single_line_text_field"
+name = "Location"
+description = "Location/region"
+
+[[metafields.product]]
+namespace = "event"
+key = "country"
+type = "single_line_text_field"
+name = "Country"
+description = "Country name"
+
+[[metafields.product]]
+namespace = "event"
+key = "category"
+type = "single_line_text_field"
+name = "Event Category"
+description = "One of: European Classics, Sportive Events, Iconic Climbs, Global & Epic Challenges"
+
+[[metafields.product]]
+namespace = "event"
+key = "description"
+type = "multi_line_text_field"
+name = "Event Description"
+description = "Brief description"
+
+[[metafields.product]]
+namespace = "event"
+key = "route_highlights"
+type = "multi_line_text_field"
+name = "Route Highlights"
+description = "Key route features"

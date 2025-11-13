@@ -3,22 +3,22 @@
     "main": {
       "type": "main-page",
       "settings": {
-        "padding_top": 28,
-        "padding_bottom": 28
+        "padding_top": 0,
+        "padding_bottom": 0
       }
     },
     "strava-login-section": {
       "type": "strava-login",
       "settings": {
-        "heading": "Connect Your Strava Account",
-        "description": "Connect your Strava account to access your cycling activities and create personalized maps of your rides.",
-        "padding_top": 40,
-        "padding_bottom": 40
+        "hero_heading": "Turn Your Rides Into Beautiful Wall Art",
+        "hero_subheading": "Transform your Strava cycling routes into professional-quality map posters. 300 DPI print-ready, customizable, and ready to frame.",
+        "padding_top": 0,
+        "padding_bottom": 0
       }
     }
   },
   "order": [
-    "main", 
+    "main",
     "strava-login-section"
   ]
 }

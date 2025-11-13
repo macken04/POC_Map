@@ -1,0 +1,208 @@
+{{ 'design-system.css' | asset_url | stylesheet_tag }}
+{{ 'sportive-prints-page.css' | asset_url | stylesheet_tag }}
+
+<div class="sportive-categories">
+  <div class="page-width">
+    {%- if section.settings.heading != blank or section.settings.description != blank -%}
+      <div class="sportive-categories-header">
+        {%- if section.settings.heading != blank -%}
+          <h2 class="sportive-categories-heading">
+            {{ section.settings.heading }}
+          </h2>
+        {%- endif -%}
+        {%- if section.settings.description != blank -%}
+          <p class="sportive-categories-description">
+            {{ section.settings.description }}
+          </p>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    <div class="sportive-categories-grid">
+      {%- for block in section.blocks -%}
+        <a
+          href="{{ block.settings.link }}"
+          class="sportive-category-card"
+          {{ block.shopify_attributes }}
+        >
+          <div class="sportive-category-image-wrapper">
+            {%- if block.settings.image != blank -%}
+              <img
+                src="{{ block.settings.image | image_url: width: 600 }}"
+                srcset="
+                  {{ block.settings.image | image_url: width: 300 }} 300w,
+                  {{ block.settings.image | image_url: width: 600 }} 600w
+                "
+                sizes="(min-width: 990px) 300px, (min-width: 750px) 50vw, 100vw"
+                alt="{{ block.settings.image.alt | escape }}"
+                loading="lazy"
+                class="sportive-category-image"
+                width="600"
+                height="450"
+              >
+            {%- else -%}
+              <div class="sportive-category-placeholder">
+                <div class="sportive-category-placeholder-icon">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 10C21 17 12 23 12 23S3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div class="sportive-category-placeholder-text">{{ block.settings.title }}</div>
+              </div>
+            {%- endif -%}
+
+            {%- if block.settings.badge_text != blank -%}
+              <div class="sportive-category-overlay">
+                <span class="sportive-category-badge">
+                  {{ block.settings.badge_text }}
+                </span>
+              </div>
+            {%- endif -%}
+          </div>
+
+          <div class="sportive-category-content">
+            <h3 class="sportive-category-title">{{ block.settings.title }}</h3>
+
+            {%- if block.settings.description != blank -%}
+              <p class="sportive-category-description">
+                {{ block.settings.description }}
+              </p>
+            {%- endif -%}
+
+            {%- comment -%} Display route count from collection {%- endcomment -%}
+            {%- if block.settings.link != blank -%}
+              {%- assign link_parts = block.settings.link | split: '/' -%}
+              {%- assign collection_handle = link_parts | last -%}
+              {%- if collection_handle != blank and collection_handle != 'collections' -%}
+                {%- assign linked_collection = collections[collection_handle] -%}
+                {%- if linked_collection -%}
+                  <p class="sportive-category-count">
+                    {{ linked_collection.products_count }}
+                    {%- if linked_collection.products_count == 1 -%}
+                      route
+                    {%- else -%}
+                      routes
+                    {%- endif -%}
+                  </p>
+                {%- endif -%}
+              {%- endif -%}
+            {%- endif -%}
+
+            <span class="sportive-category-link">
+              {{ block.settings.link_label | default: 'View Collection' }}
+              <svg class="sportive-category-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </div>
+        </a>
+      {%- endfor -%}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Sportive Categories",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Browse by Category"
+    },
+    {
+      "type": "text",
+      "id": "description",
+      "label": "Description",
+      "default": "Discover iconic routes from around the world"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "category",
+      "name": "Category",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Category image",
+          "info": "Recommended: 600x450px"
+        },
+        {
+          "type": "text",
+          "id": "badge_text",
+          "label": "Badge text",
+          "default": "Popular",
+          "info": "Optional badge overlay on image"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Category title",
+          "default": "European Classics"
+        },
+        {
+          "type": "textarea",
+          "id": "description",
+          "label": "Category description",
+          "default": "From Fred Whitton to Dragon Ride, explore Britain's most challenging and iconic sportive events."
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Category link"
+        },
+        {
+          "type": "text",
+          "id": "link_label",
+          "label": "Link label",
+          "default": "View Collection"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Sportive Categories",
+      "blocks": [
+        {
+          "type": "category",
+          "settings": {
+            "title": "European Classics",
+            "description": "From Fred Whitton to Dragon Ride, explore Britain's most challenging and iconic sportive events.",
+            "badge_text": "Popular"
+          }
+        },
+        {
+          "type": "category",
+          "settings": {
+            "title": "Sportive Events",
+            "description": "Ride the routes of Paris-Roubaix, Tour of Flanders, and other legendary professional races.",
+            "badge_text": "New"
+          }
+        },
+        {
+          "type": "category",
+          "settings": {
+            "title": "Iconic Climbs",
+            "description": "Conquer Alpe d'Huez, Mont Ventoux, and the world's most famous mountain climbs on your wall.",
+            "badge_text": "Bestseller"
+          }
+        },
+        {
+          "type": "category",
+          "settings": {
+            "title": "Global Challenges",
+            "description": "From Unbound Gravel to Cape Town Double Century, the world's toughest endurance events.",
+            "badge_text": "Featured"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

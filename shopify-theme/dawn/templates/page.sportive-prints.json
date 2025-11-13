@@ -1,0 +1,140 @@
+{
+  "sections": {
+    "hero": {
+      "type": "sportive-hero",
+      "settings": {
+        "eyebrow_text": "Legendary Routes",
+        "heading": "Iconic Cycling Routes & Events",
+        "description": "Celebrate the world's most legendary cycling routes with our professionally designed map prints. From Grand Tours to epic sportives, bring your favorite rides home.",
+        "show_cta": true,
+        "button_label_1": "Create Custom Print",
+        "button_link_1": "/pages/custom-print",
+        "show_location_icon": true,
+        "button_label_2": "Browse Categories",
+        "button_link_2": "#sportive-categories",
+        "show_search": true,
+        "search_placeholder": "Search for routes, climbs, or events...",
+        "show_trust_signal": true,
+        "trust_signal_text": "Free shipping • Premium quality • 90-day guarantee"
+      }
+    },
+    "categories": {
+      "type": "sportive-categories",
+      "blocks": {
+        "category-1": {
+          "type": "category",
+          "settings": {
+            "badge_text": "Popular",
+            "title": "European Classics",
+            "description": "From Fred Whitton to Dragon Ride, explore Britain's most challenging and iconic sportive events.",
+            "link": "/collections/european-classics",
+            "link_label": "View Collection"
+          }
+        },
+        "category-2": {
+          "type": "category",
+          "settings": {
+            "badge_text": "New",
+            "title": "Sportive Events",
+            "description": "Ride the routes of Paris-Roubaix, Tour of Flanders, and other legendary professional races.",
+            "link": "/collections/sportive-events",
+            "link_label": "View Collection"
+          }
+        },
+        "category-3": {
+          "type": "category",
+          "settings": {
+            "badge_text": "Bestseller",
+            "title": "Iconic Climbs",
+            "description": "Conquer Alpe d'Huez, Mont Ventoux, and the world's most famous mountain climbs on your wall.",
+            "link": "/collections/iconic-climbs",
+            "link_label": "View Collection"
+          }
+        },
+        "category-4": {
+          "type": "category",
+          "settings": {
+            "badge_text": "Featured",
+            "title": "Global Challenges",
+            "description": "From Unbound Gravel to Cape Town Double Century, the world's toughest endurance events.",
+            "link": "/collections/global-challenges",
+            "link_label": "View Collection"
+          }
+        }
+      },
+      "block_order": [
+        "category-1",
+        "category-2",
+        "category-3",
+        "category-4"
+      ],
+      "settings": {
+        "heading": "Browse by Category",
+        "description": "Discover iconic routes from around the world"
+      }
+    },
+    "features": {
+      "type": "sportive-features",
+      "blocks": {
+        "feature-1": {
+          "type": "feature",
+          "settings": {
+            "icon": "quality",
+            "title": "Premium Quality",
+            "description": "Museum-grade archival paper with professional printing for lasting quality. Each print is carefully inspected before shipping."
+          }
+        },
+        "feature-2": {
+          "type": "feature",
+          "settings": {
+            "icon": "sizes",
+            "title": "Multiple Sizes",
+            "description": "Available in A4, A3, and A2 sizes to suit any space. Perfect for home, office, or as a gift for cycling enthusiasts."
+          }
+        },
+        "feature-3": {
+          "type": "feature",
+          "settings": {
+            "icon": "framing",
+            "title": "Framing Options",
+            "description": "Choose from unframed or select black, white, or oak frames. All frames are handcrafted with museum-quality materials."
+          }
+        }
+      },
+      "block_order": [
+        "feature-1",
+        "feature-2",
+        "feature-3"
+      ],
+      "settings": {
+        "heading": "Why Choose Our Prints"
+      }
+    },
+    "custom-cta": {
+      "type": "sportive-cta-custom",
+      "settings": {
+        "heading": "Can't Find Your Route?",
+        "description": "Connect your Strava account and create a custom print from any of your activities. Design it exactly how you want it.",
+        "button_label": "Create Custom Print",
+        "button_link": "/pages/custom-print"
+      }
+    },
+    "newsletter": {
+      "type": "sportive-newsletter",
+      "settings": {
+        "heading": "Subscribe to our emails",
+        "description": "Get updates on new routes, special offers, and cycling inspiration",
+        "placeholder": "Enter your email",
+        "button_label": "Subscribe",
+        "success_message": "Thanks for subscribing!"
+      }
+    }
+  },
+  "order": [
+    "hero",
+    "categories",
+    "features",
+    "custom-cta",
+    "newsletter"
+  ]
+}

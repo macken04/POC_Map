@@ -24,7 +24,10 @@ class StravaActivities {
       sortBy: 'start_date',
       sortOrder: 'desc'
     };
-    
+
+    // Activity comparison
+    this.selectedActivities = new Set();
+
     // Simple session token
     this.sessionToken = null;
 
@@ -50,8 +53,44 @@ class StravaActivities {
       totalTime: document.getElementById('total-time'),
       // User connection status
       userConnectionStatus: document.getElementById('user-connection-status'),
-      userName: document.getElementById('user-name')
+      userName: document.getElementById('user-name'),
+      // Search elements
+      searchInput: document.getElementById('activity-search'),
+      searchClearBtn: document.getElementById('search-clear'),
+      // Filter elements
+      filterActivityTypeBtn: document.getElementById('filter-activity-type'),
+      activityTypeFilter: document.getElementById('activity-type-filter'),
+      dateRangeBtn: document.getElementById('date-range-button'),
+      sortButton: document.getElementById('sort-button'),
+      sortSelect: document.getElementById('sort-select'),
+      compareButton: document.getElementById('compare-button'),
+      compareCount: document.getElementById('compare-count'),
+      // Bulk actions elements
+      bulkActionsToolbar: document.getElementById('bulk-actions-toolbar'),
+      bulkSelectedCount: document.getElementById('bulk-selected-count'),
+      bulkCreatePosters: document.getElementById('bulk-create-posters'),
+      bulkExportData: document.getElementById('bulk-export-data'),
+      bulkDeselectAll: document.getElementById('bulk-deselect-all'),
+      // Statistics dashboard
+      statisticsDashboard: document.querySelector('.statistics-dashboard'),
+      // Empty state elements
+      emptyTitle: document.getElementById('empty-title'),
+      emptyDescription: document.getElementById('empty-description'),
+      emptyIconPath: document.getElementById('empty-icon-path'),
+      emptyActiveFilters: document.getElementById('empty-active-filters'),
+      emptyFilterTags: document.getElementById('empty-filter-tags'),
+      emptyClearFiltersBtn: document.getElementById('empty-clear-filters'),
+      // Load more elements
+      loadMoreText: document.getElementById('load-more-text'),
+      loadMoreArrow: document.getElementById('load-more-arrow'),
+      loadMoreSpinner: document.getElementById('load-more-spinner'),
+      // Infinite scroll
+      infiniteScrollTrigger: document.getElementById('infinite-scroll-trigger')
     };
+
+    // Infinite scroll observer
+    this.infiniteScrollObserver = null;
+    this.infiniteScrollEnabled = true; // Can be toggled by user preference
 
     this.bindEvents();
   }
@@ -61,14 +100,17 @@ class StravaActivities {
    */
   async init() {
     console.log('Initializing Strava Activities Manager');
-    
+
     // Validate DOM elements are available
     this.validateDOMElements();
-    
+
     // Initialize authentication first
     this.initializeAuthentication();
-    
+
     await this.checkAuthentication();
+
+    // Setup infinite scroll
+    this.setupInfiniteScroll();
   }
 
   /**
@@ -255,7 +297,19 @@ class StravaActivities {
         this.totalActivitiesLoaded = 0;
         this.hasMoreActivities = true;
         this.hideAllStates();
-        this.showElement(this.elements.loading);
+        // Show skeleton loading cards instead of generic spinner
+        this.showSkeletonCards(6);
+      }
+
+      // Calculate date range filter if set
+      let afterDate = null;
+      if (this.currentFilters.dateRange && this.currentFilters.dateRange !== '') {
+        const daysAgo = parseInt(this.currentFilters.dateRange);
+        if (!isNaN(daysAgo)) {
+          const date = new Date();
+          date.setDate(date.getDate() - daysAgo);
+          afterDate = Math.floor(date.getTime() / 1000); // Strava uses Unix timestamps
+        }
       }
 
       const apiParams = {
@@ -263,6 +317,7 @@ class StravaActivities {
         per_page: 30, // Standard Strava API limit
         ...(this.currentFilters.type && { activity_types: this.currentFilters.type }),
         ...(this.searchTerm && { search_name: this.searchTerm }),
+        ...(afterDate && { after: afterDate }),
         sort_by: this.currentFilters.sortBy,
         sort_order: this.currentFilters.sortOrder
       };
@@ -319,7 +374,12 @@ class StravaActivities {
         console.log('🔍 [DEBUG] data.success is true');
         console.log('🔍 [DEBUG] newActivities array:', newActivities);
         console.log('🔍 [DEBUG] newActivities.length:', newActivities.length);
-        
+
+        // Update user status if user info is available in the response
+        if (data.athlete || data.user) {
+          this.updateUserStatus(data.athlete || data.user);
+        }
+
         if (isLoadMore) {
           // Append new activities to existing ones
           console.log('🔍 [DEBUG] Load more mode - appending to existing activities');
@@ -397,19 +457,61 @@ class StravaActivities {
   }
 
   /**
+   * Show skeleton loading cards
+   */
+  showSkeletonCards(count = 6) {
+    const skeletonHtml = Array.from({ length: count }, () => `
+      <div class="skeleton-card" role="status" aria-label="Loading activity">
+        <div class="skeleton-preview"></div>
+        <div class="skeleton-details">
+          <div class="skeleton-line title"></div>
+          <div class="skeleton-line subtitle"></div>
+          <div class="skeleton-stats">
+            <div class="skeleton-stat">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+            </div>
+            <div class="skeleton-stat">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+            </div>
+            <div class="skeleton-stat">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+            </div>
+            <div class="skeleton-stat">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+            </div>
+          </div>
+          <div class="skeleton-button"></div>
+        </div>
+      </div>
+    `).join('');
+
+    if (this.elements.grid) {
+      this.elements.grid.innerHTML = skeletonHtml;
+      this.elements.grid.classList.remove('activities-grid');
+      this.elements.grid.classList.add('skeleton-grid');
+      this.hideAllStates();
+      this.showElement(this.elements.grid);
+    }
+  }
+
+  /**
    * Render activities grid
    */
   renderActivities() {
     console.log('🔍 [DEBUG] renderActivities() called');
     console.log('🔍 [DEBUG] this.elements.grid exists:', !!this.elements.grid);
     console.log('🔍 [DEBUG] this.filteredActivities.length:', this.filteredActivities.length);
-    
+
     // Validate DOM elements exist
     if (!this.elements.grid) {
       console.error('❌ [ERROR] Activities grid element not found!');
       return;
     }
-    
+
     // Show all loaded activities (not paginated client-side)
     const cardHtml = this.filteredActivities.map(activity => {
       try {
@@ -426,18 +528,22 @@ class StravaActivities {
         </div>`;
       }
     }).join('');
-    
+
     console.log('🔍 [DEBUG] Generated HTML length:', cardHtml.length);
     console.log('🔍 [DEBUG] Generated HTML preview:', cardHtml.substring(0, 200) + '...');
-    
+
     this.elements.grid.innerHTML = cardHtml;
-    
+
+    // Ensure grid has correct classes
+    this.elements.grid.classList.remove('skeleton-grid');
+    this.elements.grid.classList.add('activities-grid');
+
     console.log('🔍 [DEBUG] Grid innerHTML set, length:', this.elements.grid.innerHTML.length);
 
     this.hideAllStates();
     this.showElement(this.elements.grid);
     this.showElement(this.elements.pagination);
-    
+
     console.log('🔍 [DEBUG] Grid element styles after show:', {
       display: this.elements.grid.style.display,
       visibility: window.getComputedStyle(this.elements.grid).visibility,
@@ -446,40 +552,6 @@ class StravaActivities {
 
     // Update statistics dashboard
     this.updateStatistics();
-
-    // Add click handlers for create poster buttons
-    this.elements.grid.querySelectorAll('.create-poster-button').forEach(button => {
-      console.log('🔧 [DEBUG] Adding click listener to button:', button, 'Activity ID:', button.dataset.activityId);
-      
-      // Add multiple event listeners to debug
-      button.addEventListener('click', (e) => {
-        console.log('🔧 [DEBUG] *** BUTTON CLICKED! ***', e.target, 'Activity ID:', button.dataset.activityId);
-        console.log('🔧 [DEBUG] Event details:', e);
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const activityId = button.dataset.activityId;
-        const activity = this.activities.find(a => a.id.toString() === activityId);
-        console.log('🔧 [DEBUG] Found activity:', activity);
-        
-        if (activity) {
-          console.log('🔧 [DEBUG] Calling createMapForActivity...');
-          this.createMapForActivity(activity);
-        } else {
-          console.error('🚨 [DEBUG] No activity found for ID:', activityId);
-        }
-      });
-      
-      // Add mousedown event to test if any events are firing
-      button.addEventListener('mousedown', (e) => {
-        console.log('🔧 [DEBUG] MOUSEDOWN detected on button:', button.dataset.activityId);
-      });
-      
-      // Add mouseover event to test hover
-      button.addEventListener('mouseover', (e) => {
-        console.log('🔧 [DEBUG] MOUSEOVER detected on button:', button.dataset.activityId);
-      });
-    });
   }
 
   /**
@@ -497,16 +569,31 @@ class StravaActivities {
     const elevation = Math.round(activity.total_elevation_gain || 0);
     const avgSpeed = activity.average_speed ? (activity.average_speed * 3.6).toFixed(1) : 'N/A'; // Convert m/s to km/h
 
-    const isSelected = false;
+    const isSelected = this.selectedActivities.has(activity.id);
     const routePath = this.generateMockRoutePath(activity.id);
     const routeColor = this.getRouteColor(activity.id);
 
     return `
-      <div class="activity-card ${isSelected ? 'selected' : ''}" data-activity-id="${activity.id}">
+      <div class="activity-card ${isSelected ? 'selected' : ''}" data-activity-id="${activity.id}" role="listitem">
         <!-- Activity Preview -->
         <div class="activity-card-preview">
+          <!-- Selection Checkbox -->
+          <div class="activity-selection-checkbox" role="checkbox" aria-checked="${isSelected}" tabindex="0">
+            <input
+              type="checkbox"
+              class="activity-select-input"
+              data-activity-id="${activity.id}"
+              ${isSelected ? 'checked' : ''}
+              aria-label="Select activity for comparison">
+            <div class="checkbox-custom">
+              <svg class="checkbox-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+          </div>
+
           <!-- Mock route visualization -->
-          <svg class="activity-route-svg" viewBox="0 0 300 200">
+          <svg class="activity-route-svg" viewBox="0 0 300 200" aria-hidden="true">
             <path
               d="${routePath}"
               class="activity-route-path"
@@ -515,19 +602,54 @@ class StravaActivities {
           </svg>
 
           <!-- Activity type badge -->
-          <div class="activity-type-badge">
-            ${activity.sport_type || activity.type || 'Activity'}
+          <div class="activity-type-badge" aria-label="${activity.type || activity.sport_type || 'Activity'} activity">
+            ${this.getActivityIcon(activity.type || activity.sport_type || 'Activity')}
           </div>
 
           <!-- GPS indicator -->
           ${activity.map && activity.map.summary_polyline ? `
-            <div class="activity-gps-indicator">
-              <svg class="activity-gps-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <div class="activity-gps-indicator" aria-label="GPS route data available">
+              <svg class="activity-gps-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
                 <circle cx="12" cy="10" r="3"/>
               </svg>
             </div>
           ` : ''}
+
+          <!-- Quick Actions Overlay -->
+          <div class="activity-quick-actions">
+            <button
+              class="quick-action-btn"
+              data-action="view-details"
+              data-activity-id="${activity.id}"
+              aria-label="View activity details"
+              title="View Details">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+            <button
+              class="quick-action-btn primary"
+              data-action="create-poster"
+              data-activity-id="${activity.id}"
+              aria-label="Create poster for this activity"
+              title="Create Poster">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </button>
+            <button
+              class="quick-action-btn"
+              data-action="share"
+              data-activity-id="${activity.id}"
+              aria-label="Share activity"
+              title="Share">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <!-- Activity Details -->
@@ -535,7 +657,7 @@ class StravaActivities {
           <div class="activity-card-body">
             <h3 class="activity-name">${this.escapeHtml(activity.name || 'Unnamed Activity')}</h3>
             <div class="activity-meta">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
                 <line x1="16" y1="2" x2="16" y2="6"/>
                 <line x1="8" y1="2" x2="8" y2="6"/>
@@ -544,7 +666,7 @@ class StravaActivities {
               ${formattedDate}
               ${activity.location_city || activity.location_country ? `
                 <span class="activity-meta-separator">•</span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
                   <circle cx="12" cy="10" r="3"/>
                 </svg>
@@ -573,12 +695,9 @@ class StravaActivities {
             </div>
 
             <!-- Create Poster Button -->
-            <button class="create-poster-button" data-activity-id="${activity.id}">
-              CREATE POSTER
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="5" y1="12" x2="19" y2="12"/>
-                <polyline points="12,5 19,12 12,19"/>
-              </svg>
+            <button class="create-poster-button" data-activity-id="${activity.id}" aria-label="Create poster for ${this.escapeHtml(activity.name || 'activity')}">
+              <span class="button-text">CREATE POSTER</span>
+              <span class="button-icon">${this.getActivityIcon(activity.type || activity.sport_type || 'Activity')}</span>
             </button>
           </div>
         </div>
@@ -600,20 +719,20 @@ class StravaActivities {
   }
 
   /**
-   * Get icon for activity type (emoji fallback)
+   * Get Heroicon SVG for activity type
    */
   getActivityIcon(type) {
     const icons = {
-      'Ride': '🚴',
-      'Run': '🏃',
-      'Walk': '🚶',
-      'Hike': '🥾',
-      'Swim': '🏊',
-      'VirtualRide': '🚴‍♂️',
-      'EBikeRide': '🚲',
-      'MountainBikeRide': '🚵'
+      'Ride': '<svg class="activity-type-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><circle cx="6" cy="17" r="2.5"/><circle cx="18" cy="17" r="2.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M6 17l4-9h4l4 9M12 6h2M10 8l4 9M14 8l-4 9"/></svg>',
+      'Run': '<svg class="activity-type-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" /></svg>',
+      'Walk': '<svg class="activity-type-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>',
+      'Hike': '<svg class="activity-type-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205l3 1m1.5.5l-1.5-.5M6.75 7.364V3h-3v18m3-13.636l10.5-3.819" /></svg>',
+      'Swim': '<svg class="activity-type-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" /></svg>',
+      'VirtualRide': '<svg class="activity-type-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" /></svg>',
+      'EBikeRide': '<svg class="activity-type-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>',
+      'MountainBikeRide': '<svg class="activity-type-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" /></svg>'
     };
-    return icons[type] || '📍';
+    return icons[type] || '<svg class="activity-type-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>';
   }
 
   /**
@@ -663,6 +782,97 @@ class StravaActivities {
     return colors[activityId % colors.length];
   }
 
+  /**
+   * Generate simplified elevation profile visualization
+   * Creates a representative elevation curve based on total elevation gain
+   */
+  generateElevationProfile(activityId, totalElevationGain) {
+    if (!totalElevationGain || totalElevationGain < 10) {
+      // For flat routes, return nearly flat line
+      return this.generateFlatElevationPath();
+    }
+
+    // Use activity ID as seed for consistent variation
+    const seed = activityId % 100;
+    const numPoints = 50;
+    const width = 300;
+    const height = 80;
+    const padding = 10;
+
+    // Generate points with some randomness based on seed
+    const points = [];
+    const baseElevation = height - padding;
+    const maxVariation = (totalElevationGain / 100) * 30; // Scale variation based on total gain
+
+    for (let i = 0; i < numPoints; i++) {
+      const x = (i / (numPoints - 1)) * (width - 2 * padding) + padding;
+
+      // Create natural-looking elevation changes
+      const progress = i / (numPoints - 1);
+      const wave1 = Math.sin(progress * Math.PI * 2 + seed * 0.1) * maxVariation * 0.4;
+      const wave2 = Math.sin(progress * Math.PI * 4 + seed * 0.2) * maxVariation * 0.3;
+      const wave3 = Math.sin(progress * Math.PI * 6 + seed * 0.3) * maxVariation * 0.3;
+
+      const y = baseElevation - (wave1 + wave2 + wave3) - (maxVariation * 0.5);
+
+      points.push({x, y});
+    }
+
+    // Create SVG path for area chart
+    const pathD = this.createSmoothPath(points);
+    const areaPath = `${pathD} L ${width - padding},${height} L ${padding},${height} Z`;
+
+    return {
+      linePath: pathD,
+      areaPath: areaPath,
+      viewBox: `0 0 ${width} ${height}`
+    };
+  }
+
+  /**
+   * Generate flat elevation path for routes with minimal elevation
+   */
+  generateFlatElevationPath() {
+    const width = 300;
+    const height = 80;
+    const padding = 10;
+    const y = height - padding - 5;
+
+    const path = `M ${padding},${y} L ${width - padding},${y}`;
+    const area = `${path} L ${width - padding},${height} L ${padding},${height} Z`;
+
+    return {
+      linePath: path,
+      areaPath: area,
+      viewBox: `0 0 ${width} ${height}`
+    };
+  }
+
+  /**
+   * Create smooth path through points using quadratic curves
+   */
+  createSmoothPath(points) {
+    if (points.length < 2) return '';
+
+    let path = `M ${points[0].x},${points[0].y}`;
+
+    for (let i = 1; i < points.length - 1; i++) {
+      const current = points[i];
+      const next = points[i + 1];
+      const controlX = current.x;
+      const controlY = current.y;
+      const endX = (current.x + next.x) / 2;
+      const endY = (current.y + next.y) / 2;
+
+      path += ` Q ${controlX},${controlY} ${endX},${endY}`;
+    }
+
+    // Connect to last point
+    const last = points[points.length - 1];
+    path += ` L ${last.x},${last.y}`;
+
+    return path;
+  }
 
   /**
    * Format duration from seconds to readable format
@@ -801,16 +1011,52 @@ class StravaActivities {
    */
   updateLoadMoreButton() {
     if (!this.elements.loadMoreBtn) return;
-    
+
     if (this.isLoadingMore) {
-      this.elements.loadMoreBtn.textContent = 'Loading...';
+      // Loading state - show spinner and progress message
       this.elements.loadMoreBtn.disabled = true;
+      if (this.elements.loadMoreText) {
+        this.elements.loadMoreText.textContent = 'Loading more activities...';
+      }
+      // Swap icon from arrow to spinner
+      if (this.elements.loadMoreArrow) {
+        this.elements.loadMoreArrow.classList.add('hidden');
+      }
+      if (this.elements.loadMoreSpinner) {
+        this.elements.loadMoreSpinner.classList.remove('hidden');
+      }
+      this.elements.loadMoreBtn.setAttribute('aria-busy', 'true');
     } else if (!this.hasMoreActivities) {
-      this.elements.loadMoreBtn.textContent = 'All activities loaded';
+      // End of list state
       this.elements.loadMoreBtn.disabled = true;
+      if (this.elements.loadMoreText) {
+        const totalCount = this.totalActivitiesLoaded;
+        this.elements.loadMoreText.textContent = totalCount > 0
+          ? `All ${totalCount} activities loaded`
+          : 'All activities loaded';
+      }
+      // Hide both icons
+      if (this.elements.loadMoreArrow) {
+        this.elements.loadMoreArrow.classList.add('hidden');
+      }
+      if (this.elements.loadMoreSpinner) {
+        this.elements.loadMoreSpinner.classList.add('hidden');
+      }
+      this.elements.loadMoreBtn.setAttribute('aria-busy', 'false');
     } else {
-      this.elements.loadMoreBtn.textContent = 'Load More Activities';
+      // Ready state - show arrow
       this.elements.loadMoreBtn.disabled = false;
+      if (this.elements.loadMoreText) {
+        this.elements.loadMoreText.textContent = 'Load More Activities';
+      }
+      // Swap icon from spinner to arrow
+      if (this.elements.loadMoreArrow) {
+        this.elements.loadMoreArrow.classList.remove('hidden');
+      }
+      if (this.elements.loadMoreSpinner) {
+        this.elements.loadMoreSpinner.classList.add('hidden');
+      }
+      this.elements.loadMoreBtn.setAttribute('aria-busy', 'false');
     }
   }
 
@@ -825,6 +1071,75 @@ class StravaActivities {
   }
 
   /**
+   * Setup Intersection Observer for infinite scroll
+   */
+  setupInfiniteScroll() {
+    // Check if Intersection Observer is supported
+    if (!('IntersectionObserver' in window)) {
+      console.warn('⚠️ [InfiniteScroll] Intersection Observer not supported, infinite scroll disabled');
+      return;
+    }
+
+    if (!this.elements.infiniteScrollTrigger) {
+      console.warn('⚠️ [InfiniteScroll] Trigger element not found');
+      return;
+    }
+
+    // Create observer with options
+    const options = {
+      root: null, // viewport
+      rootMargin: '200px', // trigger 200px before reaching the element
+      threshold: 0.1
+    };
+
+    this.infiniteScrollObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          this.handleInfiniteScroll();
+        }
+      });
+    }, options);
+
+    // Start observing
+    this.infiniteScrollObserver.observe(this.elements.infiniteScrollTrigger);
+    console.log('✅ [InfiniteScroll] Observer initialized and watching');
+  }
+
+  /**
+   * Handle infinite scroll trigger
+   */
+  handleInfiniteScroll() {
+    // Only load if:
+    // 1. Infinite scroll is enabled
+    // 2. Not currently loading
+    // 3. There are more activities to load
+    // 4. Activities grid is visible (not on empty/error state)
+    if (
+      !this.infiniteScrollEnabled ||
+      this.isLoading ||
+      this.isLoadingMore ||
+      !this.hasMoreActivities ||
+      !this.elements.grid ||
+      this.elements.grid.classList.contains('hidden')
+    ) {
+      return;
+    }
+
+    console.log('📜 [InfiniteScroll] Trigger reached, loading more activities');
+    this.loadMoreActivities();
+  }
+
+  /**
+   * Disconnect infinite scroll observer
+   */
+  disconnectInfiniteScroll() {
+    if (this.infiniteScrollObserver) {
+      this.infiniteScrollObserver.disconnect();
+      console.log('🛑 [InfiniteScroll] Observer disconnected');
+    }
+  }
+
+  /**
    * Show error state
    */
   showError(title, message) {
@@ -835,10 +1150,106 @@ class StravaActivities {
   }
 
   /**
-   * Show empty state
+   * Show empty state with context-aware messaging
    */
   showEmptyState() {
     this.hideAllStates();
+
+    // Determine if filters or search are active
+    const hasActiveFilters = this.currentFilters.type || this.currentFilters.dateRange;
+    const hasSearch = this.searchTerm && this.searchTerm.trim().length > 0;
+    const hasAnyFilter = hasActiveFilters || hasSearch;
+
+    // Update icon based on context
+    if (this.elements.emptyIconPath) {
+      if (hasSearch) {
+        // Search icon
+        this.elements.emptyIconPath.setAttribute('d', 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z');
+      } else if (hasActiveFilters) {
+        // Filter icon
+        this.elements.emptyIconPath.setAttribute('d', 'M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z');
+      } else {
+        // Document icon (default)
+        this.elements.emptyIconPath.setAttribute('d', 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z');
+      }
+    }
+
+    // Update title and description based on context
+    if (hasSearch && !hasActiveFilters) {
+      // Search only - no results
+      this.elements.emptyTitle.textContent = `No activities found for "${this.searchTerm}"`;
+      this.elements.emptyDescription.innerHTML = 'Try a different search term or <button type="button" class="text-link" onclick="document.getElementById(\'empty-clear-filters\').click()">clear your search</button> to see all activities.';
+    } else if (hasActiveFilters && !hasSearch) {
+      // Filters only - no results
+      this.elements.emptyTitle.textContent = 'No activities match your filters';
+      this.elements.emptyDescription.innerHTML = 'Try adjusting your filters or <button type="button" class="text-link" onclick="document.getElementById(\'empty-clear-filters\').click()">clear all filters</button> to see more activities.';
+    } else if (hasSearch && hasActiveFilters) {
+      // Both search and filters - no results
+      this.elements.emptyTitle.textContent = 'No activities found';
+      this.elements.emptyDescription.innerHTML = `No activities match your search "${this.searchTerm}" with the current filters. Try <button type="button" class="text-link" onclick="document.getElementById(\'empty-clear-filters\').click()">clearing your filters</button>.`;
+    } else {
+      // No filters or search - truly empty
+      this.elements.emptyTitle.textContent = 'No activities found';
+      this.elements.emptyDescription.innerHTML = 'Looks like you haven\'t recorded any activities yet. <a href="https://www.strava.com" target="_blank" rel="noopener">Upload some activities to Strava</a> to get started!';
+    }
+
+    // Show/hide active filters section
+    if (hasAnyFilter) {
+      const filterTags = [];
+
+      if (hasSearch) {
+        filterTags.push({
+          label: `Search: "${this.searchTerm}"`,
+          icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>'
+        });
+      }
+
+      if (this.currentFilters.type) {
+        const typeLabel = this.elements.activityTypeFilter?.querySelector(`option[value="${this.currentFilters.type}"]`)?.textContent || this.currentFilters.type;
+        filterTags.push({
+          label: `Type: ${typeLabel}`,
+          icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>'
+        });
+      }
+
+      if (this.currentFilters.dateRange) {
+        const days = parseInt(this.currentFilters.dateRange);
+        const label = days === 365 ? 'This year' : days === 90 ? 'Last 90 days' : days === 30 ? 'Last 30 days' : days === 7 ? 'Last 7 days' : `Last ${days} days`;
+        filterTags.push({
+          label: `Date: ${label}`,
+          icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>'
+        });
+      }
+
+      // Render filter tags
+      if (this.elements.emptyFilterTags) {
+        this.elements.emptyFilterTags.innerHTML = filterTags.map(tag => `
+          <div class="empty-filter-tag">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              ${tag.icon}
+            </svg>
+            <span>${this.escapeHtml(tag.label)}</span>
+          </div>
+        `).join('');
+      }
+
+      // Show active filters section and clear button
+      if (this.elements.emptyActiveFilters) {
+        this.elements.emptyActiveFilters.classList.remove('hidden');
+      }
+      if (this.elements.emptyClearFiltersBtn) {
+        this.elements.emptyClearFiltersBtn.classList.remove('hidden');
+      }
+    } else {
+      // Hide active filters section and clear button
+      if (this.elements.emptyActiveFilters) {
+        this.elements.emptyActiveFilters.classList.add('hidden');
+      }
+      if (this.elements.emptyClearFiltersBtn) {
+        this.elements.emptyClearFiltersBtn.classList.add('hidden');
+      }
+    }
+
     this.showElement(this.elements.empty);
   }
 
@@ -901,6 +1312,924 @@ class StravaActivities {
         this.loadActivities();
       });
     }
+
+    // Search functionality
+    if (this.elements.searchInput) {
+      // Debounced search handler
+      const handleSearch = this.debounce(() => {
+        this.searchTerm = this.elements.searchInput.value.trim();
+        console.log('🔍 [Search] Searching for:', this.searchTerm);
+        this.resetPagination();
+        this.loadActivities();
+      }, 300);
+
+      // Input event listener
+      this.elements.searchInput.addEventListener('input', (e) => {
+        const value = e.target.value;
+
+        // Show/hide clear button based on input
+        if (this.elements.searchClearBtn) {
+          if (value.length > 0) {
+            this.elements.searchClearBtn.classList.remove('hidden');
+          } else {
+            this.elements.searchClearBtn.classList.add('hidden');
+          }
+        }
+
+        handleSearch();
+      });
+
+      // Clear button functionality
+      if (this.elements.searchClearBtn) {
+        this.elements.searchClearBtn.addEventListener('click', () => {
+          this.elements.searchInput.value = '';
+          this.elements.searchClearBtn.classList.add('hidden');
+          this.searchTerm = '';
+          this.resetPagination();
+          this.loadActivities();
+        });
+      }
+    }
+
+    // Filter functionality - Activity Type
+    if (this.elements.filterActivityTypeBtn && this.elements.activityTypeFilter) {
+      // Toggle filter dropdown visibility
+      this.elements.filterActivityTypeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isHidden = this.elements.activityTypeFilter.classList.contains('hidden');
+        this.elements.activityTypeFilter.classList.toggle('hidden');
+
+        // Update aria-expanded attribute
+        this.elements.filterActivityTypeBtn.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+
+        // Close dropdown when clicking outside
+        if (isHidden) {
+          setTimeout(() => {
+            document.addEventListener('click', this.closeFilterDropdown.bind(this), { once: true });
+          }, 0);
+        }
+      });
+
+      // Handle filter selection
+      this.elements.activityTypeFilter.addEventListener('change', (e) => {
+        const selectedType = e.target.value;
+        console.log('🎯 [Filter] Activity type selected:', selectedType || 'All');
+
+        this.currentFilters.type = selectedType;
+        this.updateFilterButton(this.elements.filterActivityTypeBtn, selectedType);
+        this.elements.activityTypeFilter.classList.add('hidden');
+
+        this.resetPagination();
+        this.loadActivities();
+      });
+    }
+
+    // Filter functionality - Date Range
+    if (this.elements.dateRangeBtn) {
+      this.elements.dateRangeBtn.addEventListener('click', (e) => {
+        console.log('📅 [Filter] Date range filter clicked');
+        // For now, we'll implement a simple date range selector
+        this.showDateRangeSelector();
+      });
+    }
+
+    // Sort functionality
+    if (this.elements.sortButton) {
+      this.elements.sortButton.addEventListener('click', (e) => {
+        console.log('🔽 [Sort] Sort button clicked');
+        e.stopPropagation();
+
+        // Toggle sort dropdown visibility
+        const isHidden = this.elements.sortSelect.classList.contains('hidden');
+        this.elements.sortSelect.classList.toggle('hidden');
+        this.elements.sortButton.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+
+        // Close dropdown when clicking outside
+        if (isHidden) {
+          setTimeout(() => {
+            document.addEventListener('click', this.closeSortDropdown.bind(this), { once: true });
+          }, 0);
+        }
+      });
+
+      // Handle sort selection
+      this.elements.sortSelect.addEventListener('change', (e) => {
+        const selectedSort = e.target.value;
+        console.log('🔽 [Sort] Sort option selected:', selectedSort);
+
+        // Parse sort value into field and order
+        const [field, order] = this.parseSortValue(selectedSort);
+        this.currentFilters.sortBy = field;
+        this.currentFilters.sortOrder = order;
+
+        // Update button to show active sort
+        this.updateSortButton(selectedSort);
+        this.elements.sortSelect.classList.add('hidden');
+
+        // Reload activities with new sort
+        this.resetPagination();
+        this.loadActivities();
+      });
+    }
+
+    // Compare button functionality
+    if (this.elements.compareButton) {
+      this.elements.compareButton.addEventListener('click', () => {
+        console.log('📊 [Compare] Compare button clicked, selected activities:', this.selectedActivities.size);
+        if (this.selectedActivities.size >= 2) {
+          this.showComparison();
+        }
+      });
+    }
+
+    // Bulk actions functionality
+    if (this.elements.bulkCreatePosters) {
+      this.elements.bulkCreatePosters.addEventListener('click', () => {
+        console.log('🖼️ [Bulk Actions] Create posters for selected activities');
+        this.bulkCreatePosters();
+      });
+    }
+
+    if (this.elements.bulkExportData) {
+      this.elements.bulkExportData.addEventListener('click', () => {
+        console.log('📥 [Bulk Actions] Export data for selected activities');
+        this.bulkExportData();
+      });
+    }
+
+    if (this.elements.bulkDeselectAll) {
+      this.elements.bulkDeselectAll.addEventListener('click', () => {
+        console.log('🧹 [Bulk Actions] Deselect all activities');
+        this.deselectAllActivities();
+      });
+    }
+
+    // Event delegation for activity cards - handles all clicks in grid with single listener
+    if (this.elements.grid) {
+      this.elements.grid.addEventListener('click', (e) => {
+        // Handle selection checkbox clicks
+        const checkboxContainer = e.target.closest('.activity-selection-checkbox');
+        if (checkboxContainer) {
+          e.stopPropagation(); // Prevent card click event
+
+          const checkbox = checkboxContainer.querySelector('.activity-select-input');
+          const activityId = checkbox.dataset.activityId;
+          const activity = this.activities.find(a => a.id.toString() === activityId);
+
+          console.log('☑️ [Selection] Checkbox clicked for activity:', activityId);
+
+          if (activity) {
+            this.toggleActivitySelection(activity);
+          }
+          return;
+        }
+
+        // Handle quick action button clicks
+        const quickActionBtn = e.target.closest('.quick-action-btn');
+        if (quickActionBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+
+          const action = quickActionBtn.dataset.action;
+          const activityId = quickActionBtn.dataset.activityId;
+          const activity = this.activities.find(a => a.id.toString() === activityId);
+
+          console.log('⚡ [Quick Action] Action:', action, 'Activity ID:', activityId);
+
+          if (activity) {
+            this.handleQuickAction(action, activity);
+          }
+          return;
+        }
+
+        // Handle "Create Poster" button clicks
+        const button = e.target.closest('.create-poster-button');
+        if (button) {
+          e.preventDefault();
+          e.stopPropagation();
+
+          const activityId = button.dataset.activityId;
+          console.log('🔧 [Event Delegation] Create Poster button clicked for activity:', activityId);
+
+          const activity = this.activities.find(a => a.id.toString() === activityId);
+          if (activity) {
+            this.createMapForActivity(activity);
+          } else {
+            console.error('🚨 [Event Delegation] Activity not found:', activityId);
+          }
+          return;
+        }
+
+        // Handle entire card clicks - show activity details
+        const card = e.target.closest('.activity-card');
+        if (card) {
+          const activityId = card.dataset.activityId;
+          const activity = this.activities.find(a => a.id.toString() === activityId);
+
+          console.log('🔧 [Event Delegation] Card clicked for activity:', activityId);
+
+          if (activity) {
+            this.showActivityDetails(activity);
+          }
+        }
+      });
+    }
+
+    // Clear filters button in empty state
+    if (this.elements.emptyClearFiltersBtn) {
+      this.elements.emptyClearFiltersBtn.addEventListener('click', () => {
+        console.log('🧹 [Empty State] Clearing all filters');
+        this.clearAllFilters();
+      });
+    }
+  }
+
+  /**
+   * Close filter dropdown when clicking outside
+   */
+  closeFilterDropdown() {
+    if (this.elements.activityTypeFilter) {
+      this.elements.activityTypeFilter.classList.add('hidden');
+    }
+  }
+
+  /**
+   * Close sort dropdown when clicking outside
+   */
+  closeSortDropdown() {
+    if (this.elements.sortSelect) {
+      this.elements.sortSelect.classList.add('hidden');
+    }
+  }
+
+  /**
+   * Parse sort value into field and order
+   * e.g., "start_date_desc" -> ["start_date", "desc"]
+   */
+  parseSortValue(sortValue) {
+    const parts = sortValue.split('_');
+    const order = parts.pop(); // Last part is always asc or desc
+    const field = parts.join('_'); // Rejoin remaining parts
+    return [field, order];
+  }
+
+  /**
+   * Update sort button to show active sort
+   */
+  updateSortButton(sortValue) {
+    if (!this.elements.sortButton) return;
+
+    const span = this.elements.sortButton.querySelector('span');
+    if (span) {
+      if (sortValue && sortValue !== 'start_date_desc') {
+        // Show the selected sort option (not default)
+        const sortText = this.elements.sortSelect?.querySelector(`option[value="${sortValue}"]`)?.textContent || 'Sort';
+        span.textContent = sortText;
+        this.elements.sortButton.classList.add('filter-active');
+      } else {
+        // Reset to default text
+        span.textContent = 'Sort';
+        this.elements.sortButton.classList.remove('filter-active');
+      }
+    }
+  }
+
+  /**
+   * Clear all active filters and reset search
+   */
+  clearAllFilters() {
+    console.log('🧹 [Filters] Clearing all filters');
+
+    // Reset filters object
+    this.currentFilters = {
+      type: '',
+      dateRange: null,
+      sortBy: 'start_date',
+      sortOrder: 'desc'
+    };
+
+    // Reset search
+    this.searchTerm = '';
+    if (this.elements.searchInput) {
+      this.elements.searchInput.value = '';
+      if (this.elements.searchClearBtn) {
+        this.elements.searchClearBtn.classList.add('hidden');
+      }
+    }
+
+    // Reset filter UI
+    if (this.elements.activityTypeFilter) {
+      this.elements.activityTypeFilter.value = '';
+    }
+    if (this.elements.filterActivityTypeBtn) {
+      this.updateFilterButton(this.elements.filterActivityTypeBtn, '');
+    }
+    if (this.elements.dateRangeBtn) {
+      this.updateFilterButton(this.elements.dateRangeBtn, '');
+    }
+
+    // Reset sort UI
+    if (this.elements.sortSelect) {
+      this.elements.sortSelect.value = 'start_date_desc';
+    }
+    if (this.elements.sortButton) {
+      this.updateSortButton('start_date_desc');
+    }
+
+    // Reload activities
+    this.resetPagination();
+    this.loadActivities();
+  }
+
+  /**
+   * Update filter button to show active filter
+   */
+  updateFilterButton(button, filterValue) {
+    if (!button) return;
+
+    const span = button.querySelector('span');
+    if (span) {
+      if (filterValue) {
+        // Show the selected filter value
+        const filterText = this.elements.activityTypeFilter?.querySelector(`option[value="${filterValue}"]`)?.textContent || filterValue;
+        span.textContent = filterText;
+        button.classList.add('filter-active');
+      } else {
+        // Reset to default text
+        span.textContent = 'Filter';
+        button.classList.remove('filter-active');
+      }
+    }
+  }
+
+  /**
+   * Show date range selector (simplified version)
+   */
+  showDateRangeSelector() {
+    // Create a simple date range selector modal
+    const ranges = [
+      { label: 'Last 7 days', days: 7 },
+      { label: 'Last 30 days', days: 30 },
+      { label: 'Last 90 days', days: 90 },
+      { label: 'This year', days: 365 },
+      { label: 'All time', days: null }
+    ];
+
+    const options = ranges.map(range => `<option value="${range.days || ''}">${range.label}</option>`).join('');
+
+    const dateRangeHtml = `
+      <div class="date-range-modal" id="date-range-modal">
+        <div class="date-range-content">
+          <h3>Select Date Range</h3>
+          <select id="date-range-select" class="date-range-select">
+            <option value="">All time</option>
+            ${options}
+          </select>
+          <div class="date-range-actions">
+            <button type="button" class="btn-secondary" id="date-range-cancel">Cancel</button>
+            <button type="button" class="btn-primary" id="date-range-apply">Apply</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Add to DOM
+    const modalDiv = document.createElement('div');
+    modalDiv.innerHTML = dateRangeHtml;
+    document.body.appendChild(modalDiv.firstElementChild);
+
+    // Event listeners for modal
+    const modal = document.getElementById('date-range-modal');
+    const select = document.getElementById('date-range-select');
+    const cancelBtn = document.getElementById('date-range-cancel');
+    const applyBtn = document.getElementById('date-range-apply');
+
+    // Set current value if exists
+    if (this.currentFilters.dateRange) {
+      select.value = this.currentFilters.dateRange;
+    }
+
+    cancelBtn.addEventListener('click', () => {
+      modal.remove();
+    });
+
+    applyBtn.addEventListener('click', () => {
+      const selectedDays = select.value;
+      console.log('📅 [Filter] Date range applied:', selectedDays || 'All time');
+
+      this.currentFilters.dateRange = selectedDays;
+      this.updateFilterButton(this.elements.dateRangeBtn, selectedDays);
+
+      modal.remove();
+      this.resetPagination();
+      this.loadActivities();
+    });
+
+    // Close on outside click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+
+  /**
+   * Handle quick action button clicks
+   */
+  handleQuickAction(action, activity) {
+    console.log('⚡ [Quick Action] Handling action:', action, 'for activity:', activity.name);
+
+    switch (action) {
+      case 'view-details':
+        this.showActivityDetails(activity);
+        break;
+      case 'create-poster':
+        this.createMapForActivity(activity);
+        break;
+      case 'share':
+        this.shareActivity(activity);
+        break;
+      default:
+        console.warn('⚠️ [Quick Action] Unknown action:', action);
+    }
+  }
+
+  /**
+   * Show activity details modal/panel
+   */
+  showActivityDetails(activity) {
+    console.log('👁️ [Details] Showing details for activity:', activity.name);
+
+    const date = new Date(activity.start_date_local);
+    const formattedDate = date.toLocaleDateString("en-US", {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const distance = (activity.distance / 1000).toFixed(2);
+    const duration = this.formatDuration(activity.moving_time);
+    const elevation = Math.round(activity.total_elevation_gain || 0);
+    const avgSpeed = activity.average_speed ? (activity.average_speed * 3.6).toFixed(1) : 'N/A';
+    const maxSpeed = activity.max_speed ? (activity.max_speed * 3.6).toFixed(1) : 'N/A';
+    const avgHeartRate = activity.average_heartrate || 'N/A';
+    const maxHeartRate = activity.max_heartrate || 'N/A';
+
+    // Create modal HTML
+    const modalHtml = `
+      <div class="activity-details-modal" id="activity-details-modal">
+        <div class="activity-details-overlay"></div>
+        <div class="activity-details-content">
+          <div class="activity-details-header">
+            <h2>${this.escapeHtml(activity.name)}</h2>
+            <button class="activity-details-close" aria-label="Close details">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="activity-details-body">
+            <div class="activity-details-meta">
+              <p><strong>Date:</strong> ${formattedDate}</p>
+              <p><strong>Type:</strong> ${activity.type || activity.sport_type}</p>
+              ${activity.location_city || activity.location_country ? `
+                <p><strong>Location:</strong> ${[activity.location_city, activity.location_state, activity.location_country].filter(Boolean).join(', ')}</p>
+              ` : ''}
+            </div>
+            <div class="activity-details-stats">
+              <div class="stat-row"><span>Distance:</span><strong>${distance} km</strong></div>
+              <div class="stat-row"><span>Duration:</span><strong>${duration}</strong></div>
+              <div class="stat-row"><span>Elevation Gain:</span><strong>${elevation} m</strong></div>
+              <div class="stat-row"><span>Avg Speed:</span><strong>${avgSpeed} km/h</strong></div>
+              <div class="stat-row"><span>Max Speed:</span><strong>${maxSpeed} km/h</strong></div>
+              ${avgHeartRate !== 'N/A' ? `<div class="stat-row"><span>Avg Heart Rate:</span><strong>${avgHeartRate} bpm</strong></div>` : ''}
+              ${maxHeartRate !== 'N/A' ? `<div class="stat-row"><span>Max Heart Rate:</span><strong>${maxHeartRate} bpm</strong></div>` : ''}
+            </div>
+            <div class="activity-details-actions">
+              <button class="create-poster-button" data-activity-id="${activity.id}">
+                CREATE POSTER
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                  <polyline points="12,5 19,12 12,19"/>
+                </svg>
+              </button>
+              <a href="https://www.strava.com/activities/${activity.id}" target="_blank" rel="noopener" class="load-more-button">
+                View on Strava
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    // Add event listeners
+    const modal = document.getElementById('activity-details-modal');
+    const closeBtn = modal.querySelector('.activity-details-close');
+    const overlay = modal.querySelector('.activity-details-overlay');
+
+    const closeModal = () => {
+      modal.remove();
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', closeModal);
+
+    // Close on Escape key
+    document.addEventListener('keydown', function escapeHandler(e) {
+      if (e.key === 'Escape') {
+        closeModal();
+        document.removeEventListener('keydown', escapeHandler);
+      }
+    });
+  }
+
+  /**
+   * Share activity
+   */
+  shareActivity(activity) {
+    console.log('📤 [Share] Sharing activity:', activity.name);
+
+    const shareUrl = `https://www.strava.com/activities/${activity.id}`;
+    const shareText = `Check out my ${activity.type || 'activity'}: ${activity.name}`;
+
+    // Try native Web Share API first (mobile)
+    if (navigator.share) {
+      navigator.share({
+        title: activity.name,
+        text: shareText,
+        url: shareUrl
+      }).catch((error) => {
+        console.log('🚨 [Share] Share cancelled or failed:', error);
+      });
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        alert('Link copied to clipboard!');
+      }).catch(() => {
+        // Final fallback: show URL
+        prompt('Copy this link:', shareUrl);
+      });
+    }
+  }
+
+  /**
+   * Toggle activity selection for comparison
+   */
+  toggleActivitySelection(activity) {
+    const activityId = activity.id;
+
+    if (this.selectedActivities.has(activityId)) {
+      this.selectedActivities.delete(activityId);
+      console.log('☑️ [Selection] Deselected activity:', activityId);
+    } else {
+      // Limit to 4 activities for comparison
+      if (this.selectedActivities.size >= 4) {
+        alert('You can compare up to 4 activities at a time.');
+        return;
+      }
+      this.selectedActivities.add(activityId);
+      console.log('☑️ [Selection] Selected activity:', activityId);
+    }
+
+    // Update the UI
+    this.updateCardSelectionUI(activityId);
+    this.updateCompareButton();
+  }
+
+  /**
+   * Update card selection UI state
+   */
+  updateCardSelectionUI(activityId) {
+    const card = this.elements.grid.querySelector(`[data-activity-id="${activityId}"]`);
+    if (!card) return;
+
+    const isSelected = this.selectedActivities.has(activityId);
+    const checkbox = card.querySelector('.activity-select-input');
+    const checkboxContainer = card.querySelector('.activity-selection-checkbox');
+
+    if (isSelected) {
+      card.classList.add('selected');
+      checkbox.checked = true;
+      checkboxContainer.setAttribute('aria-checked', 'true');
+    } else {
+      card.classList.remove('selected');
+      checkbox.checked = false;
+      checkboxContainer.setAttribute('aria-checked', 'false');
+    }
+  }
+
+  /**
+   * Update compare button state and count
+   */
+  updateCompareButton() {
+    if (!this.elements.compareButton || !this.elements.compareCount) return;
+
+    const count = this.selectedActivities.size;
+    this.elements.compareCount.textContent = count;
+
+    // Enable button if 2 or more activities selected
+    if (count >= 2) {
+      this.elements.compareButton.disabled = false;
+      this.elements.compareButton.classList.add('filter-active');
+    } else {
+      this.elements.compareButton.disabled = true;
+      this.elements.compareButton.classList.remove('filter-active');
+    }
+
+    // Update bulk actions toolbar
+    this.updateBulkActionsToolbar();
+  }
+
+  /**
+   * Update bulk actions toolbar visibility and count
+   */
+  updateBulkActionsToolbar() {
+    if (!this.elements.bulkActionsToolbar || !this.elements.bulkSelectedCount) return;
+
+    const count = this.selectedActivities.size;
+    this.elements.bulkSelectedCount.textContent = count;
+
+    // Show toolbar if any activities are selected
+    if (count > 0) {
+      this.elements.bulkActionsToolbar.classList.remove('hidden');
+    } else {
+      this.elements.bulkActionsToolbar.classList.add('hidden');
+    }
+  }
+
+  /**
+   * Show activity comparison modal
+   */
+  showComparison() {
+    console.log('📊 [Comparison] Showing comparison for:', Array.from(this.selectedActivities));
+
+    // Get selected activities data
+    const selectedActivitiesData = Array.from(this.selectedActivities)
+      .map(id => this.activities.find(a => a.id === id))
+      .filter(Boolean);
+
+    if (selectedActivitiesData.length < 2) {
+      alert('Please select at least 2 activities to compare.');
+      return;
+    }
+
+    // Create comparison modal HTML
+    const modalHtml = `
+      <div class="activity-comparison-modal" id="activity-comparison-modal">
+        <div class="activity-comparison-overlay"></div>
+        <div class="activity-comparison-content">
+          <div class="activity-comparison-header">
+            <h2>Activity Comparison</h2>
+            <button class="activity-comparison-close" aria-label="Close comparison">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="activity-comparison-body">
+            <div class="comparison-grid">
+              ${selectedActivitiesData.map(activity => this.createComparisonCard(activity)).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    // Setup close handlers
+    const modal = document.getElementById('activity-comparison-modal');
+    const closeBtn = modal.querySelector('.activity-comparison-close');
+    const overlay = modal.querySelector('.activity-comparison-overlay');
+
+    const closeModal = () => {
+      modal.remove();
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', closeModal);
+
+    // Close on Escape key
+    document.addEventListener('keydown', function escapeHandler(e) {
+      if (e.key === 'Escape') {
+        closeModal();
+        document.removeEventListener('keydown', escapeHandler);
+      }
+    });
+  }
+
+  /**
+   * Create comparison card HTML
+   */
+  createComparisonCard(activity) {
+    const date = new Date(activity.start_date_local);
+    const formattedDate = date.toLocaleDateString("en-US", {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+
+    const distance = (activity.distance / 1000).toFixed(2);
+    const duration = this.formatDuration(activity.moving_time);
+    const elevation = Math.round(activity.total_elevation_gain || 0);
+    const avgSpeed = activity.average_speed ? (activity.average_speed * 3.6).toFixed(1) : 'N/A';
+    const avgPace = activity.average_speed ? this.formatPace(activity.average_speed) : 'N/A';
+
+    return `
+      <div class="comparison-card">
+        <div class="comparison-card-header">
+          <h3>${this.escapeHtml(activity.name || 'Unnamed Activity')}</h3>
+          <p class="comparison-date">${formattedDate}</p>
+        </div>
+        <div class="comparison-card-body">
+          <div class="comparison-stat">
+            <span class="comparison-stat-label">Distance</span>
+            <span class="comparison-stat-value">${distance} km</span>
+          </div>
+          <div class="comparison-stat">
+            <span class="comparison-stat-label">Duration</span>
+            <span class="comparison-stat-value">${duration}</span>
+          </div>
+          <div class="comparison-stat">
+            <span class="comparison-stat-label">Elevation</span>
+            <span class="comparison-stat-value">${elevation} m</span>
+          </div>
+          <div class="comparison-stat">
+            <span class="comparison-stat-label">Avg Speed</span>
+            <span class="comparison-stat-value">${avgSpeed} km/h</span>
+          </div>
+          <div class="comparison-stat">
+            <span class="comparison-stat-label">Avg Pace</span>
+            <span class="comparison-stat-value">${avgPace}</span>
+          </div>
+          ${activity.average_heartrate ? `
+            <div class="comparison-stat">
+              <span class="comparison-stat-label">Avg Heart Rate</span>
+              <span class="comparison-stat-value">${Math.round(activity.average_heartrate)} bpm</span>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Format pace (min/km)
+   */
+  formatPace(speedInMetersPerSecond) {
+    if (!speedInMetersPerSecond || speedInMetersPerSecond === 0) return 'N/A';
+
+    const paceInSeconds = 1000 / speedInMetersPerSecond; // seconds per km
+    const minutes = Math.floor(paceInSeconds / 60);
+    const seconds = Math.round(paceInSeconds % 60);
+
+    return `${minutes}:${seconds.toString().padStart(2, '0')} /km`;
+  }
+
+  /**
+   * Bulk create posters for selected activities
+   */
+  bulkCreatePosters() {
+    if (this.selectedActivities.size === 0) {
+      alert('Please select at least one activity.');
+      return;
+    }
+
+    const selectedActivitiesData = Array.from(this.selectedActivities)
+      .map(id => this.activities.find(a => a.id === id))
+      .filter(Boolean);
+
+    // Check if all selected activities have GPS data
+    const activitiesWithoutGPS = selectedActivitiesData.filter(a => !a.map || !a.map.summary_polyline);
+
+    if (activitiesWithoutGPS.length > 0) {
+      const message = `${activitiesWithoutGPS.length} of ${selectedActivitiesData.length} selected activities do not have GPS data and will be skipped.`;
+      if (!confirm(`${message}\n\nDo you want to continue with the remaining activities?`)) {
+        return;
+      }
+    }
+
+    const activitiesWithGPS = selectedActivitiesData.filter(a => a.map && a.map.summary_polyline);
+
+    if (activitiesWithGPS.length === 0) {
+      alert('None of the selected activities have GPS data available for map creation.');
+      return;
+    }
+
+    console.log(`🖼️ [Bulk Actions] Creating posters for ${activitiesWithGPS.length} activities`);
+
+    // For now, create poster for the first activity (in future, this could batch create)
+    // This is a placeholder - actual implementation would need backend support for batch processing
+    if (confirm(`This will create posters for ${activitiesWithGPS.length} activities. Start with the first one?`)) {
+      this.createMapForActivity(activitiesWithGPS[0]);
+    }
+  }
+
+  /**
+   * Bulk export data for selected activities
+   */
+  bulkExportData() {
+    if (this.selectedActivities.size === 0) {
+      alert('Please select at least one activity.');
+      return;
+    }
+
+    const selectedActivitiesData = Array.from(this.selectedActivities)
+      .map(id => this.activities.find(a => a.id === id))
+      .filter(Boolean);
+
+    console.log('📥 [Bulk Actions] Exporting data for', selectedActivitiesData.length, 'activities');
+
+    // Prepare CSV data
+    const csvHeaders = [
+      'Activity ID',
+      'Name',
+      'Type',
+      'Date',
+      'Distance (km)',
+      'Duration',
+      'Elevation Gain (m)',
+      'Avg Speed (km/h)',
+      'Avg Pace (min/km)',
+      'Avg Heart Rate (bpm)',
+      'Location'
+    ];
+
+    const csvRows = selectedActivitiesData.map(activity => {
+      const date = new Date(activity.start_date_local).toISOString().split('T')[0];
+      const distance = (activity.distance / 1000).toFixed(2);
+      const duration = this.formatDuration(activity.moving_time);
+      const elevation = Math.round(activity.total_elevation_gain || 0);
+      const avgSpeed = activity.average_speed ? (activity.average_speed * 3.6).toFixed(1) : 'N/A';
+      const avgPace = activity.average_speed ? this.formatPace(activity.average_speed) : 'N/A';
+      const avgHeartRate = activity.average_heartrate ? Math.round(activity.average_heartrate) : 'N/A';
+      const location = [activity.location_city, activity.location_state, activity.location_country]
+        .filter(Boolean)
+        .join(', ') || 'N/A';
+
+      return [
+        activity.id,
+        `"${activity.name || 'Unnamed Activity'}"`,
+        activity.type || 'Activity',
+        date,
+        distance,
+        duration,
+        elevation,
+        avgSpeed,
+        avgPace,
+        avgHeartRate,
+        `"${location}"`
+      ];
+    });
+
+    // Convert to CSV string
+    const csvContent = [
+      csvHeaders.join(','),
+      ...csvRows.map(row => row.join(','))
+    ].join('\n');
+
+    // Create downloadable file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `strava-activities-${new Date().toISOString().split('T')[0]}.csv`;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    console.log('📥 [Bulk Actions] Data exported successfully');
+  }
+
+  /**
+   * Deselect all activities
+   */
+  deselectAllActivities() {
+    console.log('🧹 [Bulk Actions] Deselecting all activities');
+
+    // Clear all selections
+    this.selectedActivities.clear();
+
+    // Update all card UIs
+    const allCards = this.elements.grid.querySelectorAll('.activity-card.selected');
+    allCards.forEach(card => {
+      const activityId = card.dataset.activityId;
+      this.updateCardSelectionUI(parseInt(activityId));
+    });
+
+    // Update buttons and toolbar
+    this.updateCompareButton();
   }
 
   /**
@@ -975,6 +2304,10 @@ class StravaActivities {
       this.setStatistic('totalDistance', '0');
       this.setStatistic('totalElevation', '0');
       this.setStatistic('totalTime', '0h 0m');
+      // Hide statistics dashboard when no data
+      if (this.elements.statisticsDashboard) {
+        this.elements.statisticsDashboard.classList.remove('loaded');
+      }
       return;
     }
 
@@ -989,6 +2322,14 @@ class StravaActivities {
     this.setStatistic('totalDistance', totalDistance.toFixed(1));
     this.setStatistic('totalElevation', Math.round(totalElevation).toLocaleString());
     this.setStatistic('totalTime', this.formatDuration(totalTimeSeconds));
+
+    // Show statistics dashboard with fade-in animation
+    if (this.elements.statisticsDashboard) {
+      // Small delay to ensure data is rendered first
+      requestAnimationFrame(() => {
+        this.elements.statisticsDashboard.classList.add('loaded');
+      });
+    }
   }
 
   /**
@@ -1006,15 +2347,26 @@ class StravaActivities {
    */
   updateUserStatus(userInfo) {
     if (this.elements.userName && userInfo) {
-      const firstName = userInfo.firstname || '';
-      const lastName = userInfo.lastname || '';
-      const displayName = `${firstName} ${lastName}`.trim() || userInfo.username || 'User';
-      
+      // Handle different field name formats (firstname vs first_name, etc.)
+      const firstName = userInfo.firstname || userInfo.first_name || userInfo.firstName || '';
+      const lastName = userInfo.lastname || userInfo.last_name || userInfo.lastName || '';
+      const username = userInfo.username || userInfo.userName || '';
+
+      // Build display name from available info
+      const fullName = `${firstName} ${lastName}`.trim();
+      const displayName = fullName || username || 'Strava User';
+
       this.elements.userName.textContent = displayName;
-      
+      console.log('👤 User status updated:', displayName, userInfo);
+
       if (this.elements.userConnectionStatus) {
         this.elements.userConnectionStatus.classList.remove('hidden');
       }
+    } else {
+      console.warn('⚠️ Could not update user status:', {
+        hasElement: !!this.elements.userName,
+        hasUserInfo: !!userInfo
+      });
     }
   }
 

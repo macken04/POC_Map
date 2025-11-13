@@ -1,5 +1,6 @@
 {{ 'design-system.css' | asset_url | stylesheet_tag }}
 {{ 'strava-pages.css' | asset_url | stylesheet_tag }}
+{{ 'strava-login-enhanced.css' | asset_url | stylesheet_tag }}
 {{ 'strava-integration.js' | asset_url | script_tag }}
 
 {%- style -%}
@@ -16,177 +17,526 @@
   }
 {%- endstyle -%}
 
-<div class="page-width section-{{ section.id }}-padding">
-  <div class="strava-login-container">
-    <div style="max-width: 42rem; margin: 0 auto;" class="text-center">
-      <!-- Header Section -->
-      <div class="mb-8">
-        <div class="flex justify-center mb-6">
-          <div style="width: 4rem; height: 4rem; background: linear-gradient(135deg, #FC4C02, #E03E00); border-radius: 1rem; box-shadow: var(--shadow-lg);" class="flex items-center justify-center">
-            <svg style="width: 2rem; height: 2rem; color: white;" viewBox="0 0 24 24" fill="currentColor">
+<!-- ============================================
+     HERO SECTION - Full-width with background
+     ============================================ -->
+<section class="hero-login-section section-{{ section.id }}-padding">
+  <!-- Decorative background pattern -->
+  <div class="hero-background-pattern" aria-hidden="true">
+    <svg viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+      <!-- Decorative route lines -->
+      <path d="M100 200 Q 300 150, 500 250 T 900 300" stroke="#FC4C02" stroke-width="4" opacity="0.1"/>
+      <path d="M200 400 Q 400 350, 600 450 T 1000 500" stroke="#FC4C02" stroke-width="4" opacity="0.08"/>
+      <circle cx="300" cy="200" r="8" fill="#FC4C02" opacity="0.15"/>
+      <circle cx="700" cy="350" r="6" fill="#FC4C02" opacity="0.12"/>
+      <circle cx="500" cy="250" r="10" fill="#FC4C02" opacity="0.18"/>
+    </svg>
+  </div>
+
+  <div class="hero-login-content">
+    <!-- Progress Indicator -->
+    <div class="progress-indicator">
+      <span class="progress-indicator-dot"></span>
+      <span>Step 1 of 4: Connect to Strava</span>
+    </div>
+
+    <!-- Eyebrow -->
+    <div class="hero-eyebrow">
+      <svg class="hero-eyebrow-icon" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.599h4.172L10.463 0l-7 13.828h4.172" />
+      </svg>
+      <span>Custom Strava Map Prints</span>
+    </div>
+
+    <!-- Hero Heading -->
+    <h1 class="hero-heading">
+      {% if section.settings.hero_heading != blank %}
+        {{ section.settings.hero_heading | escape }}
+      {% else %}
+        Turn Your Rides Into Beautiful Wall Art
+      {% endif %}
+    </h1>
+
+    <!-- Hero Subheading -->
+    <p class="hero-subheading">
+      {% if section.settings.hero_subheading != blank %}
+        {{ section.settings.hero_subheading | escape }}
+      {% else %}
+        Transform your Strava cycling routes into professional-quality map posters. 300 DPI print-ready, customizable, and ready to frame.
+      {% endif %}
+    </p>
+
+    <!-- CTA Button Group -->
+    <div class="hero-cta-group">
+      <button type="button" class="btn btn-primary btn-xl" id="hero-connect-strava-btn">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.599h4.172L10.463 0l-7 13.828h4.172" />
+        </svg>
+        Connect with Strava
+      </button>
+      <a href="#examples" class="btn btn-secondary btn-xl">
+        See Examples
+      </a>
+    </div>
+
+    <!-- Trust Signal -->
+    <div class="hero-trust-signal">
+      <svg class="hero-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+      </svg>
+      <span>Loved by 12,000+ cyclists worldwide</span>
+    </div>
+  </div>
+
+  <!-- PRESERVE EXISTING STATE DIVS - Hidden by default, shown by JavaScript -->
+  <div class="page-width" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; max-width: 42rem; z-index: 10;">
+
+    <!-- Default Login Actions - Hidden initially, controlled by JavaScript -->
+    <div id="login-actions" style="display: none;">
+      <div class="card">
+        <div class="card-body text-center">
+          <button type="button" class="btn btn-primary btn-xl btn-full" id="connect-strava-btn">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
               <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.599h4.172L10.463 0l-7 13.828h4.172" />
             </svg>
-          </div>
-        </div>
-        
-        {% if section.settings.heading != blank %}
-          <h1 class="heading-1 text-center">{{ section.settings.heading | escape }}</h1>
-        {% else %}
-          <h1 class="heading-1 text-center">Connect Your Strava Account</h1>
-        {% endif %}
-
-        {% if section.settings.description != blank %}
-          <p class="text-lg text-secondary text-center" style="margin-bottom: var(--space-8)">{{ section.settings.description | escape }}</p>
-        {% else %}
-          <p class="text-lg text-secondary text-center" style="margin-bottom: var(--space-8)">
-            Connect your Strava account to access your cycling activities and create personalized maps of your rides.
-          </p>
-        {% endif %}
-      </div>
-
-      <!-- Success State -->
-      <div class="card hidden" id="success-message">
-        <div class="card-body text-center">
-          <div style="width: 4rem; height: 4rem; background: var(--color-success-light); border-radius: var(--radius-full); margin: 0 auto var(--space-6);" class="flex items-center justify-center">
-            <svg style="width: 2rem; height: 2rem; color: var(--color-success);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-            </svg>
-          </div>
-          <h3 class="heading-3 text-success" style="margin-bottom: var(--space-3)">Connected Successfully!</h3>
-          <p class="text-muted" style="margin-bottom: var(--space-6)">Your Strava account is connected and ready to use.</p>
-          <button type="button" class="btn btn-success btn-lg" id="continue-to-activities-btn">
-            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-            </svg>
-            Continue to Activities
+            Connect with Strava
           </button>
         </div>
       </div>
+    </div>
 
-      <!-- Loading State -->
-      <div class="card hidden" id="loading-state">
-        <div class="card-body text-center">
-          <div style="margin: 0 auto var(--space-6);" class="loading-spinner"></div>
-          <h3 class="heading-4" style="margin-bottom: var(--space-3)">Connecting to Strava...</h3>
-          <p class="text-muted">Please wait while we redirect you to Strava for authentication.</p>
+    <!-- Success State -->
+    <div class="card hidden" id="success-message">
+      <div class="card-body text-center">
+        <div style="width: 4rem; height: 4rem; background: var(--color-success-light); border-radius: var(--radius-full); margin: 0 auto var(--space-6);" class="flex items-center justify-center">
+          <svg style="width: 2rem; height: 2rem; color: var(--color-success);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+          </svg>
+        </div>
+        <h3 class="heading-3 text-success" style="margin-bottom: var(--space-3)">Connected Successfully!</h3>
+        <p class="text-muted" style="margin-bottom: var(--space-6)">Your Strava account is connected and ready to use.</p>
+        <button type="button" class="btn btn-success btn-lg" id="continue-to-activities-btn">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+          </svg>
+          Continue to Activities
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="card hidden" id="loading-state">
+      <div class="card-body text-center">
+        <div style="margin: 0 auto var(--space-6);" class="loading-spinner"></div>
+        <h3 class="heading-4" style="margin-bottom: var(--space-3)">Connecting to Strava...</h3>
+        <p class="text-muted">Please wait while we redirect you to Strava for authentication.</p>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div class="card hidden" id="error-state" style="border-color: var(--color-error-light); background: var(--color-error-light);">
+      <div class="card-body text-center">
+        <div style="width: 4rem; height: 4rem; background: var(--color-error-light); border-radius: var(--radius-full); margin: 0 auto var(--space-6);" class="flex items-center justify-center">
+          <svg style="width: 2rem; height: 2rem; color: var(--color-error);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <circle cx="12" cy="16" r="1" fill="currentColor"/>
+          </svg>
+        </div>
+        <h3 class="heading-4 text-error" style="margin-bottom: var(--space-3)">Connection Failed</h3>
+        <p class="text-muted" style="margin-bottom: var(--space-6);" id="error-message">
+          There was an issue connecting to your Strava account. Please try again.
+        </p>
+        <div class="flex" style="gap: var(--space-4); justify-content: center;">
+          <button type="button" class="btn btn-secondary" id="retry-connection-btn">
+            Try Again
+          </button>
+          <a href="mailto:support@printmyride.com" class="btn btn-link">
+            Contact Support
+          </a>
         </div>
       </div>
+    </div>
+  </div>
+</section>
 
-      <!-- Error State -->
-      <div class="card hidden" id="error-state" style="border-color: var(--color-error-light); background: var(--color-error-light);">
-        <div class="card-body text-center">
-          <div style="width: 4rem; height: 4rem; background: var(--color-error-light); border-radius: var(--radius-full); margin: 0 auto var(--space-6);" class="flex items-center justify-center">
-            <svg style="width: 2rem; height: 2rem; color: var(--color-error);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <circle cx="12" cy="16" r="1" fill="currentColor"/>
+<!-- ============================================
+     BENEFITS/FEATURES GRID
+     ============================================ -->
+<section class="benefits-section">
+  <div class="page-width">
+    <div class="benefits-grid">
+      <!-- Benefit 1: Your Activities -->
+      <div class="benefit-card">
+        <div class="benefit-icon-circle" style="background: var(--color-info-light);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-info);">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+        </div>
+        <h3 class="benefit-title">Your Activities</h3>
+        <p class="benefit-description">Access all your recorded rides and routes from Strava with a single click.</p>
+      </div>
+
+      <!-- Benefit 2: Custom Maps -->
+      <div class="benefit-card">
+        <div class="benefit-icon-circle" style="background: var(--color-success-light);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-success);">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <line x1="9" y1="9" x2="15" y2="9"/>
+            <line x1="9" y1="15" x2="15" y2="15"/>
+          </svg>
+        </div>
+        <h3 class="benefit-title">Custom Maps</h3>
+        <p class="benefit-description">Transform your routes into stunning, personalized map posters.</p>
+      </div>
+
+      <!-- Benefit 3: Privacy First -->
+      <div class="benefit-card">
+        <div class="benefit-icon-circle" style="background: var(--color-warning-light);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-warning-dark);">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <h3 class="benefit-title">Privacy First</h3>
+        <p class="benefit-description">We only access what we need, when we need it. Your data stays secure.</p>
+      </div>
+
+      <!-- Benefit 4: Professional Quality -->
+      <div class="benefit-card">
+        <div class="benefit-icon-circle" style="background: rgba(252, 76, 2, 0.1);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-primary);">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <h3 class="benefit-title">Professional Quality</h3>
+        <p class="benefit-description">300 DPI print-ready output perfect for framing and display.</p>
+      </div>
+
+      <!-- Benefit 5: Easy Integration -->
+      <div class="benefit-card">
+        <div class="benefit-icon-circle" style="background: var(--color-accent-light);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-accent);">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m0 6l4.2 4.2M1 12h6m6 0h6m-13.2 5.2l4.2-4.2m0-6L5.8 5.8"/>
+          </svg>
+        </div>
+        <h3 class="benefit-title">Easy Integration</h3>
+        <p class="benefit-description">Seamless Shopify checkout experience. Add to cart and you're done.</p>
+      </div>
+
+      <!-- Benefit 6: Quick Processing -->
+      <div class="benefit-card">
+        <div class="benefit-icon-circle" style="background: var(--color-secondary-light);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-secondary);">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <h3 class="benefit-title">Quick Processing</h3>
+        <p class="benefit-description">Fast turnaround times. Your custom map generated in minutes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     HOW IT WORKS SECTION
+     ============================================ -->
+<section class="how-it-works-section">
+  <div class="how-it-works-container">
+    <h2 class="how-it-works-heading">How It Works</h2>
+    <p class="how-it-works-subheading">Four simple steps to create your custom map poster</p>
+
+    <div class="steps-container">
+      <!-- Step 1: Connect Strava -->
+      <div class="step-item active">
+        <div class="step-number">1</div>
+        <h3 class="step-title">Connect with Strava</h3>
+        <p class="step-description">Securely link your Strava account to access your activities</p>
+      </div>
+
+      <!-- Step 2: Select Activity -->
+      <div class="step-item">
+        <div class="step-number">2</div>
+        <h3 class="step-title">Select Your Activity</h3>
+        <p class="step-description">Choose the ride you want to transform into a poster</p>
+      </div>
+
+      <!-- Step 3: Customize -->
+      <div class="step-item">
+        <div class="step-number">3</div>
+        <h3 class="step-title">Customize Your Map</h3>
+        <p class="step-description">Pick colors, style, size, and add personal touches</p>
+      </div>
+
+      <!-- Step 4: Order -->
+      <div class="step-item">
+        <div class="step-number">4</div>
+        <h3 class="step-title">Print & Frame</h3>
+        <p class="step-description">Add to cart and receive your high-quality poster</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     EXAMPLE SHOWCASE GALLERY
+     ============================================ -->
+<section class="examples-section" id="examples">
+  <div class="examples-container">
+    <h2 class="examples-heading">Example Map Posters</h2>
+    <p class="examples-subheading">See what your custom map could look like</p>
+
+    <div class="examples-grid">
+      <!-- Example 1: European Classics -->
+      <div class="example-card">
+        <div class="example-placeholder">
+          <div class="example-placeholder-content">
+            <svg class="example-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
             </svg>
+            <div class="example-placeholder-text">Your Custom Route</div>
+            <div class="example-placeholder-subtext">Example Map Design</div>
           </div>
-          <h3 class="heading-4 text-error" style="margin-bottom: var(--space-3)">Connection Failed</h3>
-          <p class="text-muted" style="margin-bottom: var(--space-6);" id="error-message">
-            There was an issue connecting to your Strava account. Please try again.
-          </p>
-          <div class="flex" style="gap: var(--space-4); justify-content: center;">
-            <button type="button" class="btn btn-secondary" id="retry-connection-btn">
-              Try Again
-            </button>
-            <a href="mailto:support@printmyride.com" class="btn btn-link">
-              Contact Support
-            </a>
+        </div>
+        <div class="example-info">
+          <span class="example-category">European Classics</span>
+          <h3 class="example-title">Fred Whitton Challenge</h3>
+          <p class="example-description">180km through Lake District with iconic climbs like Hardknott and Wrynose Pass.</p>
+        </div>
+      </div>
+
+      <!-- Example 2: Sportive Events -->
+      <div class="example-card">
+        <div class="example-placeholder">
+          <div class="example-placeholder-content">
+            <svg class="example-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+            <div class="example-placeholder-text">Your Custom Route</div>
+            <div class="example-placeholder-subtext">Example Map Design</div>
+          </div>
+        </div>
+        <div class="example-info">
+          <span class="example-category">Sportive Events</span>
+          <h3 class="example-title">RideLondon Classic</h3>
+          <p class="example-description">160km ride through London and Surrey, finishing on The Mall.</p>
+        </div>
+      </div>
+
+      <!-- Example 3: Iconic Climbs -->
+      <div class="example-card">
+        <div class="example-placeholder">
+          <div class="example-placeholder-content">
+            <svg class="example-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+            <div class="example-placeholder-text">Your Custom Route</div>
+            <div class="example-placeholder-subtext">Example Map Design</div>
+          </div>
+        </div>
+        <div class="example-info">
+          <span class="example-category">Iconic Climbs</span>
+          <h3 class="example-title">Alpe d'Huez Ascent</h3>
+          <p class="example-description">Legendary 21 hairpin climb in the French Alps, Tour de France classic.</p>
+        </div>
+      </div>
+
+      <!-- Example 4: Global Challenges -->
+      <div class="example-card">
+        <div class="example-placeholder">
+          <div class="example-placeholder-content">
+            <svg class="example-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+            <div class="example-placeholder-text">Your Custom Route</div>
+            <div class="example-placeholder-subtext">Example Map Design</div>
+          </div>
+        </div>
+        <div class="example-info">
+          <span class="example-category">Global Challenges</span>
+          <h3 class="example-title">Cape Town Double Century</h3>
+          <p class="example-description">200km through South African vineyards and mountain passes.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     FAQ SECTION
+     ============================================ -->
+<section class="faq-section">
+  <div class="faq-container">
+    <h2 class="faq-heading">Frequently Asked Questions</h2>
+    <p class="faq-subheading">Everything you need to know about custom map prints</p>
+
+    <div class="faq-list">
+      <!-- FAQ 1 -->
+      <div class="faq-item">
+        <button class="faq-question" type="button" aria-expanded="false">
+          <span>Is my Strava data secure?</span>
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-content">
+            Absolutely. We use Strava's official OAuth system for secure authentication. We only access your activity data when you explicitly choose to create a map, and we never store your Strava credentials. Your privacy is our priority.
           </div>
         </div>
       </div>
 
-      <!-- Main Login Actions -->
-      <div style="margin-top: var(--space-6);" id="login-actions">
-        <div class="card">
-          <div class="card-body text-center">
-            <button type="button" class="btn btn-primary btn-xl btn-full" id="connect-strava-btn">
-              <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.599h4.172L10.463 0l-7 13.828h4.172" />
-              </svg>
-              Connect with Strava
-            </button>
-            
-            <p class="text-xs text-muted" style="margin-top: var(--space-4)">
-              <svg style="width: 1rem; height: 1rem; display: inline; margin-right: var(--space-1);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
-              Secure authentication via Strava's official OAuth system
-            </p>
+      <!-- FAQ 2 -->
+      <div class="faq-item">
+        <button class="faq-question" type="button" aria-expanded="false">
+          <span>What print sizes are available?</span>
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-content">
+            We offer two professional print sizes: A4 (8.3" × 11.7") at 2,480 × 3,508 pixels, and A3 (11.7" × 16.5") at 3,508 × 4,961 pixels. Both are exported at 300 DPI for exceptional print quality, perfect for framing.
           </div>
         </div>
+      </div>
 
-        <!-- Benefits Section -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-6); margin-top: var(--space-8);">
-          <div class="text-center card">
-            <div class="card-body">
-              <div style="width: 3rem; height: 3rem; background: var(--color-info-light); border-radius: var(--radius-lg); margin: 0 auto var(--space-3);" class="flex items-center justify-center">
-                <svg style="width: 1.5rem; height: 1.5rem; color: var(--color-info);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                  <circle cx="12" cy="10" r="3"/>
-                </svg>
-              </div>
-              <h4 class="heading-5 text-sm" style="margin-bottom: var(--space-2)">Your Activities</h4>
-              <p class="text-xs text-muted">Access all your recorded rides and routes</p>
-            </div>
+      <!-- FAQ 3 -->
+      <div class="faq-item">
+        <button class="faq-question" type="button" aria-expanded="false">
+          <span>How long does it take to create my poster?</span>
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-content">
+            Your custom map is generated within minutes. Once you've selected your activity and customized your design, the high-resolution export process takes just 2-3 minutes. You'll then receive your print-ready file immediately.
           </div>
-          
-          <div class="text-center card">
-            <div class="card-body">
-              <div style="width: 3rem; height: 3rem; background: var(--color-success-light); border-radius: var(--radius-lg); margin: 0 auto var(--space-3);" class="flex items-center justify-center">
-                <svg style="width: 1.5rem; height: 1.5rem; color: var(--color-success);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                  <line x1="9" y1="9" x2="15" y2="9"/>
-                  <line x1="9" y1="15" x2="15" y2="15"/>
-                </svg>
-              </div>
-              <h4 class="heading-5 text-sm" style="margin-bottom: var(--space-2)">Custom Maps</h4>
-              <p class="text-xs text-muted">Transform routes into beautiful posters</p>
-            </div>
-          </div>
-          
-          <div class="text-center card">
-            <div class="card-body">
-              <div style="width: 3rem; height: 3rem; background: var(--color-warning-light); border-radius: var(--radius-lg); margin: 0 auto var(--space-3);" class="flex items-center justify-center">
-                <svg style="width: 1.5rem; height: 1.5rem; color: var(--color-warning-dark);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                </svg>
-              </div>
-              <h4 class="heading-5 text-sm" style="margin-bottom: var(--space-2)">Privacy First</h4>
-              <p class="text-xs text-muted">We only access what we need, when we need it</p>
-            </div>
+        </div>
+      </div>
+
+      <!-- FAQ 4 -->
+      <div class="faq-item">
+        <button class="faq-question" type="button" aria-expanded="false">
+          <span>Can I customize the map style?</span>
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-content">
+            Yes! You can customize route colors, map styles, add annotations, include activity stats, and personalize with text. We offer multiple map themes including minimalist, satellite, terrain, and vintage styles to match your aesthetic.
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>
+</section>
 
+<!-- ============================================
+     FINAL CTA SECTION
+     ============================================ -->
+<section class="final-cta-section">
+  <div class="final-cta-content">
+    <h2 class="final-cta-heading">Ready to Create Your Custom Map?</h2>
+    <p class="final-cta-subheading">Connect your Strava account and start designing in minutes</p>
+    <button type="button" class="final-cta-button" id="final-connect-strava-btn">
+      <svg style="width: 1.5rem; height: 1.5rem;" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.599h4.172L10.463 0l-7 13.828h4.172" />
+      </svg>
+      Get Started with Strava
+    </button>
+    <div class="final-cta-trust">
+      <svg class="final-cta-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+      <span>Secure OAuth authentication • No credit card required</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     PRESERVE EXISTING JAVASCRIPT
+     ============================================ -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  // Initialize Strava Login (PRESERVE EXISTING FUNCTIONALITY)
   const stravaLogin = new StravaLogin();
   stravaLogin.initSimple();
+
+  // FAQ Accordion functionality
+  const faqItems = document.querySelectorAll('.faq-item');
+  faqItems.forEach(item => {
+    const question = item.querySelector('.faq-question');
+    question.addEventListener('click', () => {
+      const isActive = item.classList.contains('active');
+
+      // Close all other FAQs
+      faqItems.forEach(otherItem => {
+        if (otherItem !== item) {
+          otherItem.classList.remove('active');
+          otherItem.querySelector('.faq-question').setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      // Toggle current FAQ
+      item.classList.toggle('active');
+      question.setAttribute('aria-expanded', !isActive);
+    });
+  });
+
+  // Connect all CTA buttons to the same Strava auth function
+  const heroBtn = document.getElementById('hero-connect-strava-btn');
+  const finalBtn = document.getElementById('final-connect-strava-btn');
+  const connectBtn = document.getElementById('connect-strava-btn');
+
+  [heroBtn, finalBtn, connectBtn].forEach(btn => {
+    if (btn) {
+      btn.addEventListener('click', () => {
+        stravaLogin.connectStrava();
+      });
+    }
+  });
+
+  // Smooth scroll for "See Examples" button
+  const examplesLink = document.querySelector('a[href="#examples"]');
+  if (examplesLink) {
+    examplesLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('examples').scrollIntoView({ behavior: 'smooth' });
+    });
+  }
 });
 </script>
 
 {% schema %}
 {
-  "name": "Strava Login",
+  "name": "Strava Login Enhanced",
   "tag": "section",
   "class": "section",
   "settings": [
     {
+      "type": "header",
+      "content": "Hero Section"
+    },
+    {
       "type": "text",
-      "id": "heading",
-      "default": "Connect Your Strava Account",
-      "label": "Heading"
+      "id": "hero_heading",
+      "default": "Turn Your Rides Into Beautiful Wall Art",
+      "label": "Hero Heading"
     },
     {
       "type": "textarea",
-      "id": "description",
-      "default": "Connect your Strava account to access your cycling activities and create personalized maps of your rides.",
-      "label": "Description"
+      "id": "hero_subheading",
+      "default": "Transform your Strava cycling routes into professional-quality map posters. 300 DPI print-ready, customizable, and ready to frame.",
+      "label": "Hero Subheading"
     },
     {
       "type": "header",
@@ -200,7 +550,7 @@ document.addEventListener('DOMContentLoaded', function() {
       "step": 4,
       "unit": "px",
       "label": "Top padding",
-      "default": 40
+      "default": 0
     },
     {
       "type": "range",
@@ -210,12 +560,12 @@ document.addEventListener('DOMContentLoaded', function() {
       "step": 4,
       "unit": "px",
       "label": "Bottom padding",
-      "default": 40
+      "default": 0
     }
   ],
   "presets": [
     {
-      "name": "Strava Login"
+      "name": "Strava Login Enhanced"
     }
   ]
 }

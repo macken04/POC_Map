@@ -1,0 +1,199 @@
+<style>
+  .sportive-stats-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  .sportive-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+  }
+
+  .sportive-stat-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    border: 1px solid #e9ecef;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .sportive-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+
+  .sportive-stat-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.8;
+  }
+
+  .sportive-stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0.5rem 0;
+    line-height: 1.2;
+  }
+
+  .sportive-stat-label {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6c757d;
+    font-weight: 600;
+  }
+
+  .sportive-category-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.5rem 1.25rem;
+    border-radius: 50px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+  }
+
+  .sportive-event-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 1rem 0 0.5rem;
+  }
+
+  .sportive-event-subtitle {
+    font-size: 1rem;
+    color: #6c757d;
+    margin-bottom: 2rem;
+  }
+
+  @media screen and (max-width: 749px) {
+    .sportive-stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .sportive-stat-card {
+      padding: 1rem;
+    }
+
+    .sportive-stat-value {
+      font-size: 1.5rem;
+    }
+
+    .sportive-stat-icon {
+      font-size: 1.5rem;
+    }
+  }
+</style>
+
+<div class="sportive-stats-container section-{{ section.id }}-padding">
+  {%- liquid
+    assign event_name = product.metafields.event.name.value
+    assign event_year = product.metafields.event.year.value
+    assign event_distance = product.metafields.event.distance_km.value
+    assign event_elevation = product.metafields.event.elevation_m.value
+    assign event_location = product.metafields.event.location.value
+    assign event_country = product.metafields.event.country.value
+    assign event_category = product.metafields.event.category.value
+    assign event_description = product.metafields.event.description.value
+  -%}
+
+  {%- if event_category != blank -%}
+    <div style="text-align: center;">
+      <span class="sportive-category-badge">{{ event_category }}</span>
+    </div>
+  {%- endif -%}
+
+  {%- if event_name != blank and event_name != product.title -%}
+    <h2 class="sportive-event-title" style="text-align: center;">{{ event_name }}</h2>
+  {%- endif -%}
+
+  {%- if event_description != blank -%}
+    <p class="sportive-event-subtitle" style="text-align: center;">{{ event_description }}</p>
+  {%- endif -%}
+
+  <div class="sportive-stats-grid">
+    {%- if event_distance != blank -%}
+      <div class="sportive-stat-card">
+        <div class="sportive-stat-icon">📏</div>
+        <div class="sportive-stat-value">{{ event_distance }} km</div>
+        <div class="sportive-stat-label">Distance</div>
+      </div>
+    {%- endif -%}
+
+    {%- if event_elevation != blank -%}
+      <div class="sportive-stat-card">
+        <div class="sportive-stat-icon">⛰️</div>
+        <div class="sportive-stat-value">{{ event_elevation | divided_by: 1.0 | round: 0 | append: 'm' }}</div>
+        <div class="sportive-stat-label">Elevation Gain</div>
+      </div>
+    {%- endif -%}
+
+    {%- if event_location != blank -%}
+      <div class="sportive-stat-card">
+        <div class="sportive-stat-icon">📍</div>
+        <div class="sportive-stat-value">{{ event_location }}</div>
+        <div class="sportive-stat-label">Location</div>
+      </div>
+    {%- endif -%}
+
+    {%- if event_country != blank -%}
+      <div class="sportive-stat-card">
+        <div class="sportive-stat-icon">🌍</div>
+        <div class="sportive-stat-value">{{ event_country }}</div>
+        <div class="sportive-stat-label">Country</div>
+      </div>
+    {%- endif -%}
+
+    {%- if event_year != blank -%}
+      <div class="sportive-stat-card">
+        <div class="sportive-stat-icon">📅</div>
+        <div class="sportive-stat-value">{{ event_year }}</div>
+        <div class="sportive-stat-label">Year</div>
+      </div>
+    {%- endif -%}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Sportive Event Stats",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding top",
+      "default": 36
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding bottom",
+      "default": 36
+    }
+  ],
+  "presets": [
+    {
+      "name": "Sportive Event Stats"
+    }
+  ]
+}
+{% endschema %}

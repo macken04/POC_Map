@@ -180,17 +180,29 @@ class OrderMapService {
             }
           }
           
-          // Add print format information if available
-          const printConfig = configData.mapConfiguration?.config || configData.printPreferences;
-          if (printConfig) {
-            config.format = printConfig.printSize;
-            config.orientation = printConfig.orientation;
-            config.dpi = 300; // Always 300 DPI for high-res printing
-            console.log('[OrderMapService] Added print configuration:', { 
-              format: config.format, 
-              orientation: config.orientation 
-            });
-          }
+          // Add print format information from configuration
+          // printSize and orientation are stored at top level of mapConfiguration
+          const format = configData.mapConfiguration?.printSize || configData.printSize || 'A4';
+          const orientation = configData.mapConfiguration?.orientation || configData.orientation || 'portrait';
+
+          config.format = format;
+          config.orientation = orientation;
+          config.dpi = 300; // Always 300 DPI for high-res printing
+
+          // Calculate actual pixel dimensions for the format at 300 DPI
+          // This is critical - dimensions must match PRINT_CONFIG values
+          const printDimensions = this.mapService.getPrintDimensions(format, orientation);
+
+          config.width = printDimensions.width;
+          config.height = printDimensions.height;
+
+          console.log('[OrderMapService] Added print configuration with dimensions:', {
+            format: config.format,
+            orientation: config.orientation,
+            width: config.width,
+            height: config.height,
+            dpi: config.dpi
+          });
           
           // Log configuration structure for debugging
           console.log('[OrderMapService] Configuration structure:', {

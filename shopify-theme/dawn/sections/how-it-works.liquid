@@ -1,0 +1,292 @@
+{{ 'homepage-sections.css' | asset_url | stylesheet_tag }}
+
+{%- style -%}
+  .how-it-works-{{ section.id }} {
+    padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .how-it-works-{{ section.id }} {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+{%- endstyle -%}
+
+<div class="how-it-works how-it-works-{{ section.id }} {% if section.settings.color_scheme %}color-{{ section.settings.color_scheme }}{% endif %}">
+  <div class="page-width">
+    <!-- Section Header -->
+    <div class="how-it-works-header">
+      {% if section.settings.heading != blank %}
+        <h2 class="how-it-works-heading">{{ section.settings.heading }}</h2>
+      {% endif %}
+
+      {% if section.settings.description != blank %}
+        <p class="how-it-works-description">{{ section.settings.description }}</p>
+      {% endif %}
+    </div>
+
+    <!-- Steps Grid -->
+    <div class="how-it-works-grid">
+      {% for block in section.blocks %}
+        <div class="how-it-works-step" {{ block.shopify_attributes }}>
+          <!-- Step Number -->
+          <div class="step-number">
+            <span>{{ forloop.index }}</span>
+          </div>
+
+          <!-- Step Icon -->
+          <div class="step-icon">
+            {% case block.settings.icon %}
+              {% when 'connect' %}
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.599h4.172L10.463 0l-7 13.828h4.172" fill="currentColor" stroke="none"/>
+                </svg>
+              {% when 'select' %}
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+              {% when 'customize' %}
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"/>
+                </svg>
+              {% when 'print' %}
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 6 2 18 2 18 9"/>
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                  <rect x="6" y="14" width="12" height="8"/>
+                </svg>
+              {% when 'map' %}
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+              {% else %}
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                </svg>
+            {% endcase %}
+          </div>
+
+          <!-- Step Content -->
+          <div class="step-content">
+            {% if block.settings.title != blank %}
+              <h3 class="step-title">{{ block.settings.title }}</h3>
+            {% endif %}
+
+            {% if block.settings.description != blank %}
+              <p class="step-description">{{ block.settings.description }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Connector Arrow (not shown on last step) -->
+          {% unless forloop.last %}
+            <div class="step-connector">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9,18 15,12 9,6"/>
+              </svg>
+            </div>
+          {% endunless %}
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Optional CTA -->
+    {% if section.settings.show_cta and section.settings.button_label != blank %}
+      <div class="how-it-works-cta">
+        <a href="{{ section.settings.button_link }}" class="how-it-works-btn">
+          {{ section.settings.button_label }}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9,18 15,12 9,6"/>
+          </svg>
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "How It Works",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Section Header"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "How It Works"
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "label": "Description",
+      "default": "Create your custom map poster in just 4 simple steps"
+    },
+    {
+      "type": "header",
+      "content": "Call to Action"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_cta",
+      "label": "Show CTA Button",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button Label",
+      "default": "Get Started Now"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "Button Link"
+    },
+    {
+      "type": "header",
+      "content": "Styling"
+    },
+    {
+      "type": "select",
+      "id": "color_scheme",
+      "label": "Color Scheme",
+      "options": [
+        {
+          "value": "scheme-1",
+          "label": "Scheme 1"
+        },
+        {
+          "value": "scheme-2",
+          "label": "Scheme 2"
+        },
+        {
+          "value": "background-1",
+          "label": "Background 1"
+        },
+        {
+          "value": "background-2",
+          "label": "Background 2"
+        }
+      ],
+      "default": "background-1"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Top Padding",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Bottom Padding",
+      "default": 60
+    }
+  ],
+  "blocks": [
+    {
+      "type": "step",
+      "name": "Step",
+      "settings": [
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "options": [
+            {
+              "value": "connect",
+              "label": "Connect (Strava)"
+            },
+            {
+              "value": "select",
+              "label": "Select (Clock/Activity)"
+            },
+            {
+              "value": "customize",
+              "label": "Customize (Design)"
+            },
+            {
+              "value": "print",
+              "label": "Print (Printer)"
+            },
+            {
+              "value": "map",
+              "label": "Map (Location Pin)"
+            }
+          ],
+          "default": "connect"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "Connect"
+        },
+        {
+          "type": "textarea",
+          "id": "description",
+          "label": "Description",
+          "default": "Link your Strava account securely"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "How It Works",
+      "category": "Custom",
+      "blocks": [
+        {
+          "type": "step",
+          "settings": {
+            "icon": "connect",
+            "title": "Connect",
+            "description": "Link your Strava account to access your cycling activities"
+          }
+        },
+        {
+          "type": "step",
+          "settings": {
+            "icon": "select",
+            "title": "Select",
+            "description": "Choose your favorite route from your Strava activities"
+          }
+        },
+        {
+          "type": "step",
+          "settings": {
+            "icon": "customize",
+            "title": "Customize",
+            "description": "Design your map with themes, colors, and personalized text"
+          }
+        },
+        {
+          "type": "step",
+          "settings": {
+            "icon": "print",
+            "title": "Print",
+            "description": "Order your high-quality 300 DPI poster in A4, A3, or A2"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

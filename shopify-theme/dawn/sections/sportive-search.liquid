@@ -1,0 +1,59 @@
+{{ 'design-system.css' | asset_url | stylesheet_tag }}
+{{ 'sportive-prints-page.css' | asset_url | stylesheet_tag }}
+
+<div class="sportive-search-section">
+  <div class="page-width">
+    <div class="sportive-search-wrapper">
+      <form action="{{ routes.search_url }}" method="get" role="search" class="sportive-search-form">
+        <div class="sportive-search-input-wrapper">
+          <svg class="sportive-search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M19 19L14.65 14.65" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <input
+            type="search"
+            name="q"
+            value="{{ search.terms | escape }}"
+            placeholder="{{ section.settings.placeholder | default: 'Search for routes, climbs, or events...' }}"
+            class="sportive-search-input"
+            {%- if section.settings.product_type_filter -%}
+              data-search-type="product"
+            {%- endif -%}
+          >
+          {%- if section.settings.product_type_filter -%}
+            <input type="hidden" name="type" value="product">
+          {%- endif -%}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Sportive Search",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "placeholder",
+      "label": "Search placeholder text",
+      "default": "Search for routes, climbs, or events...",
+      "info": "Placeholder text shown in the search input"
+    },
+    {
+      "type": "checkbox",
+      "id": "product_type_filter",
+      "label": "Search products only",
+      "default": true,
+      "info": "When enabled, search will only return products (not pages, articles, etc.)"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Sportive Search"
+    }
+  ]
+}
+{% endschema %}

@@ -1,3 +1,4 @@
+{{ 'design-system.css' | asset_url | stylesheet_tag }}
 {{ 'strava-cards-v3.css' | asset_url | append: '?v=' | append: 'now' | stylesheet_tag }}
 
 <!-- Include authentication utilities -->
@@ -5,46 +6,55 @@
 
 <div class="strava-activities-section">
   <div class="strava-content-wrapper">
-    <!-- Header Section -->
-    <div class="strava-activities-header">
-      <div class="strava-header-content">
-        <div class="strava-logo">
-          <svg class="strava-icon" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066M7.613 13.828L2.461 3.656H5.53l2.083 4.116 2.083-4.116H12.7"/>
-          </svg>
-        </div>
-        <h1 class="strava-activities-heading">
-          <span class="gradient-text">YOUR STRAVA ACTIVITIES</span>
-        </h1>
-        <div id="user-connection-status" class="user-connection-status">
-          <span id="connection-text">Connected as <span id="user-name">Loading...</span></span>
-        </div>
-      </div>
-      
+    <!-- User connection status -->
+    <div id="user-connection-status" class="user-connection-status hidden">
+      <svg class="user-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+      <span id="connection-text">Connected as <strong id="user-name">Loading...</strong></span>
+    </div>
+
+    {%- comment -%}
+    Section Header removed per user request
+    {%- if section.settings.heading != blank or section.settings.description != blank -%}
+    <div class="section-header">
+      {%- if section.settings.heading != blank -%}
+        <h2 class="section-heading">{{ section.settings.heading }}</h2>
+      {%- endif -%}
       {%- if section.settings.description != blank -%}
-        <p class="strava-activities-description">{{ section.settings.description | escape }}</p>
-      {%- else -%}
-        <p class="strava-activities-description">
-          Select any activity below to create a stunning retro poster. Activities with GPS data work best for detailed route visualization.
-        </p>
+        <p class="section-description">{{ section.settings.description }}</p>
       {%- endif -%}
     </div>
+    {%- endif -%}
+    {%- endcomment -%}
 
     <!-- Statistics Dashboard -->
     <div class="statistics-dashboard">
       <div class="stat-card stat-activities">
+        <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
+        </svg>
         <div class="stat-number" id="total-activities">0</div>
         <div class="stat-label">Total Activities</div>
       </div>
       <div class="stat-card stat-distance">
+        <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
+        </svg>
         <div class="stat-number" id="total-distance">0</div>
         <div class="stat-label">Total Distance (km)</div>
       </div>
       <div class="stat-card stat-elevation">
+        <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+        </svg>
         <div class="stat-number" id="total-elevation">0</div>
         <div class="stat-label">Total Elevation (m)</div>
       </div>
       <div class="stat-card stat-time">
+        <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
         <div class="stat-number" id="total-time">0h 0m</div>
         <div class="stat-label">Total Time</div>
       </div>
@@ -66,19 +76,20 @@
       
       <div class="controls-body">
         {%- if section.settings.show_search -%}
-        <div class="strava-activities-search">
-          <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="strava-activities-search" role="search">
+          <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
           </svg>
-          <input 
-            type="text" 
-            id="activity-search" 
+          <input
+            type="text"
+            id="activity-search"
             class="strava-search-input"
             placeholder="Search activities..."
             autocomplete="off"
+            aria-label="Search activities by name"
           >
-          <button type="button" class="search-clear-button hidden" id="search-clear">
-            <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+          <button type="button" class="search-clear-button hidden" id="search-clear" aria-label="Clear search">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
               <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
             </svg>
           </button>
@@ -86,30 +97,58 @@
         {%- endif -%}
         
         {%- if section.settings.show_filters -%}
-        <div class="strava-activities-filters">
-          <button type="button" class="filter-button" id="filter-activity-type">
-            <svg class="filter-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="strava-activities-filters" role="group" aria-label="Activity filters">
+          <button type="button" class="filter-button" id="filter-activity-type" aria-label="Filter by activity type" aria-haspopup="true" aria-expanded="false">
+            <svg class="filter-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
             </svg>
             <span>Filter</span>
-            <svg class="chevron-icon" width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+            <svg class="chevron-icon" width="16" height="16" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
               <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
             </svg>
           </button>
-          
-          <button type="button" class="filter-button" id="date-range-button">
-            <svg class="calendar-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+          <button type="button" class="filter-button" id="date-range-button" aria-label="Filter by date range">
+            <svg class="calendar-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
             </svg>
             <span>Date Range</span>
           </button>
-          
-          <select id="activity-type-filter" class="strava-filter-select hidden-filters">
+
+          <button type="button" class="filter-button" id="sort-button" aria-label="Sort activities" aria-haspopup="true" aria-expanded="false">
+            <svg class="sort-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"></path>
+            </svg>
+            <span>Sort</span>
+            <svg class="chevron-icon" width="16" height="16" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+            </svg>
+          </button>
+
+          <button type="button" class="filter-button" id="compare-button" aria-label="Compare selected activities" disabled>
+            <svg class="compare-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <span>Compare (<span id="compare-count">0</span>)</span>
+          </button>
+
+          <select id="activity-type-filter" class="strava-filter-select hidden-filters" aria-label="Select activity type">
             <option value="">All Activities</option>
             <option value="Ride">Cycling</option>
             <option value="Run">Running</option>
             <option value="Hike">Hiking</option>
             <option value="Walk">Walking</option>
+          </select>
+
+          <select id="sort-select" class="strava-filter-select hidden-filters" aria-label="Sort activities by">
+            <option value="start_date_desc">Newest First</option>
+            <option value="start_date_asc">Oldest First</option>
+            <option value="distance_desc">Longest Distance</option>
+            <option value="distance_asc">Shortest Distance</option>
+            <option value="moving_time_desc">Longest Duration</option>
+            <option value="moving_time_asc">Shortest Duration</option>
+            <option value="total_elevation_gain_desc">Most Elevation</option>
+            <option value="total_elevation_gain_asc">Least Elevation</option>
           </select>
         </div>
         {%- endif -%}
@@ -117,9 +156,38 @@
     </div>
     {%- endif -%}
 
+    <!-- Bulk Actions Toolbar -->
+    <div id="bulk-actions-toolbar" class="bulk-actions-toolbar hidden" role="toolbar" aria-label="Bulk actions">
+      <div class="bulk-actions-content">
+        <div class="bulk-actions-info">
+          <span id="bulk-selected-count">0</span> activities selected
+        </div>
+        <div class="bulk-actions-buttons">
+          <button type="button" class="bulk-action-btn" id="bulk-create-posters" aria-label="Create posters for selected activities">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span>Create Posters</span>
+          </button>
+          <button type="button" class="bulk-action-btn" id="bulk-export-data" aria-label="Export selected activities data">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span>Export Data</span>
+          </button>
+          <button type="button" class="bulk-action-btn secondary" id="bulk-deselect-all" aria-label="Deselect all activities">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span>Clear Selection</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Loading State -->
-    <div id="activities-loading" class="activities-loading hidden">
-      <div class="loading-spinner">
+    <div id="activities-loading" class="activities-loading hidden" role="status" aria-live="polite">
+      <div class="loading-spinner" aria-hidden="true">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
         </svg>
@@ -129,8 +197,8 @@
     </div>
 
     <!-- Error State -->
-    <div id="activities-error" class="activities-error hidden">
-      <div class="error-icon">
+    <div id="activities-error" class="activities-error hidden" role="alert" aria-live="assertive">
+      <div class="error-icon" aria-hidden="true">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.865-.833-2.635 0L4.179 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
         </svg>
@@ -138,27 +206,41 @@
       <h3 id="error-title">Unable to load activities</h3>
       <p id="error-message">Please check your connection and try again.</p>
       <div style="display: flex; gap: 1rem; justify-content: center; align-items: center;">
-        <button type="button" id="retry-button" class="load-more-button">Try Again</button>
-        <a href="https://boss-hog-freely.ngrok-free.app/auth/strava" class="create-poster-button" style="min-width: auto; padding: 0.75rem 1.5rem;">Connect with Strava</a>
+        <button type="button" id="retry-button" class="load-more-button" aria-label="Retry loading activities">Try Again</button>
+        <a href="https://boss-hog-freely.ngrok-free.app/auth/strava" class="create-poster-button" style="min-width: auto; padding: 0.75rem 1.5rem;" aria-label="Connect your Strava account">Connect with Strava</a>
       </div>
     </div>
 
     <!-- Activities Grid -->
     <div class="activities-grid-wrapper">
-      <div id="activities-grid" class="activities-grid hidden">
+      <div id="activities-grid" class="activities-grid hidden" role="list" aria-label="Strava activities">
         <!-- Activities will be populated by JavaScript -->
       </div>
+      <!-- Infinite scroll trigger -->
+      <div id="infinite-scroll-trigger" class="infinite-scroll-trigger" aria-hidden="true"></div>
     </div>
 
     <!-- Empty State -->
-    <div id="activities-empty" class="activities-empty hidden">
-      <div class="empty-icon">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+    <div id="activities-empty" class="activities-empty hidden" role="status" aria-live="polite">
+      <div class="empty-icon" aria-hidden="true">
+        <svg id="empty-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path id="empty-icon-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
         </svg>
       </div>
-      <h3>No activities found</h3>
-      <p>Try refreshing or <a href="https://www.strava.com" target="_blank">upload some activities to Strava</a> to get started.</p>
+      <h3 id="empty-title">No activities found</h3>
+      <p id="empty-description">Try refreshing or <a href="https://www.strava.com" target="_blank" rel="noopener">upload some activities to Strava</a> to get started.</p>
+      <div id="empty-active-filters" class="empty-active-filters hidden">
+        <p class="filter-label">Active filters:</p>
+        <div id="empty-filter-tags" class="empty-filter-tags"></div>
+      </div>
+      <div id="empty-actions" class="empty-actions">
+        <button type="button" id="empty-clear-filters" class="load-more-button hidden" aria-label="Clear all filters">
+          Clear Filters
+        </button>
+        <a href="https://www.strava.com" target="_blank" rel="noopener" class="create-poster-button" aria-label="Go to Strava to upload activities">
+          Go to Strava
+        </a>
+      </div>
     </div>
 
     <!-- Load More Section -->
@@ -168,9 +250,14 @@
           <span id="activities-count">0</span> activities loaded <span id="pagination-status"></span>
         </p>
         <button type="button" id="load-more-btn" class="load-more-button">
-          Load More Activities
-          <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+          <span id="load-more-text">Load More Activities</span>
+          <!-- Arrow icon (default) -->
+          <svg id="load-more-arrow" class="load-more-icon" width="16" height="16" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
             <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+          </svg>
+          <!-- Loading spinner (hidden by default) -->
+          <svg id="load-more-spinner" class="load-more-icon spinner hidden" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
           </svg>
         </button>
       </div>

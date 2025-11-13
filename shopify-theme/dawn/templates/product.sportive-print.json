@@ -1,0 +1,122 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-product",
+      "blocks": {
+        "title": {
+          "type": "title",
+          "settings": {}
+        },
+        "price": {
+          "type": "price",
+          "settings": {}
+        },
+        "variant_picker": {
+          "type": "variant_picker",
+          "settings": {
+            "picker_type": "button"
+          }
+        },
+        "quantity_selector": {
+          "type": "quantity_selector",
+          "settings": {}
+        },
+        "buy_buttons": {
+          "type": "buy_buttons",
+          "settings": {
+            "show_dynamic_checkout": true,
+            "show_gift_card_recipient": false
+          }
+        },
+        "description": {
+          "type": "description",
+          "settings": {}
+        },
+        "collapsible_tab_1": {
+          "type": "collapsible_tab",
+          "settings": {
+            "heading": "Print Specifications",
+            "icon": "ruler",
+            "content": "<p><strong>Materials:</strong> Museum-grade archival paper, fade-resistant inks</p><p><strong>Print Quality:</strong> Professional 300 DPI printing</p><p><strong>Sizes Available:</strong></p><ul><li>A4: 210 × 297 mm (8.3 × 11.7 in)</li><li>A3: 297 × 420 mm (11.7 × 16.5 in)</li><li>A2: 420 × 594 mm (16.5 × 23.4 in)</li></ul>",
+            "page": ""
+          }
+        },
+        "collapsible_tab_2": {
+          "type": "collapsible_tab",
+          "settings": {
+            "heading": "Shipping & Delivery",
+            "icon": "truck",
+            "content": "<p><strong>Processing Time:</strong> 2-3 business days</p><p><strong>Shipping:</strong> Carefully packaged in rigid protective tubes</p><p><strong>Delivery Time:</strong> 5-7 business days (UK), 7-14 business days (International)</p>",
+            "page": ""
+          }
+        },
+        "collapsible_tab_3": {
+          "type": "collapsible_tab",
+          "settings": {
+            "heading": "Care Instructions",
+            "icon": "heart",
+            "content": "<p>Keep away from direct sunlight to prevent fading. Frame under UV-protective glass for best longevity. Handle with clean, dry hands.</p>",
+            "page": ""
+          }
+        },
+        "share": {
+          "type": "share",
+          "settings": {
+            "share_label": "Share"
+          }
+        }
+      },
+      "block_order": [
+        "title",
+        "price",
+        "variant_picker",
+        "quantity_selector",
+        "buy_buttons",
+        "description",
+        "collapsible_tab_1",
+        "collapsible_tab_2",
+        "collapsible_tab_3",
+        "share"
+      ],
+      "settings": {
+        "enable_sticky_info": true,
+        "media_size": "large",
+        "constrain_to_viewport": true,
+        "gallery_layout": "thumbnail_slider",
+        "mobile_thumbnails": "show",
+        "hide_variants": false,
+        "enable_video_looping": false,
+        "padding_top": 36,
+        "padding_bottom": 12
+      }
+    },
+    "event_stats": {
+      "type": "sportive-event-stats",
+      "settings": {
+        "padding_top": 0,
+        "padding_bottom": 36
+      }
+    },
+    "related_products": {
+      "type": "related-products",
+      "settings": {
+        "heading": "More Iconic Routes",
+        "heading_size": "h2",
+        "columns_desktop": 4,
+        "columns_mobile": "2",
+        "color_scheme": "scheme-1",
+        "image_ratio": "portrait",
+        "show_secondary_image": true,
+        "show_vendor": false,
+        "show_rating": false,
+        "padding_top": 36,
+        "padding_bottom": 28
+      }
+    }
+  },
+  "order": [
+    "main",
+    "event_stats",
+    "related_products"
+  ]
+}
