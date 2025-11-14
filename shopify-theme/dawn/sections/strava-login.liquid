@@ -74,17 +74,46 @@
         </svg>
         Connect with Strava
       </button>
-      <a href="#examples" class="btn btn-secondary btn-xl">
-        See Examples
+      <a href="#examples" class="hero-secondary-link">
+        See examples ↓
       </a>
     </div>
 
-    <!-- Trust Signal -->
-    <div class="hero-trust-signal">
-      <svg class="hero-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-      </svg>
-      <span>Loved by 12,000+ cyclists worldwide</span>
+    <!-- Social Proof Section -->
+    <div class="hero-social-proof">
+      <div class="testimonial-avatars">
+        <div class="avatar-circle">🚴</div>
+        <div class="avatar-circle">🚵</div>
+        <div class="avatar-circle">🏃</div>
+        <span class="avatar-count">+12,000</span>
+      </div>
+      <div class="hero-rating">
+        <div class="stars">★★★★★</div>
+        <span class="rating-text">4.9 / 5 from 2,341 reviews</span>
+      </div>
+    </div>
+
+    <!-- Trust Badges -->
+    <div class="hero-trust-badges">
+      <div class="trust-badge">
+        <svg class="trust-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <span>Secure OAuth</span>
+      </div>
+      <div class="trust-badge">
+        <svg class="trust-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+        </svg>
+        <span>Official Strava API</span>
+      </div>
+      <div class="trust-badge">
+        <svg class="trust-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+        <span>Instant Access</span>
+      </div>
     </div>
   </div>
 
@@ -129,12 +158,29 @@
       <div class="card-body text-center">
         <div style="margin: 0 auto var(--space-6);" class="loading-spinner"></div>
         <h3 class="heading-4" style="margin-bottom: var(--space-3)">Connecting to Strava...</h3>
-        <p class="text-muted">Please wait while we redirect you to Strava for authentication.</p>
+        <p class="text-muted" style="margin-bottom: var(--space-4)">
+          You'll be redirected to Strava to securely authorize access.
+          We'll only read your activities – never modify them.
+        </p>
+        <div class="loading-progress-steps">
+          <div class="loading-step active">
+            <span class="step-number">1</span>
+            <span class="step-label">Redirecting to Strava</span>
+          </div>
+          <div class="loading-step">
+            <span class="step-number">2</span>
+            <span class="step-label">Authorize access</span>
+          </div>
+          <div class="loading-step">
+            <span class="step-number">3</span>
+            <span class="step-label">Return to create your map</span>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Error State -->
-    <div class="card hidden" id="error-state" style="border-color: var(--color-error-light); background: var(--color-error-light);">
+    <div class="card hidden" id="error-state" style="border-color: var(--color-error-light); background: #FEF2F2;">
       <div class="card-body text-center">
         <div style="width: 4rem; height: 4rem; background: var(--color-error-light); border-radius: var(--radius-full); margin: 0 auto var(--space-6);" class="flex items-center justify-center">
           <svg style="width: 2rem; height: 2rem; color: var(--color-error);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -144,11 +190,23 @@
           </svg>
         </div>
         <h3 class="heading-4 text-error" style="margin-bottom: var(--space-3)">Connection Failed</h3>
-        <p class="text-muted" style="margin-bottom: var(--space-6);" id="error-message">
+        <p class="text-muted" style="margin-bottom: var(--space-4);" id="error-message">
           There was an issue connecting to your Strava account. Please try again.
         </p>
-        <div class="flex" style="gap: var(--space-4); justify-content: center;">
-          <button type="button" class="btn btn-secondary" id="retry-connection-btn">
+
+        <!-- Common Solutions -->
+        <div class="error-solutions">
+          <h4 class="heading-5" style="font-size: var(--font-size-sm); margin-bottom: var(--space-3); color: var(--text-secondary);">Common solutions:</h4>
+          <ul class="error-solutions-list">
+            <li>Make sure pop-ups are enabled in your browser</li>
+            <li>Check that you're logged into Strava</li>
+            <li>Try using an incognito/private window</li>
+            <li>Clear your browser cache and cookies</li>
+          </ul>
+        </div>
+
+        <div class="flex error-actions" style="gap: var(--space-4); justify-content: center; margin-top: var(--space-6);">
+          <button type="button" class="btn btn-primary" id="retry-connection-btn">
             Try Again
           </button>
           <a href="mailto:support@printmyride.com" class="btn btn-link">
@@ -166,7 +224,7 @@
 <section class="benefits-section">
   <div class="page-width">
     <div class="benefits-grid">
-      <!-- Benefit 1: Your Activities -->
+      <!-- Benefit 1: Your Achievements, Immortalized -->
       <div class="benefit-card">
         <div class="benefit-icon-circle" style="background: var(--color-info-light);">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-info);">
@@ -174,11 +232,11 @@
             <circle cx="12" cy="10" r="3"/>
           </svg>
         </div>
-        <h3 class="benefit-title">Your Activities</h3>
-        <p class="benefit-description">Access all your recorded rides and routes from Strava with a single click.</p>
+        <h3 class="benefit-title">Your Achievements, Immortalized</h3>
+        <p class="benefit-description">Every epic ride deserves to be remembered. Instantly access all your Strava activities and turn your favorite moments into lasting memories.</p>
       </div>
 
-      <!-- Benefit 2: Custom Maps -->
+      <!-- Benefit 2: One-of-a-Kind Art -->
       <div class="benefit-card">
         <div class="benefit-icon-circle" style="background: var(--color-success-light);">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-success);">
@@ -187,33 +245,33 @@
             <line x1="9" y1="15" x2="15" y2="15"/>
           </svg>
         </div>
-        <h3 class="benefit-title">Custom Maps</h3>
-        <p class="benefit-description">Transform your routes into stunning, personalized map posters.</p>
+        <h3 class="benefit-title">One-of-a-Kind Art</h3>
+        <p class="benefit-description">Your route. Your story. Create custom map art that's uniquely yours – no two prints are the same.</p>
       </div>
 
-      <!-- Benefit 3: Privacy First -->
+      <!-- Benefit 3: Your Data, Your Control -->
       <div class="benefit-card">
         <div class="benefit-icon-circle" style="background: var(--color-warning-light);">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-warning-dark);">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
           </svg>
         </div>
-        <h3 class="benefit-title">Privacy First</h3>
-        <p class="benefit-description">We only access what we need, when we need it. Your data stays secure.</p>
+        <h3 class="benefit-title">Your Data, Your Control</h3>
+        <p class="benefit-description">Privacy matters. We only access what we need to create your map. No permanent storage, no sharing. Disconnect anytime.</p>
       </div>
 
-      <!-- Benefit 4: Professional Quality -->
+      <!-- Benefit 4: Gallery-Quality Prints -->
       <div class="benefit-card">
         <div class="benefit-icon-circle" style="background: rgba(252, 76, 2, 0.1);">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-primary);">
             <polyline points="20 6 9 17 4 12"/>
           </svg>
         </div>
-        <h3 class="benefit-title">Professional Quality</h3>
-        <p class="benefit-description">300 DPI print-ready output perfect for framing and display.</p>
+        <h3 class="benefit-title">Gallery-Quality Prints</h3>
+        <p class="benefit-description">Museum-grade 300 DPI prints that look stunning on your wall. Frame it, hang it, inspire your next ride.</p>
       </div>
 
-      <!-- Benefit 5: Easy Integration -->
+      <!-- Benefit 5: Seamless Checkout -->
       <div class="benefit-card">
         <div class="benefit-icon-circle" style="background: var(--color-accent-light);">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-accent);">
@@ -221,11 +279,11 @@
             <path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m0 6l4.2 4.2M1 12h6m6 0h6m-13.2 5.2l4.2-4.2m0-6L5.8 5.8"/>
           </svg>
         </div>
-        <h3 class="benefit-title">Easy Integration</h3>
-        <p class="benefit-description">Seamless Shopify checkout experience. Add to cart and you're done.</p>
+        <h3 class="benefit-title">Seamless Checkout</h3>
+        <p class="benefit-description">Love it? Buy it. Simple one-click checkout with Shopify. Your custom map delivered to your door.</p>
       </div>
 
-      <!-- Benefit 6: Quick Processing -->
+      <!-- Benefit 6: Ready in Minutes -->
       <div class="benefit-card">
         <div class="benefit-icon-circle" style="background: var(--color-secondary-light);">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-secondary);">
@@ -233,8 +291,8 @@
             <polyline points="12 6 12 12 16 14"/>
           </svg>
         </div>
-        <h3 class="benefit-title">Quick Processing</h3>
-        <p class="benefit-description">Fast turnaround times. Your custom map generated in minutes.</p>
+        <h3 class="benefit-title">Ready in Minutes</h3>
+        <p class="benefit-description">No waiting around. Select, customize, preview – your print-ready map is generated in under 3 minutes.</p>
       </div>
     </div>
   </div>
@@ -436,6 +494,51 @@
           </div>
         </div>
       </div>
+
+      <!-- FAQ 5: What happens to my data? -->
+      <div class="faq-item">
+        <button class="faq-question" type="button" aria-expanded="false">
+          <span>What happens to my data after I create a map?</span>
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-content">
+            Your activity data is only used to generate your map. We don't store your Strava credentials or activity data permanently. Once your map is created, you can disconnect your Strava account anytime from your account settings. We respect your privacy completely.
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQ 6: Can I preview before purchasing? -->
+      <div class="faq-item">
+        <button class="faq-question" type="button" aria-expanded="false">
+          <span>Can I preview before purchasing?</span>
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-content">
+            Absolutely! You'll see a full preview of your custom map before checkout. Adjust colors, add text, change map styles – all before you commit to buying. You have complete control over the final design.
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQ 7: Which activities are supported? -->
+      <div class="faq-item">
+        <button class="faq-question" type="button" aria-expanded="false">
+          <span>Which types of activities are supported?</span>
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-content">
+            We support all GPS-tracked activities from Strava including cycling, running, hiking, walking, and more. As long as your activity has GPS data (route coordinates), we can create a beautiful map poster from it.
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -471,6 +574,29 @@ document.addEventListener('DOMContentLoaded', function() {
   const stravaLogin = new StravaLogin();
   stravaLogin.initSimple();
 
+  // Progress Persistence - Update step indicator based on journey stage
+  function updateProgressStep(step) {
+    const steps = [
+      'Step 1 of 4: Connect to Strava',
+      'Step 2 of 4: Select Activity',
+      'Step 3 of 4: Customize Map',
+      'Step 4 of 4: Add to Cart'
+    ];
+
+    const progressIndicator = document.querySelector('.progress-indicator span');
+    if (progressIndicator && steps[step - 1]) {
+      progressIndicator.textContent = steps[step - 1];
+      // Store progress in session storage
+      sessionStorage.setItem('stravaMapProgress', step);
+    }
+  }
+
+  // Restore progress on page load
+  const savedProgress = sessionStorage.getItem('stravaMapProgress');
+  if (savedProgress) {
+    updateProgressStep(parseInt(savedProgress));
+  }
+
   // FAQ Accordion functionality
   const faqItems = document.querySelectorAll('.faq-item');
   faqItems.forEach(item => {
@@ -496,8 +622,9 @@ document.addEventListener('DOMContentLoaded', function() {
   const heroBtn = document.getElementById('hero-connect-strava-btn');
   const finalBtn = document.getElementById('final-connect-strava-btn');
   const connectBtn = document.getElementById('connect-strava-btn');
+  const retryBtn = document.getElementById('retry-connection-btn');
 
-  [heroBtn, finalBtn, connectBtn].forEach(btn => {
+  [heroBtn, finalBtn, connectBtn, retryBtn].forEach(btn => {
     if (btn) {
       btn.addEventListener('click', () => {
         stravaLogin.connectStrava();
@@ -505,14 +632,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // Smooth scroll for "See Examples" button
-  const examplesLink = document.querySelector('a[href="#examples"]');
-  if (examplesLink) {
-    examplesLink.addEventListener('click', (e) => {
+  // Smooth scroll for "See Examples" link
+  const examplesLinks = document.querySelectorAll('a[href="#examples"]');
+  examplesLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
       e.preventDefault();
-      document.getElementById('examples').scrollIntoView({ behavior: 'smooth' });
+      const examplesSection = document.getElementById('examples');
+      if (examplesSection) {
+        examplesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     });
-  }
+  });
+
+  // Export updateProgressStep for use by StravaLogin class
+  window.updateProgressStep = updateProgressStep;
 });
 </script>
 

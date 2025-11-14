@@ -330,7 +330,7 @@ class MapService {
       // Custom styles from frontend (these need special handling)
       'grey': 'macken04/cm9qvmy7500hr01s5h4h67lsr',
       'classic_pink': 'macken04/cme063epj00rq01pjamus26ma',
-      'classic_orange': 'macken04/cmdowyoaj004i01sb9i27ene8',
+      'classic_orange': 'macken04/cmhxe59y8001801qx91nfd6qc',
       'classic_grey': 'macken04/cmdowoyfi003o01r5h90e8r6l',
       'classic_dark': 'macken04/cmdowqfh4004h01sb14fe6x3u',
       'classic_blue': 'macken04/cmdowyoil001d01sh5937dt1p'

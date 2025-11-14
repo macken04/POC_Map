@@ -198,7 +198,7 @@
                 },
                 orange: {
                   name: 'Orange',
-                  url: 'mapbox://styles/macken04/cmdowyoaj004i01sb9i27ene8',
+                  url: 'mapbox://styles/macken04/cmhxe59y8001801qx91nfd6qc',
                   previewColor: '#f97316'
                 },
                 pink: {
