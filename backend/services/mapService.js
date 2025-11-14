@@ -2338,6 +2338,13 @@ class MapService {
       });
 
       // Create HTML for map rendering using validated config
+      console.log('[MapService] HIGH-RES CONFIG DEBUG:', {
+        hasRoute: !!highResConfig.route,
+        routeColor: highResConfig.route?.color,
+        routeWidth: highResConfig.route?.width,
+        routeCoordCount: highResConfig.route?.coordinates?.length,
+        allRouteKeys: highResConfig.route ? Object.keys(highResConfig.route) : 'NO ROUTE'
+      });
       const mapHTML = this.generateMapHTML(highResConfig);
       
       // Set page content and wait for map to load

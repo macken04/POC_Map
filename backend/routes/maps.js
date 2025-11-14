@@ -1147,6 +1147,13 @@ router.post('/generate-from-preview/:previewId', requireAuth, async (req, res) =
       id: `highres_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     };
 
+    console.log('[Maps] HIGH-RES CONFIG CREATION DEBUG:', {
+      previewConfigHasRoute: !!previewConfig.route,
+      previewRouteColor: previewConfig.route?.color,
+      highResConfigHasRoute: !!highResConfig.route,
+      highResRouteColor: highResConfig.route?.color
+    });
+
     // Initialize MapService
     const mapService = require('../services/mapService');
     await mapService.initialize();
