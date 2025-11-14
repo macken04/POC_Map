@@ -169,7 +169,20 @@ class OrderMapService {
           // Extract the actual map configuration from the nested structure
           // The configuration file has map properties nested at mapConfiguration.mapConfiguration
           let config = configData.mapConfiguration?.mapConfiguration || configData.mapConfiguration || {};
-          
+
+          // DEBUG: Log what the loaded config looks like
+          console.log('[OrderMapService] ⚠️ LOADED CONFIG FROM FILE DEBUG:', {
+            hasRoute: !!config.route,
+            routeColor: config.route?.color,
+            routeWidth: config.route?.width,
+            routeCoordCount: config.route?.coordinates?.length,
+            settingsRouteColor: configData.settings?.routeColor,
+            customizationRouteColor: configData.mapConfiguration?.customization?.routeColor,
+            allConfigDataKeys: Object.keys(configData),
+            allMapConfigKeys: Object.keys(configData.mapConfiguration || {}),
+            fullRoute: config.route
+          });
+
           // Merge dimensions from mapConfiguration into config if missing
           if (!config.width && !config.height) {
             const dimensions = configData.mapConfiguration?.dimensions || configData.dimensions;
@@ -563,6 +576,16 @@ class OrderMapService {
         source: config.source
       });
 
+      // CRITICAL DEBUG: Log route color before passing to mapService
+      console.log('[OrderMapService] ⚠️ ROUTE COLOR DEBUG:', {
+        hasRoute: !!config.route,
+        routeColor: config.route?.color,
+        routeWidth: config.route?.width,
+        routeCoordCount: config.route?.coordinates?.length,
+        allRouteKeys: config.route ? Object.keys(config.route) : 'NO ROUTE',
+        fullRouteObject: config.route
+      });
+
       const mapPath = await this.mapService.generateHighResFromPreviewConfig(config);
       
       if (!mapPath) {
@@ -709,21 +732,31 @@ class OrderMapService {
       }
       
       // Try to extract route coordinates from various sources
-      if (!reconstructed.route) {
+      // Also fix route color if route exists but color is missing
+      if (!reconstructed.route || !reconstructed.route.color) {
+        const routeColorToUse = configData.mapConfiguration?.customization?.routeColor ||
+                                configData.settings?.routeColor ||
+                                configData.mapConfiguration?.routeColor ||
+                                '#fc5200';
+        const routeWidthToUse = configData.mapConfiguration?.customization?.routeWidth ||
+                                configData.settings?.routeThickness ||
+                                configData.mapConfiguration?.routeWidth ||
+                                4;
+
         // Check if coordinates are embedded in the mapConfiguration
         if (configData.mapConfiguration && configData.mapConfiguration.coordinates) {
           reconstructed.route = {
             coordinates: configData.mapConfiguration.coordinates,
-            color: configData.mapConfiguration.customization?.routeColor ||
-                   configData.settings?.routeColor ||
-                   configData.mapConfiguration.routeColor ||
-                   '#fc5200',
-            width: configData.mapConfiguration.customization?.routeWidth ||
-                   configData.settings?.routeThickness ||
-                   configData.mapConfiguration.routeWidth ||
-                   4
+            color: routeColorToUse,
+            width: routeWidthToUse
           };
           console.log('[OrderMapService] Extracted route from embedded coordinates with color:', reconstructed.route.color);
+        }
+        // If route exists but is missing color, fix it
+        else if (reconstructed.route && !reconstructed.route.color) {
+          reconstructed.route.color = routeColorToUse;
+          reconstructed.route.width = reconstructed.route.width || routeWidthToUse;
+          console.log('[OrderMapService] Fixed missing route color:', reconstructed.route.color);
         }
         // Check if we have a Strava polyline in activityData that we can decode
         else if (configData.mapConfiguration?.activityData?.map?.summary_polyline) {
@@ -733,12 +766,8 @@ class OrderMapService {
             if (coordinates && coordinates.length > 0) {
               reconstructed.route = {
                 coordinates: coordinates,
-                color: configData.mapConfiguration.customization?.routeColor ||
-                       configData.settings?.routeColor ||
-                       '#fc5200',
-                width: configData.mapConfiguration.customization?.routeWidth ||
-                       configData.settings?.routeThickness ||
-                       4
+                color: routeColorToUse,
+                width: routeWidthToUse
               };
               console.log('[OrderMapService] Successfully decoded Strava polyline to', coordinates.length, 'coordinates with color:', reconstructed.route.color);
             }
