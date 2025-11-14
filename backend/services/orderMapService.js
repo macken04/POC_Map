@@ -380,6 +380,8 @@ class OrderMapService {
       const printSize = orderProperties.find(p => p.name === 'Print Size')?.value || 'A4';
       const orientation = orderProperties.find(p => p.name === 'Orientation')?.value || 'portrait';
       const mapStyle = orderProperties.find(p => p.name === 'Map Style')?.value || 'outdoors-v12';
+      const routeColor = orderProperties.find(p => p.name === 'Route Color')?.value || '#fc5200';
+      const routeWidth = parseInt(orderProperties.find(p => p.name === 'Route Width')?.value) || 4;
 
       // Calculate dimensions based on print size (300 DPI)
       const dimensions = this.getPrintDimensions(printSize, orientation);
@@ -401,8 +403,8 @@ class OrderMapService {
         bounds: bounds,
         route: {
           coordinates: coordinates,
-          color: '#fc5200',
-          width: 4
+          color: routeColor,
+          width: routeWidth
         },
         markers: {
           start: coordinates[0],
@@ -712,10 +714,16 @@ class OrderMapService {
         if (configData.mapConfiguration && configData.mapConfiguration.coordinates) {
           reconstructed.route = {
             coordinates: configData.mapConfiguration.coordinates,
-            color: configData.mapConfiguration.routeColor || '#fc5200',
-            width: configData.mapConfiguration.routeWidth || 4
+            color: configData.mapConfiguration.customization?.routeColor ||
+                   configData.settings?.routeColor ||
+                   configData.mapConfiguration.routeColor ||
+                   '#fc5200',
+            width: configData.mapConfiguration.customization?.routeWidth ||
+                   configData.settings?.routeThickness ||
+                   configData.mapConfiguration.routeWidth ||
+                   4
           };
-          console.log('[OrderMapService] Extracted route from embedded coordinates');
+          console.log('[OrderMapService] Extracted route from embedded coordinates with color:', reconstructed.route.color);
         }
         // Check if we have a Strava polyline in activityData that we can decode
         else if (configData.mapConfiguration?.activityData?.map?.summary_polyline) {
@@ -725,10 +733,14 @@ class OrderMapService {
             if (coordinates && coordinates.length > 0) {
               reconstructed.route = {
                 coordinates: coordinates,
-                color: '#fc5200',
-                width: 4
+                color: configData.mapConfiguration.customization?.routeColor ||
+                       configData.settings?.routeColor ||
+                       '#fc5200',
+                width: configData.mapConfiguration.customization?.routeWidth ||
+                       configData.settings?.routeThickness ||
+                       4
               };
-              console.log('[OrderMapService] Successfully decoded Strava polyline to', coordinates.length, 'coordinates');
+              console.log('[OrderMapService] Successfully decoded Strava polyline to', coordinates.length, 'coordinates with color:', reconstructed.route.color);
             }
           } catch (error) {
             console.warn('[OrderMapService] Failed to decode Strava polyline:', error.message);
