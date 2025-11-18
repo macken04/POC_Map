@@ -1,0 +1,751 @@
+{{ 'custom-map-guide.css' | asset_url | stylesheet_tag }}
+
+{%- style -%}
+  .custom-map-guide-{{ section.id }} {
+    padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .custom-map-guide-{{ section.id }} {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+{%- endstyle -%}
+
+<div class="custom-map-guide custom-map-guide-{{ section.id }}">
+  <div class="page-width">
+
+    <!-- Guide Hero -->
+    <div class="guide-hero">
+      {% if section.settings.eyebrow_text != blank %}
+        <span class="guide-eyebrow">{{ section.settings.eyebrow_text }}</span>
+      {% endif %}
+
+      {% if section.settings.heading != blank %}
+        <h1 class="guide-heading">{{ section.settings.heading }}</h1>
+      {% endif %}
+
+      {% if section.settings.description != blank %}
+        <p class="guide-description">{{ section.settings.description }}</p>
+      {% endif %}
+
+      <!-- Interactive Process Steps Preview -->
+      <div class="process-preview">
+        <div class="process-step" data-step="1">
+          <div class="step-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.599h4.172L10.463 0l-7 13.828h4.172" fill="currentColor"/>
+            </svg>
+          </div>
+          <span class="step-label">Connect</span>
+        </div>
+
+        <div class="step-connector">
+          <svg width="40" height="2" viewBox="0 0 40 2">
+            <line x1="0" y1="1" x2="40" y2="1" stroke="currentColor" stroke-width="2" stroke-dasharray="4 4"/>
+          </svg>
+        </div>
+
+        <div class="process-step" data-step="2">
+          <div class="step-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="step-label">Select</span>
+        </div>
+
+        <div class="step-connector">
+          <svg width="40" height="2" viewBox="0 0 40 2">
+            <line x1="0" y1="1" x2="40" y2="1" stroke="currentColor" stroke-width="2" stroke-dasharray="4 4"/>
+          </svg>
+        </div>
+
+        <div class="process-step" data-step="3">
+          <div class="step-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span class="step-label">Customize</span>
+        </div>
+
+        <div class="step-connector">
+          <svg width="40" height="2" viewBox="0 0 40 2">
+            <line x1="0" y1="1" x2="40" y2="1" stroke="currentColor" stroke-width="2" stroke-dasharray="4 4"/>
+          </svg>
+        </div>
+
+        <div class="process-step" data-step="4">
+          <div class="step-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <path d="M6 2v6M6 18v4M2 8h8M2 16h8M14 2h8v8h-8zM14 14h8v8h-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="step-label">Print</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detailed Process Steps -->
+    <div class="detailed-steps">
+      {% for block in section.blocks %}
+        {% if block.type == 'step' %}
+          <div class="detail-step" {{ block.shopify_attributes }}>
+            <div class="step-number">
+              <span>{{ forloop.index }}</span>
+            </div>
+
+            <div class="step-content">
+              <h3 class="step-title">{{ block.settings.title }}</h3>
+              <p class="step-description">{{ block.settings.description }}</p>
+
+              {% if block.settings.features != blank %}
+                <ul class="step-features">
+                  {% assign features = block.settings.features | split: '|' %}
+                  {% for feature in features %}
+                    <li>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                      {{ feature | strip }}
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            </div>
+
+            <div class="step-visual">
+              {% if block.settings.image != blank %}
+                {{ block.settings.image | image_url: width: 600 | image_tag: class: 'step-image', loading: 'lazy' }}
+              {% else %}
+                <!-- Placeholder visual based on step -->
+                <div class="step-placeholder step-placeholder-{{ forloop.index }}">
+                  {% case forloop.index %}
+                    {% when 1 %}
+                      <!-- Strava Connection Visual -->
+                      <div class="placeholder-strava">
+                        <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+                          <circle cx="60" cy="60" r="50" fill="#FC4C02" opacity="0.1"/>
+                          <path d="M60 30l15 30h-10l-5 10-5-10H45l15-30z" fill="#FC4C02"/>
+                          <path d="M67.5 67.5l7.5 15 7.5-15h-5l-2.5 5-2.5-5h-5z" fill="#FC4C02"/>
+                        </svg>
+                      </div>
+                    {% when 2 %}
+                      <!-- Activity Selection Visual -->
+                      <div class="placeholder-activities">
+                        <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+                          {% for i in (1..3) %}
+                            <rect x="10" y="{{ 15 | plus: forloop.index0 | times: 30 }}" width="100" height="20" rx="4" fill="#f8f9fa" stroke="#dee2e6" stroke-width="2"/>
+                            <circle cx="25" cy="{{ 25 | plus: forloop.index0 | times: 30 }}" r="4" fill="#FC4C02"/>
+                            <line x1="35" y1="{{ 25 | plus: forloop.index0 | times: 30 }}" x2="95" y2="{{ 25 | plus: forloop.index0 | times: 30 }}" stroke="#adb5bd" stroke-width="2"/>
+                          {% endfor %}
+                        </svg>
+                      </div>
+                    {% when 3 %}
+                      <!-- Customization Visual -->
+                      <div class="placeholder-customize">
+                        <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+                          <rect x="20" y="20" width="80" height="80" rx="4" fill="#fff" stroke="#dee2e6" stroke-width="2"/>
+                          <path d="M40 60Q60 40 80 60T100 80" stroke="#FC4C02" stroke-width="3" fill="none"/>
+                          <circle cx="40" cy="60" r="5" fill="#FC4C02"/>
+                          <circle cx="80" cy="60" r="5" fill="#FC4C02"/>
+                          <!-- Color swatches -->
+                          <circle cx="30" cy="100" r="6" fill="#FC4C02"/>
+                          <circle cx="50" cy="100" r="6" fill="#2E7D32"/>
+                          <circle cx="70" cy="100" r="6" fill="#1976D2"/>
+                          <circle cx="90" cy="100" r="6" fill="#9C27B0"/>
+                        </svg>
+                      </div>
+                    {% when 4 %}
+                      <!-- Print Format Visual -->
+                      <div class="placeholder-print">
+                        <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+                          <rect x="30" y="20" width="60" height="80" rx="2" fill="#fff" stroke="#dee2e6" stroke-width="2"/>
+                          <text x="60" y="50" font-family="Arial" font-size="10" text-anchor="middle" fill="#666">A4</text>
+                          <rect x="35" y="55" width="50" height="35" rx="1" fill="#f8f9fa"/>
+                          <path d="M45 70Q60 65 75 70" stroke="#FC4C02" stroke-width="2" fill="none"/>
+                        </svg>
+                      </div>
+                  {% endcase %}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <!-- Map Styles Showcase -->
+    <div class="styles-showcase">
+      <div class="showcase-header">
+        <h2 class="showcase-heading">{{ section.settings.styles_heading | default: 'Choose Your Map Style' }}</h2>
+        <p class="showcase-description">{{ section.settings.styles_description | default: 'Every map tells a story. Pick the style that brings your adventure to life.' }}</p>
+      </div>
+
+      <div class="styles-grid">
+        {% for block in section.blocks %}
+          {% if block.type == 'map_style' %}
+            <div class="style-card" {{ block.shopify_attributes }}>
+              <div class="style-preview">
+                {% if block.settings.preview_image != blank %}
+                  {{ block.settings.preview_image | image_url: width: 500 | image_tag: class: 'style-image', loading: 'lazy' }}
+                {% else %}
+                  <!-- Generated style preview -->
+                  <div class="style-generated" data-style="{{ block.settings.style_name | handleize }}">
+                    <svg viewBox="0 0 300 400" fill="none">
+                      {% assign style_colors = block.settings.color_scheme | default: '#FC4C02,#ffffff,#f8f9fa' | split: ',' %}
+                      <rect width="300" height="400" fill="{{ style_colors[2] | default: '#f8f9fa' }}"/>
+
+                      <!-- Route path with style-specific rendering -->
+                      {% case block.settings.style_name %}
+                        {% when 'Classic' %}
+                          <path d="M50,300 Q100,200 150,250 T250,300" stroke="{{ style_colors[0] | default: '#FC4C02' }}" stroke-width="4" fill="none"/>
+                        {% when 'Minimal' %}
+                          <path d="M50,300 L150,200 L250,300" stroke="{{ style_colors[0] | default: '#000000' }}" stroke-width="2" fill="none"/>
+                        {% when 'Bold' %}
+                          <path d="M50,300 Q100,200 150,250 T250,300" stroke="{{ style_colors[0] | default: '#FC4C02' }}" stroke-width="8" fill="none" opacity="0.9"/>
+                        {% when 'Vintage' %}
+                          <path d="M50,300 Q100,200 150,250 T250,300" stroke="{{ style_colors[0] | default: '#8B7355' }}" stroke-width="3" fill="none" stroke-dasharray="2,2"/>
+                        {% else %}
+                          <path d="M50,300 Q100,200 150,250 T250,300" stroke="{{ style_colors[0] | default: '#FC4C02' }}" stroke-width="4" fill="none"/>
+                      {% endcase %}
+
+                      <!-- Start/End markers -->
+                      <circle cx="50" cy="300" r="6" fill="{{ style_colors[0] | default: '#FC4C02' }}"/>
+                      <circle cx="250" cy="300" r="6" fill="{{ style_colors[0] | default: '#FC4C02' }}"/>
+
+                      <!-- Style-specific details -->
+                      <text x="150" y="360" font-family="Arial" font-size="18" font-weight="bold" text-anchor="middle" fill="#333">
+                        {{ block.settings.style_name | upcase }}
+                      </text>
+                      <text x="150" y="380" font-family="Arial" font-size="12" text-anchor="middle" fill="#666">
+                        42.5km • 680m
+                      </text>
+                    </svg>
+                  </div>
+                {% endif %}
+
+                <div class="style-overlay">
+                  <span class="style-badge">{{ block.settings.style_name }}</span>
+                </div>
+              </div>
+
+              <div class="style-info">
+                <h3 class="style-title">{{ block.settings.style_name }}</h3>
+                {% if block.settings.style_description != blank %}
+                  <p class="style-description">{{ block.settings.style_description }}</p>
+                {% endif %}
+
+                {% if block.settings.best_for != blank %}
+                  <div class="style-meta">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor"/>
+                    </svg>
+                    <span>Best for: {{ block.settings.best_for }}</span>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Customization Options -->
+    <div class="customization-options">
+      <div class="options-header">
+        <h2 class="options-heading">{{ section.settings.options_heading | default: 'Personalize Every Detail' }}</h2>
+        <p class="options-description">{{ section.settings.options_description | default: 'Make it uniquely yours with our extensive customization options.' }}</p>
+      </div>
+
+      <div class="options-grid">
+        {% for block in section.blocks %}
+          {% if block.type == 'customization_option' %}
+            <div class="option-card" {{ block.shopify_attributes }}>
+              <div class="option-icon">
+                {% case block.settings.icon %}
+                  {% when 'color' %}
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                      <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10" stroke="currentColor" stroke-width="2" fill="none"/>
+                      <circle cx="12" cy="12" r="3" fill="currentColor"/>
+                    </svg>
+                  {% when 'text' %}
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                      <path d="M4 7V4h16v3M9 20h6M12 4v16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  {% when 'size' %}
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                      <path d="M3 9h18M9 21V9" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                  {% when 'stats' %}
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                      <path d="M3 3v18h18M7 16l4-4 4 4 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <circle cx="7" cy="16" r="2" fill="currentColor"/>
+                      <circle cx="11" cy="12" r="2" fill="currentColor"/>
+                      <circle cx="15" cy="16" r="2" fill="currentColor"/>
+                      <circle cx="21" cy="10" r="2" fill="currentColor"/>
+                    </svg>
+                  {% when 'frame' %}
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                      <rect x="7" y="7" width="10" height="10" rx="1" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                  {% else %}
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                      <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                {% endcase %}
+              </div>
+
+              <h3 class="option-title">{{ block.settings.title }}</h3>
+              <p class="option-description">{{ block.settings.description }}</p>
+
+              {% if block.settings.choices != blank %}
+                <div class="option-choices">
+                  {% assign choices = block.settings.choices | split: '|' %}
+                  {% for choice in choices limit: 4 %}
+                    <span class="choice-tag">{{ choice | strip }}</span>
+                  {% endfor %}
+                  {% if choices.size > 4 %}
+                    <span class="choice-tag choice-more">+{{ choices.size | minus: 4 }} more</span>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- CTA Section -->
+    {% if section.settings.show_cta %}
+      <div class="guide-cta">
+        <h2 class="cta-heading">{{ section.settings.cta_heading | default: 'Ready to Create Your Map?' }}</h2>
+        <p class="cta-description">{{ section.settings.cta_description | default: 'Transform your favorite rides into stunning wall art in minutes.' }}</p>
+
+        <div class="cta-actions">
+          {% if section.settings.primary_cta_text != blank %}
+            <a href="{{ section.settings.primary_cta_link }}" class="cta-button cta-primary">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.599h4.172L10.463 0l-7 13.828h4.172"/>
+              </svg>
+              {{ section.settings.primary_cta_text }}
+            </a>
+          {% endif %}
+
+          {% if section.settings.secondary_cta_text != blank %}
+            <a href="{{ section.settings.secondary_cta_link }}" class="cta-button cta-secondary">
+              {{ section.settings.secondary_cta_text }}
+            </a>
+          {% endif %}
+        </div>
+
+        {% if section.settings.trust_badges != blank %}
+          <div class="cta-trust-badges">
+            {% assign badges = section.settings.trust_badges | split: '|' %}
+            {% for badge in badges %}
+              <span class="trust-badge">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                </svg>
+                {{ badge | strip }}
+              </span>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Custom Map Guide",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Guide Hero"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow_text",
+      "label": "Eyebrow Text",
+      "default": "COMPLETE GUIDE"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "How to Build Your Custom Map"
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "label": "Description",
+      "default": "From Strava to stunning wall art in 4 simple steps. Discover how to transform your cycling adventures into museum-quality prints."
+    },
+    {
+      "type": "header",
+      "content": "Map Styles Section"
+    },
+    {
+      "type": "text",
+      "id": "styles_heading",
+      "label": "Styles Heading",
+      "default": "Choose Your Map Style"
+    },
+    {
+      "type": "textarea",
+      "id": "styles_description",
+      "label": "Styles Description",
+      "default": "Every map tells a story. Pick the style that brings your adventure to life."
+    },
+    {
+      "type": "header",
+      "content": "Customization Options Section"
+    },
+    {
+      "type": "text",
+      "id": "options_heading",
+      "label": "Options Heading",
+      "default": "Personalize Every Detail"
+    },
+    {
+      "type": "textarea",
+      "id": "options_description",
+      "label": "Options Description",
+      "default": "Make it uniquely yours with our extensive customization options."
+    },
+    {
+      "type": "header",
+      "content": "Call to Action"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_cta",
+      "label": "Show CTA Section",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "cta_heading",
+      "label": "CTA Heading",
+      "default": "Ready to Create Your Map?"
+    },
+    {
+      "type": "textarea",
+      "id": "cta_description",
+      "label": "CTA Description",
+      "default": "Transform your favorite rides into stunning wall art in minutes."
+    },
+    {
+      "type": "text",
+      "id": "primary_cta_text",
+      "label": "Primary CTA Text",
+      "default": "Start Creating Now"
+    },
+    {
+      "type": "url",
+      "id": "primary_cta_link",
+      "label": "Primary CTA Link"
+    },
+    {
+      "type": "text",
+      "id": "secondary_cta_text",
+      "label": "Secondary CTA Text",
+      "default": "View Examples"
+    },
+    {
+      "type": "url",
+      "id": "secondary_cta_link",
+      "label": "Secondary CTA Link"
+    },
+    {
+      "type": "text",
+      "id": "trust_badges",
+      "label": "Trust Badges (separate with |)",
+      "default": "Free Shipping|300 DPI Quality|30-Day Guarantee|Easy Returns"
+    },
+    {
+      "type": "header",
+      "content": "Section Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Top Padding",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Bottom Padding",
+      "default": 60
+    }
+  ],
+  "blocks": [
+    {
+      "type": "step",
+      "name": "Process Step",
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Step Title",
+          "default": "Connect Your Strava Account"
+        },
+        {
+          "type": "textarea",
+          "id": "description",
+          "label": "Step Description",
+          "default": "Securely link your Strava account to access all your cycling activities and routes."
+        },
+        {
+          "type": "textarea",
+          "id": "features",
+          "label": "Key Features (separate with |)",
+          "info": "Example: Secure OAuth authentication|Access all activities|No password required",
+          "default": "Secure OAuth authentication|One-click connection|All your activities instantly available"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Step Image (optional)"
+        }
+      ]
+    },
+    {
+      "type": "map_style",
+      "name": "Map Style",
+      "settings": [
+        {
+          "type": "text",
+          "id": "style_name",
+          "label": "Style Name",
+          "default": "Classic"
+        },
+        {
+          "type": "textarea",
+          "id": "style_description",
+          "label": "Style Description",
+          "default": "Clean and timeless design that highlights your route beautifully."
+        },
+        {
+          "type": "text",
+          "id": "best_for",
+          "label": "Best For",
+          "default": "All types of rides"
+        },
+        {
+          "type": "text",
+          "id": "color_scheme",
+          "label": "Color Scheme (comma-separated hex values)",
+          "info": "Format: route color, background color, accent color",
+          "default": "#FC4C02,#ffffff,#f8f9fa"
+        },
+        {
+          "type": "image_picker",
+          "id": "preview_image",
+          "label": "Style Preview Image (optional)"
+        }
+      ]
+    },
+    {
+      "type": "customization_option",
+      "name": "Customization Option",
+      "settings": [
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "options": [
+            { "value": "color", "label": "Color Palette" },
+            { "value": "text", "label": "Text & Typography" },
+            { "value": "size", "label": "Size & Format" },
+            { "value": "stats", "label": "Stats & Data" },
+            { "value": "frame", "label": "Frame Options" },
+            { "value": "custom", "label": "Custom Settings" }
+          ],
+          "default": "color"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Option Title",
+          "default": "Route Colors"
+        },
+        {
+          "type": "textarea",
+          "id": "description",
+          "label": "Option Description",
+          "default": "Choose from 20+ carefully curated color palettes or create your own custom scheme."
+        },
+        {
+          "type": "textarea",
+          "id": "choices",
+          "label": "Available Choices (separate with |)",
+          "info": "Show a preview of available options",
+          "default": "Classic Orange|Ocean Blue|Forest Green|Mountain Purple|Sunset Red|Custom RGB"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Custom Map Guide",
+      "blocks": [
+        {
+          "type": "step",
+          "settings": {
+            "title": "Connect Your Strava Account",
+            "description": "Securely link your Strava account with a single click. We use OAuth authentication to keep your data safe.",
+            "features": "Secure OAuth authentication|One-click connection|All your activities instantly available|No password sharing required"
+          }
+        },
+        {
+          "type": "step",
+          "settings": {
+            "title": "Select Your Activity",
+            "description": "Browse your complete Strava history and choose the ride you want to immortalize. Filter by distance, date, or location.",
+            "features": "Search all activities|Filter by type and date|View route previews|See elevation profiles"
+          }
+        },
+        {
+          "type": "step",
+          "settings": {
+            "title": "Customize Your Map",
+            "description": "Make it uniquely yours. Choose colors, add custom text, select your preferred map style, and adjust every detail.",
+            "features": "20+ map styles|Custom color schemes|Add titles and stats|Live preview updates|Adjust zoom and framing"
+          }
+        },
+        {
+          "type": "step",
+          "settings": {
+            "title": "Choose Format & Order",
+            "description": "Select your print size (A4, A3, or A2), add optional framing, and place your order. We'll handle the rest.",
+            "features": "Multiple print sizes|Professional framing options|300 DPI museum quality|Fast shipping worldwide"
+          }
+        },
+        {
+          "type": "map_style",
+          "settings": {
+            "style_name": "Classic",
+            "style_description": "Clean, timeless design with bold route lines and minimal distractions.",
+            "best_for": "All types of rides",
+            "color_scheme": "#FC4C02,#ffffff,#f8f9fa"
+          }
+        },
+        {
+          "type": "map_style",
+          "settings": {
+            "style_name": "Minimal",
+            "style_description": "Ultra-clean aesthetic with thin lines and maximum white space.",
+            "best_for": "Modern interiors",
+            "color_scheme": "#000000,#ffffff,#f8f9fa"
+          }
+        },
+        {
+          "type": "map_style",
+          "settings": {
+            "style_name": "Bold",
+            "style_description": "Eye-catching thick routes with vibrant colors that pop off the page.",
+            "best_for": "Statement pieces",
+            "color_scheme": "#FC4C02,#f8f9fa,#fff5f0"
+          }
+        },
+        {
+          "type": "map_style",
+          "settings": {
+            "style_name": "Vintage",
+            "style_description": "Classic cartography-inspired design with muted tones and elegant details.",
+            "best_for": "Traditional spaces",
+            "color_scheme": "#8B7355,#F5F1E8,#E8DCC4"
+          }
+        },
+        {
+          "type": "map_style",
+          "settings": {
+            "style_name": "Satellite",
+            "style_description": "Real terrain imagery showing the actual landscape of your route.",
+            "best_for": "Mountain & nature rides",
+            "color_scheme": "#FFEB3B,#2d3436,#636e72"
+          }
+        },
+        {
+          "type": "map_style",
+          "settings": {
+            "style_name": "Night Mode",
+            "style_description": "Dark background with bright route lines for dramatic contrast.",
+            "best_for": "Contemporary spaces",
+            "color_scheme": "#00E5FF,#1a1a1a,#2d2d2d"
+          }
+        },
+        {
+          "type": "customization_option",
+          "settings": {
+            "icon": "color",
+            "title": "Route Colors",
+            "description": "Choose from 20+ curated color palettes or create your own custom scheme with unlimited RGB options.",
+            "choices": "Classic Orange|Ocean Blue|Forest Green|Mountain Purple|Sunset Red|Midnight Black|Custom RGB"
+          }
+        },
+        {
+          "type": "customization_option",
+          "settings": {
+            "icon": "text",
+            "title": "Custom Text",
+            "description": "Add ride names, dates, locations, or personal messages in your choice of fonts and sizes.",
+            "choices": "Ride title|Date & location|Custom message|Stats display|Font selection|Text positioning"
+          }
+        },
+        {
+          "type": "customization_option",
+          "settings": {
+            "icon": "size",
+            "title": "Print Formats",
+            "description": "Available in three premium sizes, all printed at museum-quality 300 DPI resolution.",
+            "choices": "A4 (8.3 × 11.7 in)|A3 (11.7 × 16.5 in)|A2 (16.5 × 23.4 in)|300 DPI quality"
+          }
+        },
+        {
+          "type": "customization_option",
+          "settings": {
+            "icon": "stats",
+            "title": "Activity Stats",
+            "description": "Include key ride metrics pulled directly from your Strava data.",
+            "choices": "Distance|Elevation gain|Moving time|Average speed|Top speed|Heart rate|Power data"
+          }
+        },
+        {
+          "type": "customization_option",
+          "settings": {
+            "icon": "frame",
+            "title": "Framing Options",
+            "description": "Upgrade to a professionally crafted frame in your choice of finish.",
+            "choices": "Unframed|Black wood frame|White wood frame|Natural oak frame|Premium metal frame"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

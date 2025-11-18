@@ -1,0 +1,380 @@
+{
+  "sections": {
+    "custom_map_guide_main": {
+      "type": "custom-map-guide",
+      "blocks": {
+        "step_1": {
+          "type": "step",
+          "settings": {
+            "title": "Connect Your Strava Account",
+            "description": "Start by securely linking your Strava account with a single click. We use industry-standard OAuth authentication to ensure your data stays safe and private. No password sharing required—just authorize our app and you're ready to go.",
+            "features": "Secure OAuth 2.0 authentication|One-click connection process|Access all your cycling activities instantly|No password sharing required|Automatic activity sync"
+          }
+        },
+        "step_2": {
+          "type": "step",
+          "settings": {
+            "title": "Select Your Favorite Activity",
+            "description": "Browse through your complete Strava history and choose the ride you want to turn into art. Use our powerful filters to search by distance, date, location, or activity type. Preview each route before making your selection.",
+            "features": "Search through all your Strava activities|Filter by date, distance, and type|View interactive route previews|See elevation profiles and stats|Select multiple activities (coming soon)"
+          }
+        },
+        "step_3": {
+          "type": "step",
+          "settings": {
+            "title": "Customize Your Map Design",
+            "description": "This is where the magic happens. Choose from over 20 professionally designed map styles, select your perfect color palette, add custom text, and fine-tune every detail. Our live preview shows exactly what your final print will look like.",
+            "features": "20+ professional map styles|Unlimited custom color schemes|Add titles, dates, and locations|Include activity stats and metrics|Adjust zoom level and framing|Real-time preview updates"
+          }
+        },
+        "step_4": {
+          "type": "step",
+          "settings": {
+            "title": "Choose Format & Place Order",
+            "description": "Select your preferred print size (A4, A3, or A2) and optional professional framing. All prints are produced at museum-quality 300 DPI resolution on premium archival paper. Add to cart and we'll handle the rest with fast, secure shipping worldwide.",
+            "features": "Multiple print sizes available|Professional framing options|300 DPI museum-quality printing|Premium archival paper|Fast worldwide shipping|30-day satisfaction guarantee"
+          }
+        },
+        "style_classic": {
+          "type": "map_style",
+          "settings": {
+            "style_name": "Classic",
+            "style_description": "Clean, timeless design with bold route lines and minimal distractions. Perfect for any interior style.",
+            "best_for": "All types of rides and spaces",
+            "color_scheme": "#FC4C02,#ffffff,#f8f9fa"
+          }
+        },
+        "style_minimal": {
+          "type": "map_style",
+          "settings": {
+            "style_name": "Minimal",
+            "style_description": "Ultra-clean aesthetic with thin lines and maximum white space. Modern sophistication at its finest.",
+            "best_for": "Contemporary and minimalist interiors",
+            "color_scheme": "#000000,#ffffff,#f8f9fa"
+          }
+        },
+        "style_bold": {
+          "type": "map_style",
+          "settings": {
+            "style_name": "Bold",
+            "style_description": "Eye-catching thick routes with vibrant colors that demand attention and make a statement.",
+            "best_for": "Creating focal points and statement pieces",
+            "color_scheme": "#FC4C02,#f8f9fa,#fff5f0"
+          }
+        },
+        "style_vintage": {
+          "type": "map_style",
+          "settings": {
+            "style_name": "Vintage",
+            "style_description": "Classic cartography-inspired design with muted earth tones and elegant typographic details.",
+            "best_for": "Traditional and rustic spaces",
+            "color_scheme": "#8B7355,#F5F1E8,#E8DCC4"
+          }
+        },
+        "style_satellite": {
+          "type": "map_style",
+          "settings": {
+            "style_name": "Satellite",
+            "style_description": "Real terrain imagery showing the actual landscape and topography of your route.",
+            "best_for": "Mountain climbs and scenic routes",
+            "color_scheme": "#FFEB3B,#2d3436,#636e72"
+          }
+        },
+        "style_night": {
+          "type": "map_style",
+          "settings": {
+            "style_name": "Night Mode",
+            "style_description": "Dark background with bright, glowing route lines for dramatic high-contrast impact.",
+            "best_for": "Modern spaces and dramatic effect",
+            "color_scheme": "#00E5FF,#1a1a1a,#2d2d2d"
+          }
+        },
+        "style_ocean": {
+          "type": "map_style",
+          "settings": {
+            "style_name": "Ocean Blue",
+            "style_description": "Calming blues and aquas perfect for coastal rides and beach-side memories.",
+            "best_for": "Coastal rides and beach routes",
+            "color_scheme": "#1976D2,#E3F2FD,#BBDEFB"
+          }
+        },
+        "style_forest": {
+          "type": "map_style",
+          "settings": {
+            "style_name": "Forest Green",
+            "style_description": "Rich greens and natural tones that bring the outdoors inside.",
+            "best_for": "Trail rides and nature routes",
+            "color_scheme": "#2E7D32,#F1F8E9,#DCEDC8"
+          }
+        },
+        "option_colors": {
+          "type": "customization_option",
+          "settings": {
+            "icon": "color",
+            "title": "Route Colors",
+            "description": "Choose from 20+ professionally curated color palettes, or create your own custom scheme with unlimited RGB color options. Each palette is designed to complement modern interiors.",
+            "choices": "Classic Orange|Ocean Blue|Forest Green|Mountain Purple|Sunset Red|Midnight Black|Golden Hour|Rose Pink|Teal Blue|Lavender|Custom RGB"
+          }
+        },
+        "option_text": {
+          "type": "customization_option",
+          "settings": {
+            "icon": "text",
+            "title": "Custom Text & Labels",
+            "description": "Add ride names, memorable dates, locations, or personal messages. Choose from multiple professional fonts and customize size, positioning, and styling.",
+            "choices": "Ride title|Date & time|Location|Custom message|Stats display|Font selection|Text size|Positioning|Color customization"
+          }
+        },
+        "option_sizes": {
+          "type": "customization_option",
+          "settings": {
+            "icon": "size",
+            "title": "Print Formats",
+            "description": "Available in three premium sizes, all printed at museum-quality 300 DPI resolution on archival-grade paper that will last for generations.",
+            "choices": "A4 (8.3 × 11.7 in)|A3 (11.7 × 16.5 in)|A2 (16.5 × 23.4 in)|300 DPI quality|Archival paper"
+          }
+        },
+        "option_stats": {
+          "type": "customization_option",
+          "settings": {
+            "icon": "stats",
+            "title": "Activity Statistics",
+            "description": "Include key ride metrics pulled directly from your Strava data. Showcase your achievement with accurate stats displayed beautifully.",
+            "choices": "Total distance|Elevation gain|Moving time|Average speed|Top speed|Heart rate data|Power output|Calories burned"
+          }
+        },
+        "option_frames": {
+          "type": "customization_option",
+          "settings": {
+            "icon": "frame",
+            "title": "Professional Framing",
+            "description": "Upgrade to a professionally crafted wooden or metal frame. Each frame is handcrafted with UV-protective glass and ready to hang.",
+            "choices": "Unframed (print only)|Black wood frame|White wood frame|Natural oak frame|Walnut wood frame|Premium metal frame"
+          }
+        },
+        "option_layout": {
+          "type": "customization_option",
+          "settings": {
+            "icon": "custom",
+            "title": "Map Layout & Zoom",
+            "description": "Fine-tune your map's composition. Adjust zoom level, rotation, and framing to capture the perfect view of your route.",
+            "choices": "Auto-fit route|Custom zoom level|Map rotation|Center point adjustment|Margin control|Aspect ratio options"
+          }
+        }
+      },
+      "block_order": [
+        "step_1",
+        "step_2",
+        "step_3",
+        "step_4",
+        "style_classic",
+        "style_minimal",
+        "style_bold",
+        "style_vintage",
+        "style_satellite",
+        "style_night",
+        "style_ocean",
+        "style_forest",
+        "option_colors",
+        "option_text",
+        "option_sizes",
+        "option_stats",
+        "option_frames",
+        "option_layout"
+      ],
+      "settings": {
+        "eyebrow_text": "COMPLETE GUIDE",
+        "heading": "How to Build Your Custom Map",
+        "description": "From Strava to stunning wall art in 4 simple steps. Discover how to transform your cycling adventures into museum-quality prints that celebrate your achievements.",
+        "styles_heading": "Choose Your Perfect Map Style",
+        "styles_description": "Every map tells a story. Pick the style that brings your adventure to life and complements your space perfectly.",
+        "options_heading": "Personalize Every Detail",
+        "options_description": "Make it uniquely yours with our extensive customization options. From colors to stats, you're in complete control.",
+        "show_cta": true,
+        "cta_heading": "Ready to Create Your Map?",
+        "cta_description": "Transform your favorite rides into stunning wall art in minutes. No design skills required.",
+        "primary_cta_text": "Start Creating Now",
+        "primary_cta_link": "/pages/strava-login",
+        "secondary_cta_text": "View Gallery",
+        "secondary_cta_link": "/pages/gallery",
+        "trust_badges": "Free Worldwide Shipping|300 DPI Museum Quality|30-Day Money-Back Guarantee|Secure Payment",
+        "padding_top": 60,
+        "padding_bottom": 60
+      }
+    },
+    "map_examples": {
+      "type": "map-examples-gallery",
+      "blocks": {
+        "example_1": {
+          "type": "example",
+          "settings": {
+            "title": "Alpine Climb",
+            "subtitle": "Chamonix, France • 127km • 2,450m",
+            "style_name": "Classic Orange"
+          }
+        },
+        "example_2": {
+          "type": "example",
+          "settings": {
+            "title": "Coastal Loop",
+            "subtitle": "Big Sur, CA • 95km • 1,830m",
+            "style_name": "Ocean Blue"
+          }
+        },
+        "example_3": {
+          "type": "example",
+          "settings": {
+            "title": "City Circuit",
+            "subtitle": "San Francisco • 42km • 680m",
+            "style_name": "Minimal Black"
+          }
+        },
+        "example_4": {
+          "type": "example",
+          "settings": {
+            "title": "Mountain Pass",
+            "subtitle": "Boulder, CO • 88km • 1,920m",
+            "style_name": "Vintage"
+          }
+        },
+        "example_5": {
+          "type": "example",
+          "settings": {
+            "title": "Desert Adventure",
+            "subtitle": "Sedona, AZ • 112km • 1,450m",
+            "style_name": "Sunset Red"
+          }
+        },
+        "example_6": {
+          "type": "example",
+          "settings": {
+            "title": "Forest Trail",
+            "subtitle": "Portland, OR • 65km • 950m",
+            "style_name": "Forest Green"
+          }
+        }
+      },
+      "block_order": [
+        "example_1",
+        "example_2",
+        "example_3",
+        "example_4",
+        "example_5",
+        "example_6"
+      ],
+      "settings": {
+        "heading": "Get Inspired by Real Rider Maps",
+        "description": "See what's possible with custom map posters. Each one tells a unique story of adventure and achievement.",
+        "grid_style": "3-column",
+        "show_titles": true,
+        "show_view_button": true,
+        "show_cta": true,
+        "cta_label": "Create Your Own Map",
+        "cta_link": "/pages/strava-login",
+        "show_trust_signal": true,
+        "trust_signal_text": "Free Shipping • 300 DPI Quality • 30-Day Guarantee",
+        "color_scheme": "scheme-1",
+        "padding_top": 80,
+        "padding_bottom": 80
+      }
+    },
+    "faq_section": {
+      "type": "collapsible-content",
+      "blocks": {
+        "faq_1": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "How does the Strava integration work?",
+            "row_content": "<p>We use secure OAuth 2.0 authentication to connect with your Strava account. This means you never share your password with us. Once connected, we can access your public activity data to generate your custom maps. You can disconnect at any time from your account settings.</p>",
+            "page": ""
+          }
+        },
+        "faq_2": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "What print quality can I expect?",
+            "row_content": "<p>All our prints are produced at professional 300 DPI resolution on museum-grade archival paper. This ensures sharp details, vibrant colors, and longevity. The paper is acid-free and designed to last for generations without fading.</p>",
+            "page": ""
+          }
+        },
+        "faq_3": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "Can I customize the map colors and style?",
+            "row_content": "<p>Absolutely! You have complete control over your map's appearance. Choose from 20+ pre-designed styles or create your own color scheme. You can also customize text, fonts, stats display, zoom level, and much more. Our live preview shows your changes in real-time.</p>",
+            "page": ""
+          }
+        },
+        "faq_4": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "What sizes are available?",
+            "row_content": "<p>We offer three standard sizes:<br>• A4 (8.3 × 11.7 inches / 210 × 297 mm)<br>• A3 (11.7 × 16.5 inches / 297 × 420 mm)<br>• A2 (16.5 × 23.4 inches / 420 × 594 mm)<br><br>All sizes are available with or without professional framing options.</p>",
+            "page": ""
+          }
+        },
+        "faq_5": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "How long does shipping take?",
+            "row_content": "<p>Production typically takes 2-3 business days. Shipping times vary by location:<br>• US: 3-5 business days<br>• Europe: 5-7 business days<br>• Rest of world: 7-14 business days<br><br>We offer free standard shipping worldwide. Express options are available at checkout.</p>",
+            "page": ""
+          }
+        },
+        "faq_6": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "What if I'm not satisfied with my print?",
+            "row_content": "<p>We stand behind our quality with a 30-day money-back guarantee. If you're not completely satisfied with your print, contact us within 30 days of delivery for a full refund or replacement. We'll even cover return shipping.</p>",
+            "page": ""
+          }
+        },
+        "faq_7": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "Can I create maps from non-Strava activities?",
+            "row_content": "<p>Currently, we support Strava integration exclusively. However, if you have GPS data from other sources (Garmin, Wahoo, etc.), you can upload those files to Strava first, then create your map through our platform.</p>",
+            "page": ""
+          }
+        },
+        "faq_8": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "Do you offer gift certificates?",
+            "row_content": "<p>Yes! Gift certificates are available in multiple denominations. They make perfect gifts for cyclists and can be redeemed for any product in our store. Purchase a gift certificate from our shop page.</p>",
+            "page": ""
+          }
+        }
+      },
+      "block_order": [
+        "faq_1",
+        "faq_2",
+        "faq_3",
+        "faq_4",
+        "faq_5",
+        "faq_6",
+        "faq_7",
+        "faq_8"
+      ],
+      "settings": {
+        "caption": "",
+        "heading": "Frequently Asked Questions",
+        "heading_size": "h1",
+        "heading_alignment": "center",
+        "layout": "none",
+        "color_scheme": "",
+        "container_color_scheme": "",
+        "open_first_collapsible_row": false,
+        "image_ratio": "adapt",
+        "desktop_layout": "image_second",
+        "padding_top": 80,
+        "padding_bottom": 80
+      }
+    }
+  },
+  "order": [
+    "custom_map_guide_main",
+    "map_examples",
+    "faq_section"
+  ]
+}
