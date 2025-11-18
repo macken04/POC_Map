@@ -28,6 +28,7 @@ class MapDesign {
       mapStyle: 'streets',         // New: Currently selected map style
       colorScheme: 'synthwave',    // Keep for backward compatibility
       routeThickness: 4,
+      routeColor: '#FF0000',       // Route line color (default: red)
       mainTitle: 'EPIC RIDE',
       subtitle: 'Summer 2023',
       layout: 'portrait',
@@ -86,6 +87,7 @@ class MapDesign {
       // Legacy style controls (keep for compatibility)
       colorSchemes: document.querySelectorAll('.color-scheme'),
       routeThicknessSlider: document.getElementById('route-thickness-slider'),
+      routeColorOptions: document.querySelectorAll('.route-color-option'),
       presetOptions: document.querySelectorAll('.preset-option'),
       
       // Text controls
@@ -955,8 +957,8 @@ class MapDesign {
         mainTitle: this.currentSettings.mainTitle || 'EPIC RIDE',
         subtitle: this.currentSettings.subtitle || '',
         showStartEnd: true,
-        lineColor: '#ff4444',
-        lineWidth: 3,
+        lineColor: this.currentSettings.routeColor || '#FF0000',
+        lineWidth: this.currentSettings.routeThickness || 4,
         bounds: {
           north: currentBounds.getNorth(),
           south: currentBounds.getSouth(),
@@ -2844,14 +2846,37 @@ class MapDesign {
       this.elements.routeThicknessSlider.addEventListener('input', (e) => {
         const thickness = parseInt(e.target.value);
         this.currentSettings.routeThickness = thickness;
-        
+
         // Update map route thickness
         this.updateRouteThickness(thickness);
-        
+
         console.log('Route thickness changed to:', thickness);
       });
     }
-    
+
+    // Route color options
+    if (this.elements.routeColorOptions) {
+      this.elements.routeColorOptions.forEach((colorOption) => {
+        colorOption.addEventListener('click', (e) => {
+          const color = colorOption.dataset.color;
+
+          // Remove active class from all options
+          this.elements.routeColorOptions.forEach(opt => opt.classList.remove('active'));
+
+          // Add active class to clicked option
+          colorOption.classList.add('active');
+
+          // Update current settings
+          this.currentSettings.routeColor = color;
+
+          // Update map route color
+          this.updateRouteColor(color);
+
+          console.log('Route color changed to:', color);
+        });
+      });
+    }
+
     // Preset options
     this.elements.presetOptions.forEach((preset) => {
       preset.addEventListener('click', () => {
@@ -3348,7 +3373,7 @@ class MapDesign {
    */
   updateRouteThickness(thickness) {
     console.log(`MapDesign: Updating route thickness to ${thickness} (direct method)`);
-    
+
     if (this.mapboxIntegration && this.mapboxIntegration.updateRouteStyle) {
       // This should now use the direct route update method
       this.mapboxIntegration.updateRouteStyle({ routeWidth: thickness });
@@ -3356,7 +3381,21 @@ class MapDesign {
       console.warn('MapDesign: Cannot update route thickness - mapboxIntegration not available');
     }
   }
-  
+
+  /**
+   * Update route color without triggering style changes
+   */
+  updateRouteColor(color) {
+    console.log(`MapDesign: Updating route color to ${color} (direct method)`);
+
+    if (this.mapboxIntegration && this.mapboxIntegration.updateRouteStyle) {
+      // Update route color using the direct route update method
+      this.mapboxIntegration.updateRouteStyle({ routeColor: color });
+    } else {
+      console.warn('MapDesign: Cannot update route color - mapboxIntegration not available');
+    }
+  }
+
   /**
    * Update text overlay
    */

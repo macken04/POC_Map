@@ -803,6 +803,56 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   text-align: center;
 }
 
+/* Route Color Section */
+.route-color-section {
+  margin-bottom: 2rem;
+}
+
+.color-options-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.route-color-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--poster-bg-primary);
+  border: 2px solid var(--poster-border);
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.route-color-option:hover {
+  border-color: var(--poster-accent-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--poster-shadow-sm);
+}
+
+.route-color-option.active {
+  border-color: var(--poster-accent-primary);
+  background: var(--poster-bg-secondary);
+  box-shadow: var(--poster-shadow-md);
+}
+
+.route-color-option .color-box {
+  width: 100%;
+  height: 40px;
+  border-radius: 0.5rem;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.route-color-option .color-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--poster-text-primary);
+}
+
 /* Route Thickness Section */
 .route-thickness-section {
   margin-bottom: 2rem; /* More spacing between sections */
