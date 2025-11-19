@@ -3175,7 +3175,7 @@ router.post('/confirm/:previewId', requireAuth, validateMapSession, saveSessionF
       bounds: preview.config.bounds,
       route: {
         coordinates: preview.config.route.coordinates,
-        color: preview.config.route.color || '#fc5200',
+        color: preview.config.route.color || '#ff4444',
         width: preview.config.route.width || 4
       },
       markers: preview.config.markers,

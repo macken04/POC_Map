@@ -2026,7 +2026,7 @@ class MapService {
         style: options.style || 'mapbox://styles/mapbox/streets-v12',
         route: {
           coordinates: options.routeCoordinates || [],
-          color: options.routeColor || '#fc5200',
+          color: options.routeColor || '#ff4444',
           width: options.routeWidth || 4
         },
         markers: options.showStartEnd && options.routeCoordinates && options.routeCoordinates.length >= 2 ? {
@@ -2513,7 +2513,7 @@ class MapService {
       style: config.style || 'mapbox://styles/mapbox/streets-v12',
       route: {
         coordinates: Array.isArray(config.route?.coordinates) ? config.route.coordinates : [],
-        color: config.route?.color || '#fc5200',
+        color: config.route?.color || '#ff4444',
         width: config.route?.width || 4
       },
       markers: config.markers || null,

@@ -26,11 +26,77 @@ class OrderMapService {
 
     this.mapService = require('./mapService');
     this.stravaService = require('./stravaService');
-    
+
     await this.mapService.initialize();
-    
+
     this.initialized = true;
     console.log('[OrderMapService] Service initialized successfully');
+  }
+
+  /**
+   * Extract routeColor from configuration data, checking all possible locations
+   * @param {Object} configData - The raw configuration data loaded from file
+   * @returns {string} The route color or default '#ff4444'
+   */
+  extractRouteColor(configData) {
+    // Check all possible locations where routeColor might be stored
+    const possiblePaths = [
+      // Double nested structure: mapConfiguration.mapConfiguration.customization.routeColor
+      configData?.mapConfiguration?.mapConfiguration?.customization?.routeColor,
+      // Settings path: mapConfiguration.settings.routeColor
+      configData?.mapConfiguration?.settings?.routeColor,
+      // Single nested: mapConfiguration.customization.routeColor
+      configData?.mapConfiguration?.customization?.routeColor,
+      // Direct path: mapConfiguration.routeColor
+      configData?.mapConfiguration?.routeColor,
+      // Top level customization
+      configData?.customization?.routeColor,
+      // Top level
+      configData?.routeColor
+    ];
+
+    for (const color of possiblePaths) {
+      if (color && typeof color === 'string') {
+        console.log('[OrderMapService] Found routeColor:', color);
+        return color;
+      }
+    }
+
+    console.log('[OrderMapService] No routeColor found, using default #ff4444');
+    return '#ff4444';
+  }
+
+  /**
+   * Extract routeWidth from configuration data, checking all possible locations
+   * @param {Object} configData - The raw configuration data loaded from file
+   * @returns {number} The route width or default 4
+   */
+  extractRouteWidth(configData) {
+    // Check all possible locations where routeWidth might be stored
+    const possiblePaths = [
+      // Double nested structure
+      configData?.mapConfiguration?.mapConfiguration?.customization?.routeWidth,
+      // Settings path
+      configData?.mapConfiguration?.settings?.routeThickness,
+      configData?.mapConfiguration?.settings?.routeWidth,
+      // Single nested
+      configData?.mapConfiguration?.customization?.routeWidth,
+      // Direct path
+      configData?.mapConfiguration?.routeWidth,
+      // Top level
+      configData?.customization?.routeWidth,
+      configData?.routeWidth
+    ];
+
+    for (const width of possiblePaths) {
+      if (width && typeof width === 'number') {
+        console.log('[OrderMapService] Found routeWidth:', width);
+        return width;
+      }
+    }
+
+    console.log('[OrderMapService] No routeWidth found, using default 4');
+    return 4;
   }
 
   /**
@@ -365,7 +431,7 @@ class OrderMapService {
   /**
    * Reconstruct complete map configuration from Strava activity data
    */
-  async reconstructConfigFromActivity(activityData, orderProperties) {
+  async reconstructConfigFromActivity(activityData, orderProperties, configData = null) {
     try {
       // Validate activity data first
       const validation = this.stravaService.validateActivityForMapGeneration(activityData);
@@ -380,6 +446,19 @@ class OrderMapService {
       const printSize = orderProperties.find(p => p.name === 'Print Size')?.value || 'A4';
       const orientation = orderProperties.find(p => p.name === 'Orientation')?.value || 'portrait';
       const mapStyle = orderProperties.find(p => p.name === 'Map Style')?.value || 'outdoors-v12';
+
+      // Use helper functions to extract routeColor/Width from configData if available,
+      // otherwise fall back to order properties (which likely don't have these values)
+      let routeColor, routeWidth;
+      if (configData) {
+        routeColor = this.extractRouteColor(configData);
+        routeWidth = this.extractRouteWidth(configData);
+        console.log('[OrderMapService] Using stored route styling from config - color:', routeColor, 'width:', routeWidth);
+      } else {
+        routeColor = orderProperties.find(p => p.name === 'Route Color')?.value || '#ff4444';
+        routeWidth = parseInt(orderProperties.find(p => p.name === 'Route Width')?.value) || 4;
+        console.log('[OrderMapService] Using order properties for route styling - color:', routeColor, 'width:', routeWidth);
+      }
 
       // Calculate dimensions based on print size (300 DPI)
       const dimensions = this.getPrintDimensions(printSize, orientation);
@@ -401,8 +480,8 @@ class OrderMapService {
         bounds: bounds,
         route: {
           coordinates: coordinates,
-          color: '#fc5200',
-          width: 4
+          color: routeColor,
+          width: routeWidth
         },
         markers: {
           start: coordinates[0],
@@ -459,8 +538,8 @@ class OrderMapService {
         throw new Error('Could not fetch detailed activity data from Strava API');
       }
       
-      // Use the existing reconstruction logic
-      return await this.reconstructConfigFromActivity(detailedActivity, orderProperties);
+      // Use the existing reconstruction logic, passing configData to preserve stored routeColor
+      return await this.reconstructConfigFromActivity(detailedActivity, orderProperties, configData);
       
     } catch (error) {
       console.error('[OrderMapService] Error reconstructing from stored activity data:', error);
@@ -708,12 +787,18 @@ class OrderMapService {
       
       // Try to extract route coordinates from various sources
       if (!reconstructed.route) {
+        // Use helper functions to extract routeColor and routeWidth from all possible locations
+        const routeColor = this.extractRouteColor(configData);
+        const routeWidth = this.extractRouteWidth(configData);
+
+        console.log('[OrderMapService] Extracted route styling - color:', routeColor, 'width:', routeWidth);
+
         // Check if coordinates are embedded in the mapConfiguration
         if (configData.mapConfiguration && configData.mapConfiguration.coordinates) {
           reconstructed.route = {
             coordinates: configData.mapConfiguration.coordinates,
-            color: configData.mapConfiguration.routeColor || '#fc5200',
-            width: configData.mapConfiguration.routeWidth || 4
+            color: routeColor,
+            width: routeWidth
           };
           console.log('[OrderMapService] Extracted route from embedded coordinates');
         }
@@ -725,8 +810,8 @@ class OrderMapService {
             if (coordinates && coordinates.length > 0) {
               reconstructed.route = {
                 coordinates: coordinates,
-                color: '#fc5200',
-                width: 4
+                color: routeColor,
+                width: routeWidth
               };
               console.log('[OrderMapService] Successfully decoded Strava polyline to', coordinates.length, 'coordinates');
             }

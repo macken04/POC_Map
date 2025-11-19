@@ -1,5 +1,6 @@
 /* ==========================================================================
-   MAP DESIGN - MODERN POSTER DESIGNER STYLES
+   MAP DESIGN - MODERN POSTER DESIGNER STYLES 
+   This is for the map design page
    ========================================================================== */
 
 /* Root Variables - Premium Neutral Palette */
@@ -2016,6 +2017,186 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .color-selected-text span {
   font-weight: 600;
   color: var(--poster-accent-primary);
+}
+
+/* Route Color Swatches - Horizontal Layout */
+.route-color-swatches {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  margin: 1.5rem 0;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.route-color-swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.route-color-swatch:hover {
+  transform: translateY(-2px);
+}
+
+.color-swatch-inner {
+  width: 60px;
+  height: 60px;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  box-shadow: var(--poster-shadow-sm);
+  position: relative;
+}
+
+.route-color-swatch:hover .color-swatch-inner {
+  box-shadow: var(--poster-shadow);
+  transform: scale(1.05);
+}
+
+.route-color-swatch.selected .color-swatch-inner {
+  border: 3px solid var(--poster-accent-primary) !important;
+  box-shadow: var(--poster-shadow-lg);
+}
+
+.route-color-swatch.selected .color-swatch-inner::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* White swatch checkmark needs dark color */
+.route-color-swatch[data-color="#ffffff"].selected .color-swatch-inner::after {
+  color: #333333;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.5);
+}
+
+.color-swatch-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--poster-text-secondary);
+  transition: color 0.2s ease;
+}
+
+.route-color-swatch.selected .color-swatch-label {
+  color: var(--poster-accent-primary);
+  font-weight: 600;
+}
+
+/* Mobile responsive for route color swatches */
+@media (max-width: 640px) {
+  .route-color-swatches {
+    justify-content: space-between;
+  }
+
+  .color-swatch-inner {
+    width: 50px;
+    height: 50px;
+  }
+
+  .color-swatch-label {
+    font-size: 0.75rem;
+  }
+}
+
+/* Route Color Section - Simplified Palette Design */
+.route-color-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: var(--poster-card-bg);
+  border-radius: 0.75rem;
+  border: 1px solid var(--poster-border);
+}
+
+.route-color-palette {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+  min-height: 50px;
+  align-items: center;
+}
+
+.route-color-box {
+  width: 50px;
+  height: 50px;
+  padding: 0;
+  border: 3px solid transparent;
+  border-radius: 0.5rem;
+  background: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: visible;
+}
+
+.color-box-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 0.375rem;
+  transition: all 0.2s ease;
+  display: block !important;
+}
+
+/* Route color fill classes */
+.color-fill-red { background-color: #ff4444 !important; }
+.color-fill-black { background-color: #000000 !important; }
+.color-fill-white { background-color: #ffffff !important; border: 1px solid #e0e0e0; }
+.color-fill-blue { background-color: #0066ff !important; }
+
+.route-color-box:hover {
+  transform: translateY(-2px);
+  border-color: var(--poster-border-hover);
+}
+
+.route-color-box.selected {
+  border-color: var(--poster-accent-primary);
+  box-shadow: 0 0 0 1px var(--poster-accent-primary);
+}
+
+.route-color-box.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  pointer-events: none;
+}
+
+/* White color box needs dark checkmark */
+.route-color-box[data-color="#ffffff"].selected::after {
+  color: #333333;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.5);
+}
+
+/* Mobile responsive for route color palette */
+@media (max-width: 640px) {
+  .route-color-palette {
+    justify-content: space-between;
+  }
+
+  .route-color-box {
+    width: 45px;
+    height: 45px;
+  }
 }
 
 /* Mobile responsive for color swatches */
