@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Batch GPX Generator - Sample Route"
+     xmlns="http://www.topografix.com/GPX/1/1"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+  <metadata>
+    <name>Sample Cycling Route</name>
+    <desc>A sample GPX file for testing the batch generator</desc>
+    <time>2025-11-21T10:00:00Z</time>
+  </metadata>
+  <trk>
+    <name>Sample Route</name>
+    <type>cycling</type>
+    <trkseg>
+      <!-- Dublin City Center Route -->
+      <trkpt lat="53.3498" lon="-6.2603">
+        <ele>20</ele>
+        <time>2025-11-21T10:00:00Z</time>
+      </trkpt>
+      <trkpt lat="53.3485" lon="-6.2580">
+        <ele>21</ele>
+        <time>2025-11-21T10:01:00Z</time>
+      </trkpt>
+      <trkpt lat="53.3472" lon="-6.2557">
+        <ele>22</ele>
+        <time>2025-11-21T10:02:00Z</time>
+      </trkpt>
+      <trkpt lat="53.3460" lon="-6.2535">
+        <ele>23</ele>
+        <time>2025-11-21T10:03:00Z</time>
+      </trkpt>
+      <trkpt lat="53.3448" lon="-6.2512">
+        <ele>24</ele>
+        <time>2025-11-21T10:04:00Z</time>
+      </trkpt>
+      <trkpt lat="53.3435" lon="-6.2490">
+        <ele>25</ele>
+        <time>2025-11-21T10:05:00Z</time>
+      </trkpt>
+      <trkpt lat="53.3423" lon="-6.2468">
+        <ele>26</ele>
+        <time>2025-11-21T10:06:00Z</time>
+      </trkpt>
+      <trkpt lat="53.3410" lon="-6.2445">
+        <ele>27</ele>
+        <time>2025-11-21T10:07:00Z</time>
+      </trkpt>
+      <trkpt lat="53.3398" lon="-6.2423">
+        <ele>28</ele>
+        <time>2025-11-21T10:08:00Z</time>
+      </trkpt>
+      <trkpt lat="53.3385" lon="-6.2400">
+        <ele>29</ele>
+        <time>2025-11-21T10:09:00Z</time>
+      </trkpt>
+      <trkpt lat="53.3373" lon="-6.2378">
+        <ele>30</ele>
+        <time>2025-11-21T10:10:00Z</time>
+      </trkpt>
+      <trkpt lat="53.3360" lon="-6.2355">
+        <ele>31</ele>
+        <time>2025-11-21T10:11:00Z</time>
+      </trkpt>
+      <trkpt lat="53.3348" lon="-6.2333">
+        <ele>32</ele>
+        <time>2025-11-21T10:12:00Z</time>
+      </trkpt>
+      <trkpt lat="53.3335" lon="-6.2310">
+        <ele>33</ele>
+        <time>2025-11-21T10:13:00Z</time>
+      </trkpt>
+      <trkpt lat="53.3323" lon="-6.2288">
+        <ele>34</ele>
+        <time>2025-11-21T10:14:00Z</time>
+      </trkpt>
+      <trkpt lat="53.3310" lon="-6.2265">
+        <ele>35</ele>
+        <time>2025-11-21T10:15:00Z</time>
+      </trkpt>
+      <trkpt lat="53.3298" lon="-6.2243">
+        <ele>36</ele>
+        <time>2025-11-21T10:16:00Z</time>
+      </trkpt>
+      <trkpt lat="53.3285" lon="-6.2220">
+        <ele>37</ele>
+        <time>2025-11-21T10:17:00Z</time>
+      </trkpt>
+      <trkpt lat="53.3273" lon="-6.2198">
+        <ele>38</ele>
+        <time>2025-11-21T10:18:00Z</time>
+      </trkpt>
+      <trkpt lat="53.3260" lon="-6.2175">
+        <ele>39</ele>
+        <time>2025-11-21T10:19:00Z</time>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>
