@@ -23,8 +23,8 @@
           "type": "step",
           "settings": {
             "title": "Customize Your Map Design",
-            "description": "This is where the magic happens. Choose from over 20 professionally designed map styles, select your perfect color palette, add custom text, and fine-tune every detail. Our live preview shows exactly what your final print will look like.",
-            "features": "20+ professional map styles|Unlimited custom color schemes|Add titles, dates, and locations|Include activity stats and metrics|Adjust zoom level and framing|Real-time preview updates"
+            "description": "This is where the magic happens. Our intuitive 4-tab customization interface lets you perfect every detail. Choose your map style, pick your route colors, add custom text, and select your print size. Our live preview updates in real-time so you see exactly what your final print will look like.",
+            "features": "Tab 1 - Style: Choose from 20+ professional map themes|Tab 2 - Colors: Select route colors from curated palettes|Tab 3 - Text: Add custom titles, subtitles, and adjust route line width (1-10px)|Tab 4 - Size: Select print format (A4, A3, A2) and orientation|Real-time preview with every change|Interactive map customization with zoom and pan"
           }
         },
         "step_4": {
@@ -160,6 +160,15 @@
             "description": "Fine-tune your map's composition. Adjust zoom level, rotation, and framing to capture the perfect view of your route.",
             "choices": "Auto-fit route|Custom zoom level|Map rotation|Center point adjustment|Margin control|Aspect ratio options"
           }
+        },
+        "option_route_line": {
+          "type": "customization_option",
+          "settings": {
+            "icon": "custom",
+            "title": "Route Line Styling",
+            "description": "Control the appearance of your route line with precision. Adjust thickness (1-10px) and choose from multiple color options including red, black, white, and blue.",
+            "choices": "Line thickness slider (1-10px)|Route color palette (Red, Black, White, Blue)|Custom route colors|Line style options|Real-time preview|Perfect for any print size"
+          }
         }
       },
       "block_order": [
@@ -176,6 +185,7 @@
         "style_ocean",
         "style_forest",
         "option_colors",
+        "option_route_line",
         "option_text",
         "option_sizes",
         "option_stats",
