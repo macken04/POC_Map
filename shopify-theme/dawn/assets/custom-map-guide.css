@@ -232,6 +232,18 @@
   transition: all 0.3s ease;
   width: 100%;
   max-width: 100%;
+  text-align: left; /* Default left alignment for readability */
+}
+
+/* Optional: Add this class via Shopify editor to center card content */
+.step-content.text-center,
+.custom-map-guide.center-card-text .step-content {
+  text-align: center;
+}
+
+.step-content.text-center .step-features,
+.custom-map-guide.center-card-text .step-features {
+  align-items: center;
 }
 
 .step-content:hover {
@@ -267,6 +279,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  align-items: flex-start; /* Default left alignment */
 }
 
 .step-features li {
@@ -276,6 +289,7 @@
   font-size: 0.9375rem;
   color: #333;
   padding: 0.5rem 0;
+  text-align: left;
 }
 
 .step-features li svg {
@@ -483,6 +497,11 @@
 
 .style-info {
   padding: 1.5rem;
+  text-align: left; /* Default left alignment */
+}
+
+.custom-map-guide.center-card-text .style-info {
+  text-align: center;
 }
 
 .style-title {
@@ -600,6 +619,13 @@
   gap: 1rem;
   width: 100%;
   max-width: 100%;
+  text-align: left; /* Default left alignment */
+  align-items: flex-start; /* Align items to start */
+}
+
+.custom-map-guide.center-card-text .option-card {
+  text-align: center;
+  align-items: center;
 }
 
 .option-card:hover {
@@ -644,6 +670,11 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 0.5rem;
+  justify-content: flex-start;
+}
+
+.custom-map-guide.center-card-text .option-choices {
+  justify-content: center;
 }
 
 .choice-tag {
