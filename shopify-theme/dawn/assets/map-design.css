@@ -556,6 +556,12 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   color: var(--poster-text-primary);
 }
 
+.step-tab:focus {
+  outline: 2px solid var(--poster-accent-primary);
+  outline-offset: -2px;
+  background: var(--poster-accent-light);
+}
+
 .step-tab.active {
   color: var(--poster-accent-primary);
   font-weight: var(--font-weight-semibold);
@@ -1143,6 +1149,11 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   box-shadow: var(--poster-shadow-sm);
 }
 
+.layout-option:focus {
+  outline: 2px solid var(--poster-accent-primary);
+  outline-offset: 2px;
+}
+
 .layout-option.active {
   border-color: var(--poster-accent-primary);
   background: var(--poster-accent-light);
@@ -1209,6 +1220,11 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   border-color: var(--poster-border-hover);
   background: var(--poster-bg-primary);
   box-shadow: var(--poster-shadow-sm);
+}
+
+.size-option:focus {
+  outline: 2px solid var(--poster-accent-primary);
+  outline-offset: 2px;
 }
 
 .size-option.active {
@@ -1359,6 +1375,12 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .nav-next-btn:hover:not(:disabled) {
   background: var(--poster-accent-hover);
   box-shadow: var(--poster-shadow);
+}
+
+.nav-next-btn:focus:not(:disabled) {
+  outline: 2px solid white;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--poster-accent-primary);
 }
 
 .nav-next-btn:disabled {
@@ -1929,6 +1951,11 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   transform: translateY(-2px);
 }
 
+.theme-card:focus {
+  outline: 2px solid var(--poster-accent-primary);
+  outline-offset: 2px;
+}
+
 .theme-card.active {
   border-color: var(--poster-accent-primary);
   box-shadow: var(--poster-shadow-focus);
@@ -2081,6 +2108,11 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   box-shadow: var(--poster-shadow);
 }
 
+.color-swatch:focus {
+  outline: 3px solid var(--poster-accent-primary);
+  outline-offset: 2px;
+}
+
 .color-swatch.active {
   border-color: var(--poster-text-primary);
   box-shadow: var(--poster-shadow-lg);
@@ -2135,6 +2167,12 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 .route-color-swatch:hover {
   transform: translateY(-2px);
+}
+
+.route-color-swatch:focus {
+  outline: 2px solid var(--poster-accent-primary);
+  outline-offset: 4px;
+  border-radius: var(--radius-lg);
 }
 
 .color-swatch-inner {
@@ -2255,6 +2293,11 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .route-color-box:hover {
   transform: translateY(-2px);
   border-color: var(--poster-border-hover);
+}
+
+.route-color-box:focus {
+  outline: 2px solid var(--poster-accent-primary);
+  outline-offset: 2px;
 }
 
 .route-color-box.selected {
