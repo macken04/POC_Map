@@ -2565,34 +2565,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
    ========================================================================== */
 
 /* Hide old summary bar */
-.selection-summary-bar {
-  display: none !important;
-}
-
-/* Hide old route card */
-.selected-route-card {
-  display: none !important;
-}
-
-/* Hide old step progress section */
-.step-progress-section {
-  display: none !important;
-}
-
-/* Hide old navigation footer (keep compact version) */
-.navigation-footer:not(.navigation-footer-compact) {
-  display: none !important;
-}
-
-/* Hide old pricing info if it exists separately */
-.pricing-info {
-  display: none !important;
-}
-
-/* Hide old step indicator */
-.step-indicator:not(.footer-step-count) {
-  display: none !important;
-}
+/* Removed unused element hiding rules - elements don't exist in HTML */
 
 /* ==========================================================================
    OPTIMIZED SPACING - COMPACT LAYOUT
@@ -2629,15 +2602,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   margin-bottom: 0.75rem; /* Reduced from 1rem */
 }
 
-/* Hide Quick Suggestions - not needed */
-.text-suggestions {
-  display: none;
-}
-
-/* Hide Stats Preview - redundant with map overlay */
-.stats-preview {
-  display: none;
-}
+/* Removed unused element hiding rules */
 
 /* Layout step optimizations */
 .layout-options {
