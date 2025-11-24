@@ -43,6 +43,28 @@
   --poster-success: #16A34A;
   --poster-warning: #F59E0B;
   --poster-error: #DC2626;
+
+  /* Typography Scale - Consistent Font Sizes */
+  --font-size-2xs: 0.6875rem;   /* 11px */
+  --font-size-xs: 0.75rem;      /* 12px */
+  --font-size-sm: 0.875rem;     /* 14px */
+  --font-size-base: 1rem;       /* 16px */
+  --font-size-lg: 1.125rem;     /* 18px */
+  --font-size-xl: 1.25rem;      /* 20px */
+  --font-size-2xl: 1.5rem;      /* 24px */
+  --font-size-3xl: 1.875rem;    /* 30px */
+
+  /* Line Heights */
+  --line-height-tight: 1.25;
+  --line-height-snug: 1.375;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+
+  /* Font Weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
 }
 
 /* Hide the main page title and page content for map design page */
@@ -83,7 +105,10 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   bottom: 0;
   height: 100vh;
   background: var(--poster-bg-gradient);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  /* Use Shopify theme fonts for consistency */
+  font-family: var(--font-body-family, var(--font-body-family)), var(--font-body-fallback);
+  font-style: var(--font-body-style);
+  font-weight: var(--font-body-weight);
   color: var(--poster-text-primary);
   overflow: hidden;
   z-index: 1;
@@ -127,15 +152,15 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 }
 
 .brand-logo {
-  width: 36px; /* Reduced from 40px for more compact nav */
-  height: 36px; /* Reduced from 40px for more compact nav */
+  width: 44px; /* Accessibility: minimum touch target */
+  height: 44px; /* Accessibility: minimum touch target */
   background: var(--poster-accent-primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 1rem; /* Reduced from 1.125rem to match logo size */
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-lg);
   color: white;
   box-shadow: var(--poster-shadow-sm);
   flex-shrink: 0; /* Prevent logo from shrinking */
@@ -150,9 +175,9 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .nav-link {
   color: var(--poster-text-muted);
   text-decoration: none;
-  font-size: 0.9375rem; /* Reduced from 1rem for better fit */
-  font-weight: 600;
-  line-height: 1.5;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-normal);
   transition: color 0.2s ease;
   white-space: nowrap; /* Prevent text wrapping */
 }
@@ -173,17 +198,18 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .action-btn {
   display: flex;
   align-items: center;
-  gap: 0.375rem; /* Reduced from 0.5rem for tighter button content */
-  padding: 0.625rem 0.875rem; /* Reduced from 0.75rem 1rem for more compact buttons */
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
   background: #FFFFFF;
   border: 1px solid var(--poster-border);
   color: var(--poster-text-secondary);
-  border-radius: 0.75rem;
-  font-size: 0.875rem; /* Reduced from 1rem for better fit */
-  font-weight: 600;
+  border-radius: var(--radius-md, 0.75rem);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: all 0.2s ease;
-  white-space: nowrap; /* Prevent text wrapping */
+  white-space: nowrap;
+  min-height: 44px; /* Accessibility: touch target */
 }
 
 .action-btn:hover {
@@ -461,17 +487,18 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.375rem; /* Compact spacing for 4 tabs */
-  padding: 0.75rem 0.625rem; /* More compact for 4-tab layout */
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-3);
   background: transparent;
   border: none;
   border-bottom: 3px solid transparent;
   color: var(--poster-text-muted);
-  font-size: 0.8125rem; /* Slightly smaller for 4 tabs */
-  font-weight: 500;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
+  min-height: 44px; /* Accessibility: touch target */
 }
 
 .step-tab:hover {
@@ -481,7 +508,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 .step-tab.active {
   color: var(--poster-accent-primary);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   border-bottom-color: var(--poster-accent-primary);
   background: var(--poster-accent-light);
 }
@@ -497,8 +524,8 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 .tab-icon {
   flex-shrink: 0;
-  width: 14px; /* Compact icon size for 4 tabs */
-  height: 14px;
+  width: 18px; /* Visible icons, not too small */
+  height: 18px;
 }
 
 .step-tab.active .tab-icon {
@@ -525,18 +552,21 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 @media (max-width: 768px) {
   .step-tab {
     flex-direction: column;
-    gap: 0.25rem;
-    padding: 0.75rem 0.375rem; /* More compact for 4 tabs on mobile */
-    font-size: 0.75rem;
+    gap: var(--space-1);
+    padding: var(--space-3) var(--space-2);
+    font-size: var(--font-size-xs);
+    min-height: 44px; /* Accessibility: maintain touch target */
   }
 
   .tab-icon {
-    width: 14px;
-    height: 14px;
+    width: 18px; /* Keep visible on mobile */
+    height: 18px;
   }
 
   .tab-label {
-    display: none; /* Show only icons on mobile */
+    display: block; /* Show labels on mobile - accessibility fix */
+    font-size: var(--font-size-xs);
+    text-align: center;
   }
 }
 
