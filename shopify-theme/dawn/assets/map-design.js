@@ -102,10 +102,6 @@ class MapDesign {
       statsOverlay: document.getElementById('stats-overlay'),
       overlayDistance: document.getElementById('overlay-distance'),
       overlayElevation: document.getElementById('overlay-elevation'),
-      
-      // Action buttons
-      saveButton: document.getElementById('save-button'),
-      shareButton: document.getElementById('share-button'),
 
       // Summary bar elements
       summaryBar: document.querySelector('.selection-summary-bar'),
@@ -3180,18 +3176,8 @@ class MapDesign {
    * Bind action button events
    */
   bindActionEvents() {
-    if (this.elements.saveButton) {
-      this.elements.saveButton.addEventListener('click', () => {
-        this.saveCurrentDesign();
-      });
-    }
-    
-    if (this.elements.shareButton) {
-      this.elements.shareButton.addEventListener('click', () => {
-        this.shareCurrentDesign();
-      });
-    }
-    
+    // Removed Save/Share button handlers - buttons removed from UI
+
     // Main "Create My Poster" button
     const createPosterBtn = document.getElementById('create-poster-btn');
     console.log('🔍 [bindActionEvents] Looking for create-poster-btn, found:', !!createPosterBtn);

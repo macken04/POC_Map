@@ -164,6 +164,18 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   color: white;
   box-shadow: var(--poster-shadow-sm);
   flex-shrink: 0; /* Prevent logo from shrinking */
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.brand-logo:hover {
+  transform: scale(1.05);
+  box-shadow: var(--poster-shadow);
+}
+
+.brand-logo:focus {
+  outline: 2px solid var(--poster-accent-primary);
+  outline-offset: 2px;
 }
 
 .nav-links {
@@ -188,6 +200,59 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 .nav-link.active {
   color: var(--poster-accent-primary);
+}
+
+/* Simplified Navigation - Back Link */
+.nav-back-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--poster-text-secondary);
+  text-decoration: none;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-normal);
+  transition: all 0.2s ease;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  min-height: 44px; /* Accessibility: touch target */
+}
+
+.nav-back-link:hover {
+  color: var(--poster-accent-primary);
+  background: var(--poster-accent-light);
+}
+
+.nav-back-link:focus {
+  outline: 2px solid var(--poster-accent-primary);
+  outline-offset: 2px;
+}
+
+.nav-back-link svg {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.nav-back-link:hover svg {
+  transform: translateX(-2px);
+}
+
+/* Navigation Info */
+.nav-info {
+  display: flex;
+  align-items: center;
+}
+
+.activity-name {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--poster-text-primary);
+}
+
+@media (max-width: 768px) {
+  .activity-name {
+    display: none; /* Hide on mobile for space */
+  }
 }
 
 .nav-actions {
