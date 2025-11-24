@@ -51,24 +51,18 @@
     <div class="poster-sidebar">
       <!-- NEW: Consolidated Compact Header -->
       <div class="poster-sidebar-header">
-        <!-- Route Badge (collapsible) -->
-        <button class="route-badge-toggle" id="route-badge-toggle" aria-expanded="false">
-          <svg class="route-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-            <circle cx="12" cy="10" r="3"/>
-          </svg>
-          <span class="route-badge-name" id="route-name">Morning Mountain Climb</span>
-          <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="6,9 12,15 18,9"/>
-          </svg>
-        </button>
-
-        <!-- Expandable Route Details (hidden by default) -->
-        <div class="route-details-expandable hidden" id="route-details-expandable">
-          <div class="route-location" id="route-location">Boulder, Colorado</div>
+        <!-- Route Badge (always visible, compact) -->
+        <div class="route-info-compact">
+          <div class="route-header">
+            <svg class="route-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+            <span class="route-name" id="route-name">Morning Mountain Climb</span>
+          </div>
           <div class="route-stats">
             <span class="route-stat" id="route-distance">53.3km</span>
-            <span class="stat-separator">—</span>
+            <span class="stat-separator">•</span>
             <span class="route-stat" id="route-elevation">743m</span>
             <span class="stat-separator">•</span>
             <span class="route-stat" id="route-date">January 15, 2024</span>

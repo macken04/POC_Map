@@ -65,8 +65,6 @@ class MapDesign {
       routeDate: document.getElementById('route-date'),
 
       // NEW: Header elements
-      routeBadgeToggle: document.getElementById('route-badge-toggle'),
-      routeDetailsExpandable: document.getElementById('route-details-expandable'),
       summarySelectionText: document.getElementById('summary-selection-text'),
       summarySizeText: document.getElementById('summary-size-text'),
 
@@ -731,20 +729,6 @@ class MapDesign {
 
     // Update footer price (call pricing update)
     this.updateFooterPrice();
-  }
-
-  /**
-   * Toggle route details expansion in header
-   */
-  toggleRouteDetails() {
-    const expandable = this.elements.routeDetailsExpandable;
-    const toggle = this.elements.routeBadgeToggle;
-
-    if (expandable && toggle) {
-      const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
-      toggle.setAttribute('aria-expanded', !isExpanded);
-      expandable.classList.toggle('hidden', isExpanded);
-    }
   }
 
   /**
@@ -2577,12 +2561,6 @@ class MapDesign {
       });
     }
 
-    // NEW: Route badge toggle
-    if (this.elements.routeBadgeToggle) {
-      this.elements.routeBadgeToggle.addEventListener('click', () => {
-        this.toggleRouteDetails();
-      });
-    }
 
     // Step navigation buttons
     if (this.elements.prevStepBtn) {

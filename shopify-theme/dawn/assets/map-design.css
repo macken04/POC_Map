@@ -372,73 +372,58 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   gap: 0.625rem; /* Reduced from 0.75rem for tighter spacing */
 }
 
-/* Route Badge Toggle */
-.route-badge-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem; /* Reduced from 0.5rem for tighter spacing */
-  padding: 0.5rem 0.625rem; /* Reduced horizontal padding from 0.75rem */
+/* Route Info - Always Visible Compact Display */
+.route-info-compact {
+  padding: var(--space-3) var(--space-4);
   background: var(--poster-bg-primary);
   border: 1px solid var(--poster-border);
   border-radius: 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  width: 100%;
-  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
-.route-badge-toggle:hover {
-  background: var(--poster-accent-light);
-  border-color: var(--poster-accent-primary);
-}
-
-.route-badge-toggle[aria-expanded="true"] .chevron-icon {
-  transform: rotate(180deg);
+.route-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .route-icon {
   flex-shrink: 0;
   color: var(--poster-accent-primary);
-  width: 14px; /* Explicitly set icon size */
+  width: 14px;
   height: 14px;
 }
 
-.route-badge-name {
+.route-name {
   flex: 1;
-  font-size: 0.8125rem; /* Reduced from 0.875rem for better fit */
-  font-weight: 600;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   color: var(--poster-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.chevron-icon {
-  flex-shrink: 0;
+.route-stats {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  padding-left: 22px; /* Align with route name (icon width + gap) */
+}
+
+.route-stat {
+  font-size: var(--font-size-xs);
+  color: var(--poster-text-secondary);
+  font-weight: var(--font-weight-normal);
+  white-space: nowrap;
+}
+
+.stat-separator {
   color: var(--poster-text-muted);
-  transition: transform 0.2s ease;
-  width: 12px; /* Explicitly set chevron size */
-  height: 12px;
-}
-
-/* Expandable Route Details */
-.route-details-expandable {
-  padding: 0.75rem;
-  background: var(--poster-bg-primary);
-  border-radius: 0.5rem;
-  overflow: hidden;
-  transition: max-height 0.3s ease, opacity 0.2s ease;
-}
-
-.route-details-expandable.hidden {
-  max-height: 0;
-  padding: 0;
-  opacity: 0;
-}
-
-.route-details-expandable:not(.hidden) {
-  max-height: 150px;
-  opacity: 1;
+  font-size: var(--font-size-xs);
 }
 
 /* Inline Selection Summary */
