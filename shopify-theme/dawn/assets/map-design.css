@@ -256,13 +256,13 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   background: linear-gradient(135deg, #FFFFFF 0%, #F5F6F8 100%);
   border-bottom: 1px solid var(--poster-border);
   padding: var(--space-3) var(--space-6);
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  box-shadow: var(--poster-shadow-sm);
   backdrop-filter: blur(8px);
   transition: box-shadow 0.2s ease;
 }
 
 .selection-summary-bar.scrolled {
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--poster-shadow);
 }
 
 .summary-content {
@@ -918,7 +918,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   border-color: var(--poster-accent-cyan);
   background: rgba(30, 41, 59, 0.7);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(34, 211, 238, 0.2);
+  box-shadow: var(--poster-shadow);
 }
 
 .preset-name {
@@ -1342,7 +1342,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   padding: 0; /* Slightly smaller padding for more map space */
   border-radius: var(--radius-xl); /* More modern radius */
   border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.1); /* Enhanced shadow */
+  box-shadow: var(--poster-shadow-lg); /* Enhanced shadow */
   overflow: hidden;
   transition: width 0.3s ease, height 0.3s ease;
   flex-shrink: 0;
@@ -1866,7 +1866,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 .theme-card.active {
   border-color: var(--poster-accent-primary);
-  box-shadow: 0 0 0 3px rgba(252, 76, 2, 0.15);
+  box-shadow: var(--poster-shadow-focus);
 }
 
 .theme-preview-area {
@@ -1963,11 +1963,11 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   flex-shrink: 0;
   margin-right: 0.75rem;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--poster-shadow-sm);
 }
 
 .style-option:hover .style-preview {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); /* Subtle shadow enhancement */
+  box-shadow: var(--poster-shadow); /* Subtle shadow enhancement */
   border-color: rgba(255, 255, 255, 0.4); /* Brighter border on hover */
 }
 
@@ -2355,7 +2355,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   margin: auto;
   background: #FFFFFF;
   border-radius: 1.5rem;
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.3);
+  box-shadow: var(--poster-shadow-lg);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -2433,7 +2433,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 .gallery-item:hover {
   border-color: var(--poster-accent-primary);
-  box-shadow: 0 8px 24px rgba(252, 76, 2, 0.15);
+  box-shadow: var(--poster-shadow);
   transform: translateY(-2px);
 }
 
@@ -2452,7 +2452,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   width: 60%;
   height: 60%;
   border-radius: 50%;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--poster-shadow);
 }
 
 .gallery-item-info {
@@ -2478,7 +2478,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .gallery-item.selected {
   border-color: var(--poster-accent-primary);
   background: var(--poster-accent-light);
-  box-shadow: 0 0 0 3px rgba(252, 76, 2, 0.15);
+  box-shadow: var(--poster-shadow-focus);
 }
 
 .gallery-item.selected .gallery-item-info {
