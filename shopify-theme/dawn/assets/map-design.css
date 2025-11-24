@@ -756,9 +756,15 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   display: block;
 }
 
-/* Remove panel titles (redundant with tabs) */
+/* Panel Titles - Clear section headers */
 .panel-title {
-  display: none;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  color: var(--poster-text-primary);
+  margin: 0 0 var(--space-6) 0;
+  padding-bottom: var(--space-4);
+  border-bottom: 2px solid var(--poster-border);
 }
 
 /* Color Schemes Grid */

@@ -693,7 +693,7 @@ class MapDesign {
 
     // Update footer step count for 4 tabs
     if (this.elements.footerStepCount) {
-      this.elements.footerStepCount.textContent = `${stepIndex + 1}/4`;
+      this.elements.footerStepCount.textContent = `Step ${stepIndex + 1} of 4`;
     }
 
     // Update navigation buttons
@@ -3943,44 +3943,94 @@ class MapDesign {
    * Render the theme selector buttons
    */
   renderThemeSelector() {
-    if (!window.mapboxCustomization) return;
-
-    const themeStyles = window.mapboxCustomization.getThemeStyles();
     const themeContainer = document.getElementById('theme-color-selector');
+    if (!themeContainer) {
+      console.warn('Theme container not found');
+      return;
+    }
 
-    if (!themeContainer) return;
+    // Use built-in map type styles (always available, no dependencies)
+    const mapTypes = this.getMapTypeStyles();
+    const activeTheme = this.currentSettings.mapType || 'street';
 
-    // Get the current active theme from settings (default to 'classic' if not set)
-    const activeTheme = this.currentSettings.mapType || 'classic';
-
-    // Render large theme preview cards
-    const themeCards = Object.entries(themeStyles).map(([themeKey, themeInfo]) => `
-      <div class="theme-card ${themeKey === activeTheme ? 'active' : ''}"
-           data-theme="${themeKey}">
-        <div class="theme-preview-area" style="background: ${this.getThemePreviewGradient(themeKey)}">
-          ${this.getThemeIcon(themeKey)}
+    // Create theme cards from map types
+    const themeCards = Object.entries(mapTypes).map(([typeKey, typeData]) => `
+      <div class="theme-card ${typeKey === activeTheme ? 'active' : ''}"
+           data-theme="${typeKey}">
+        <div class="theme-preview-area" style="background: ${this.getThemePreviewGradient(typeKey)}">
+          ${this.getThemeIcon(typeKey)}
         </div>
         <div class="theme-card-info">
-          <div class="theme-card-name">${themeInfo.name}</div>
-          <div class="theme-card-description">${themeInfo.description}</div>
+          <div class="theme-card-name">${typeData.name}</div>
+          <div class="theme-card-description">${typeData.description}</div>
         </div>
       </div>
     `).join('');
 
     themeContainer.innerHTML = themeCards;
 
-    // Render colors for Tab 2 (will be shown when user navigates to Colors tab)
-    this.renderColorSelector(activeTheme);
-
     // Add theme card event listeners
     themeContainer.querySelectorAll('.theme-card').forEach(card => {
       card.addEventListener('click', async (e) => {
         const themeKey = e.currentTarget.dataset.theme;
-        await this.setTheme(themeKey);
+        await this.selectMapType(themeKey);
       });
     });
+
+    console.log('Theme selector rendered successfully');
   }
-  
+
+  /**
+   * Select a map type and apply its first style
+   */
+  async selectMapType(typeKey) {
+    console.log('Selecting map type:', typeKey);
+
+    // Update current settings
+    this.currentSettings.mapType = typeKey;
+
+    // Get the map type styles
+    const mapTypes = this.getMapTypeStyles();
+    const selectedType = mapTypes[typeKey];
+
+    if (!selectedType || !selectedType.styles) {
+      console.error('Invalid map type selected:', typeKey);
+      return;
+    }
+
+    // Get the first style from this type
+    const firstStyleKey = Object.keys(selectedType.styles)[0];
+    const firstStyle = selectedType.styles[firstStyleKey];
+
+    // Update current settings
+    this.currentSettings.mapStyle = firstStyleKey;
+
+    // Apply the style to the map
+    if (this.mapboxIntegration && this.mapboxIntegration.map) {
+      try {
+        const styleUrl = this.formatMapboxStyleUrl(firstStyle.mapboxStyle);
+        console.log('Applying style:', styleUrl);
+
+        // Use setStyle method that preserves routes if available
+        if (this.mapboxIntegration.setStyle) {
+          await this.mapboxIntegration.setStyle(styleUrl);
+        } else {
+          this.mapboxIntegration.map.setStyle(styleUrl);
+        }
+      } catch (error) {
+        console.error('Failed to apply map style:', error);
+      }
+    }
+
+    // Update active state on cards
+    document.querySelectorAll('.theme-card').forEach(card => {
+      card.classList.toggle('active', card.dataset.theme === typeKey);
+    });
+
+    // Update summary bar
+    this.updateSummaryBar();
+  }
+
   /**
    * Render color selector for selected theme
    */
@@ -4141,22 +4191,32 @@ class MapDesign {
    */
   getThemeIcon(theme) {
     const icons = {
-      classic: `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+      street: `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 12h4m14 0h-4m-10 0h10M5 8V6a2 2 0 012-2h10a2 2 0 012 2v2M5 16v2a2 2 0 002 2h10a2 2 0 002-2v-2"/>
+      </svg>`,
+      classic: `<svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
         <path d="M20,8 L20,20 L4,20 L4,8 L12,2 L20,8 Z M6,18 L18,18 L18,10 L12,5 L6,10 L6,18 Z"/>
         <rect x="8" y="12" width="2" height="4"/>
         <rect x="14" y="12" width="2" height="4"/>
       </svg>`,
-      minimal: `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-        <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
+      minimal: `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="8"/>
         <circle cx="12" cy="12" r="3" fill="currentColor"/>
       </svg>`,
-      bubble: `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-        <circle cx="8" cy="8" r="3" fill="currentColor" opacity="0.7"/>
-        <circle cx="16" cy="8" r="2" fill="currentColor" opacity="0.5"/>
-        <circle cx="12" cy="16" r="4" fill="currentColor" opacity="0.8"/>
+      bubble: `<svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+        <circle cx="8" cy="8" r="3" opacity="0.7"/>
+        <circle cx="16" cy="8" r="2" opacity="0.5"/>
+        <circle cx="12" cy="16" r="4" opacity="0.8"/>
+      </svg>`,
+      satellite: `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M8 12h8M12 8v8M8 8l8 8M16 8l-8 8"/>
+      </svg>`,
+      terrain: `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 20l6-8 4 4 8-12M3 20h18"/>
       </svg>`
     };
-    return icons[theme] || icons.classic;
+    return icons[theme] || icons.street;
   }
 
   /**
@@ -4164,11 +4224,14 @@ class MapDesign {
    */
   getThemePreviewGradient(theme) {
     const gradients = {
+      street: 'linear-gradient(135deg, #f0f0f0 0%, #d0d0d0 100%)',
       classic: 'linear-gradient(135deg, #f8f8f8 0%, #e0e0e0 100%)',
       minimal: 'linear-gradient(135deg, #f5f5f5 0%, #d5d5d5 100%)',
-      bubble: 'linear-gradient(135deg, #e8e8ff 0%, #c8c8ff 100%)'
+      bubble: 'linear-gradient(135deg, #e8e8ff 0%, #c8c8ff 100%)',
+      satellite: 'linear-gradient(135deg, #4a6741 0%, #2a4721 100%)',
+      terrain: 'linear-gradient(135deg, #e8f5e8 0%, #c8d5c8 100%)'
     };
-    return gradients[theme] || gradients.classic;
+    return gradients[theme] || gradients.street;
   }
 
   /**
