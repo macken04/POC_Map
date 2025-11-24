@@ -2156,8 +2156,8 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 }
 
 .route-color-box {
-  width: 50px;
-  height: 50px;
+  width: 60px;  /* Increased from 50px for better touch target */
+  height: 60px; /* Increased from 50px for better touch target */
   padding: 0;
   border: 3px solid transparent;
   border-radius: var(--radius-lg);
@@ -2166,6 +2166,8 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   transition: all 0.2s ease;
   position: relative;
   overflow: visible;
+  min-width: 60px;  /* Ensure minimum touch target */
+  min-height: 60px; /* Ensure minimum touch target */
 }
 
 .color-box-fill {
