@@ -3,41 +3,41 @@
    This is for the map design page
    ========================================================================== */
 
-/* Root Variables - Premium Neutral Palette */
+/* Root Variables - Unified with Shopify Theme */
 :root {
-  /* Background Colors - Clean Neutrals */
-  --poster-bg-primary: #F5F6F8;
+  /* Background Colors - Mapped to Shopify Theme */
+  --poster-bg-primary: rgb(var(--color-background, 245, 246, 248));
   --poster-bg-secondary: #FFFFFF;
-  --poster-bg-gradient: linear-gradient(180deg, #F5F6F8 0%, #E8EAF0 100%);
+  --poster-bg-gradient: linear-gradient(180deg, rgb(var(--color-background, 245, 246, 248)) 0%, #E8EAF0 100%);
 
-  /* Accent Colors - Premium Orange */
-  --poster-accent-primary: #FC4C02;
-  --poster-accent-hover: #D83C00;
-  --poster-accent-light: rgba(252, 76, 2, 0.1);
-  --poster-accent-glow: rgba(252, 76, 2, 0.15);
+  /* Accent Colors - Mapped to Shopify Button Color */
+  --poster-accent-primary: rgb(var(--color-button, 252, 76, 2));
+  --poster-accent-hover: rgb(var(--color-button, 216, 60, 0));
+  --poster-accent-light: rgba(var(--color-button, 252, 76, 2), 0.1);
+  --poster-accent-glow: rgba(var(--color-button, 252, 76, 2), 0.15);
 
-  /* Text Colors - High Contrast for Readability */
-  --poster-text-primary: #0B1220;
-  --poster-text-secondary: #1F2933;
-  --poster-text-muted: #64748B;
-  --poster-text-helper: #475569;
+  /* Text Colors - Mapped to Shopify Foreground */
+  --poster-text-primary: rgba(var(--color-foreground, 11, 18, 32), 1);
+  --poster-text-secondary: rgba(var(--color-foreground, 11, 18, 32), 0.85);
+  --poster-text-muted: rgba(var(--color-foreground, 11, 18, 32), 0.6);
+  --poster-text-helper: rgba(var(--color-foreground, 11, 18, 32), 0.7);
 
-  /* UI Colors */
-  --poster-border: #E2E8F0;
-  --poster-border-subtle: rgba(15, 23, 42, 0.08);
-  --poster-border-hover: #CBD5E1;
-  --poster-border-active: #FC4C02;
+  /* UI Colors - Derived from Theme Colors */
+  --poster-border: rgba(var(--color-foreground, 11, 18, 32), 0.1);
+  --poster-border-subtle: rgba(var(--color-foreground, 11, 18, 32), 0.08);
+  --poster-border-hover: rgba(var(--color-foreground, 11, 18, 32), 0.2);
+  --poster-border-active: rgb(var(--color-button, 252, 76, 2));
 
   /* Component Backgrounds */
   --poster-card-bg: #FFFFFF;
   --poster-control-bg: #FFFFFF;
   --poster-input-bg: #FFFFFF;
 
-  /* Shadows - Subtle and Premium */
-  --poster-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.1);
-  --poster-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-  --poster-shadow-lg: 0 20px 60px rgba(15, 23, 42, 0.08);
-  --poster-shadow-focus: 0 0 0 4px rgba(252, 76, 2, 0.15);
+  /* Shadows - Using Shopify Shadow Color */
+  --poster-shadow-sm: 0 1px 3px rgba(var(--color-shadow, 15, 23, 42), 0.1);
+  --poster-shadow: 0 4px 12px rgba(var(--color-shadow, 15, 23, 42), 0.08);
+  --poster-shadow-lg: 0 20px 60px rgba(var(--color-shadow, 15, 23, 42), 0.08);
+  --poster-shadow-focus: 0 0 0 4px rgba(var(--color-button, 252, 76, 2), 0.15);
 
   /* Success/Warning/Error - Kept for States */
   --poster-success: #16A34A;
