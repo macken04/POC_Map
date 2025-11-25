@@ -1815,7 +1815,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .theme-cards-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  gap: 1.5rem; /* Increased from 1rem for better spacing */
   width: 100%;
   margin-bottom: 1.5rem;
   min-width: 0;
@@ -1828,29 +1828,63 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   border-radius: 0.75rem;
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease; /* Smoother transition from 0.2s */
   background: #FFFFFF;
 }
 
 .theme-card:hover {
   border-color: var(--poster-border-hover);
-  box-shadow: var(--poster-shadow);
-  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12); /* Enhanced shadow */
+  transform: translateY(-4px); /* Increased lift from -2px */
 }
 
 .theme-card.active {
+  border-width: 3px; /* Thicker border for emphasis */
   border-color: var(--poster-accent-primary);
-  box-shadow: 0 0 0 3px rgba(252, 76, 2, 0.15);
+  box-shadow: 0 0 0 4px rgba(252, 76, 2, 0.15); /* Enhanced glow from 3px to 4px */
 }
 
 .theme-preview-area {
   width: 100%;
-  height: 160px;
+  height: 220px; /* Increased from 160px for better visibility */
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   overflow: hidden;
+  background: #f5f5f5; /* Light fallback background */
+}
+
+/* NEW: Actual map thumbnail image */
+.theme-preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.theme-card:hover .theme-preview-image {
+  transform: scale(1.05); /* Subtle zoom on hover */
+}
+
+/* NEW: Loading skeleton with shimmer animation */
+.theme-preview-loading {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 0%,
+    #e0e0e0 50%,
+    #f0f0f0 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 .theme-preview-area svg {
@@ -1860,22 +1894,22 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 }
 
 .theme-card-info {
-  padding: 1rem;
+  padding: 1.25rem; /* Increased from 1rem for better proportions */
   background: #FFFFFF;
 }
 
 .theme-card-name {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 1.125rem; /* Increased from 1rem (18px) */
+  font-weight: 700; /* Increased from 600 for emphasis */
   color: var(--poster-text-primary);
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.375rem; /* Increased from 0.25rem */
   line-height: 1.3;
 }
 
 .theme-card-description {
-  font-size: 0.875rem;
+  font-size: 1rem; /* Increased from 0.875rem */
   color: var(--poster-text-muted);
-  line-height: 1.4;
+  line-height: 1.5; /* Increased from 1.4 for readability */
 }
 
 .theme-card.active .theme-card-name {
@@ -1886,11 +1920,41 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 @media (max-width: 768px) {
   .theme-cards-grid {
     grid-template-columns: 1fr;
-    gap: 0.75rem;
+    gap: 1rem; /* Consistent spacing on mobile */
   }
 
   .theme-preview-area {
-    height: 140px;
+    height: 180px; /* Slightly reduced for mobile, but still larger than original */
+  }
+
+  .theme-card-info {
+    padding: 1rem;
+  }
+
+  .theme-card-name {
+    font-size: 1rem;
+  }
+
+  .theme-card-description {
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .theme-preview-area {
+    height: 160px; /* Further reduced for small screens */
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) {
+  .theme-card:hover {
+    transform: none; /* Disable hover lift on touch devices */
+  }
+
+  .theme-card:active {
+    transform: scale(0.98); /* Add press feedback for touch */
+    opacity: 0.9;
   }
 }
 

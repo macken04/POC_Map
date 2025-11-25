@@ -3940,7 +3940,7 @@ class MapDesign {
   }
   
   /**
-   * Render the theme selector buttons
+   * Render the theme selector buttons with rich preview images
    */
   renderThemeSelector() {
     if (!window.mapboxCustomization) return;
@@ -3953,19 +3953,24 @@ class MapDesign {
     // Get the current active theme from settings (default to 'classic' if not set)
     const activeTheme = this.currentSettings.mapType || 'classic';
 
-    // Render large theme preview cards
-    const themeCards = Object.entries(themeStyles).map(([themeKey, themeInfo]) => `
-      <div class="theme-card ${themeKey === activeTheme ? 'active' : ''}"
-           data-theme="${themeKey}">
-        <div class="theme-preview-area" style="background: ${this.getThemePreviewGradient(themeKey)}">
-          ${this.getThemeIcon(themeKey)}
+    // Render large theme preview cards with gradient + icon
+    const themeCards = Object.entries(themeStyles).map(([themeKey, themeInfo]) => {
+      // Use gradient + icon for clean, working preview (images can be added later)
+      const previewContent = this.getThemeIcon(themeKey);
+
+      return `
+        <div class="theme-card ${themeKey === activeTheme ? 'active' : ''}"
+             data-theme="${themeKey}">
+          <div class="theme-preview-area" style="background: ${this.getThemePreviewGradient(themeKey)}">
+            ${previewContent}
+          </div>
+          <div class="theme-card-info">
+            <div class="theme-card-name">${themeInfo.name}</div>
+            <div class="theme-card-description">${themeInfo.description}</div>
+          </div>
         </div>
-        <div class="theme-card-info">
-          <div class="theme-card-name">${themeInfo.name}</div>
-          <div class="theme-card-description">${themeInfo.description}</div>
-        </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
 
     themeContainer.innerHTML = themeCards;
 
@@ -4160,15 +4165,79 @@ class MapDesign {
   }
 
   /**
-   * Get theme preview gradient for large theme cards
+   * Get theme preview gradient for large theme cards (fallback)
    */
   getThemePreviewGradient(theme) {
     const gradients = {
       classic: 'linear-gradient(135deg, #f8f8f8 0%, #e0e0e0 100%)',
       minimal: 'linear-gradient(135deg, #f5f5f5 0%, #d5d5d5 100%)',
-      bubble: 'linear-gradient(135deg, #e8e8ff 0%, #c8c8ff 100%)'
+      bubble: 'linear-gradient(135deg, #e8e8ff 0%, #c8c8ff 100%)',
+      street: 'linear-gradient(135deg, #fafafa 0%, #ececec 100%)',
+      satellite: 'linear-gradient(135deg, #4a6741 0%, #3a5731 100%)',
+      terrain: 'linear-gradient(135deg, #e8f5e8 0%, #d4e8d4 100%)'
     };
     return gradients[theme] || gradients.classic;
+  }
+
+  /**
+   * Check if browser supports WebP format
+   * @returns {boolean}
+   */
+  checkWebPSupport() {
+    // Check if already detected
+    if (this._webpSupport !== undefined) {
+      return this._webpSupport;
+    }
+
+    // Create test canvas
+    const elem = document.createElement('canvas');
+    if (elem.getContext && elem.getContext('2d')) {
+      // Check if WebP representation can be created
+      this._webpSupport = elem.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+    } else {
+      this._webpSupport = false;
+    }
+
+    return this._webpSupport;
+  }
+
+  /**
+   * Get preview image URL for theme + color combination
+   * Returns path to WebP or PNG based on browser support
+   * @param {string} themeKey - Theme key (e.g., 'classic')
+   * @param {string} colorKey - Color key (e.g., 'dark')
+   * @returns {string} Image URL or null if not available
+   */
+  getThemePreviewImage(themeKey, colorKey) {
+    if (!themeKey || !colorKey) return null;
+
+    // Construct filename from theme and color keys
+    const baseFilename = `${themeKey}-${colorKey}`;
+
+    // Check for WebP support
+    const supportsWebP = this.checkWebPSupport();
+    const extension = supportsWebP ? 'webp' : 'png';
+
+    // Return asset URL
+    // Note: In Shopify, we need to use the CDN path directly
+    return `/assets/preview-images/${baseFilename}.${extension}`;
+  }
+
+  /**
+   * Get the first color for a theme (for preview image)
+   * @param {string} themeKey - Theme key
+   * @returns {string} First color key or null
+   */
+  getFirstThemeColor(themeKey) {
+    if (!window.mapboxCustomization) return null;
+
+    const themeStyles = window.mapboxCustomization.getThemeStyles();
+    const theme = themeStyles[themeKey];
+
+    if (!theme || !theme.colors) return null;
+
+    const colorKeys = Object.keys(theme.colors);
+    return colorKeys.length > 0 ? colorKeys[0] : null;
   }
 
   /**
