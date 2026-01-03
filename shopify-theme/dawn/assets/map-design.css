@@ -3,47 +3,11 @@
    This is for the map design page
    ========================================================================== */
 
-/* Root Variables - Premium Neutral Palette */
-:root {
-  /* Background Colors - Clean Neutrals */
-  --poster-bg-primary: #F5F6F8;
-  --poster-bg-secondary: #FFFFFF;
-  --poster-bg-gradient: linear-gradient(180deg, #F5F6F8 0%, #E8EAF0 100%);
-
-  /* Accent Colors - Premium Orange */
-  --poster-accent-primary: #FC4C02;
-  --poster-accent-hover: #D83C00;
-  --poster-accent-light: rgba(252, 76, 2, 0.1);
-  --poster-accent-glow: rgba(252, 76, 2, 0.15);
-
-  /* Text Colors - High Contrast for Readability */
-  --poster-text-primary: #0B1220;
-  --poster-text-secondary: #1F2933;
-  --poster-text-muted: #64748B;
-  --poster-text-helper: #475569;
-
-  /* UI Colors */
-  --poster-border: #E2E8F0;
-  --poster-border-subtle: rgba(15, 23, 42, 0.08);
-  --poster-border-hover: #CBD5E1;
-  --poster-border-active: #FC4C02;
-
-  /* Component Backgrounds */
-  --poster-card-bg: #FFFFFF;
-  --poster-control-bg: #FFFFFF;
-  --poster-input-bg: #FFFFFF;
-
-  /* Shadows - Subtle and Premium */
-  --poster-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.1);
-  --poster-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-  --poster-shadow-lg: 0 20px 60px rgba(15, 23, 42, 0.08);
-  --poster-shadow-focus: 0 0 0 4px rgba(252, 76, 2, 0.15);
-
-  /* Success/Warning/Error - Kept for States */
-  --poster-success: #16A34A;
-  --poster-warning: #F59E0B;
-  --poster-error: #DC2626;
-}
+/*
+ * Map Design now uses the centralized design-system.css variables
+ * All color, spacing, shadow, and typography values reference the design system
+ * See: design-system.css for the complete variable reference
+ */
 
 /* Hide the main page title and page content for map design page */
 .main-page-title {
@@ -82,9 +46,9 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   right: 0;
   bottom: 0;
   height: 100vh;
-  background: var(--poster-bg-gradient);
+  background: linear-gradient(180deg, var(--neutral-100) 0%, var(--neutral-200) 100%);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  color: var(--poster-text-primary);
+  color: var(--text-primary);
   overflow: hidden;
   z-index: 1;
 }
@@ -94,12 +58,12 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem; /* Reduced from 1.5rem 5rem for more space */
-  background: #FFFFFF;
-  border-bottom: 1px solid var(--poster-border);
+  padding: var(--space-4) var(--space-8); /* Reduced from 1.5rem 5rem for more space */
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-light);
   position: relative;
   z-index: 100;
-  box-shadow: var(--poster-shadow-sm);
+  box-shadow: var(--shadow-sm);
 }
 
 @media (max-width: 1439px) {
@@ -116,20 +80,20 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 @media (max-width: 767px) {
   .poster-nav-bar {
-    padding: 0.75rem 1rem; /* Reduced from 1rem */
+    padding: var(--space-3) var(--space-4); /* Reduced from 1rem */
   }
 }
 
 .nav-brand {
   display: flex;
   align-items: center;
-  gap: 1rem; /* Reduced from 2rem for tighter spacing */
+  gap: var(--space-4); /* Reduced from 2rem for tighter spacing */
 }
 
 .brand-logo {
   width: 36px; /* Reduced from 40px for more compact nav */
   height: 36px; /* Reduced from 40px for more compact nav */
-  background: var(--poster-accent-primary);
+  background: var(--brand-primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -137,18 +101,18 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   font-weight: 700;
   font-size: 1rem; /* Reduced from 1.125rem to match logo size */
   color: white;
-  box-shadow: var(--poster-shadow-sm);
+  box-shadow: var(--shadow-sm);
   flex-shrink: 0; /* Prevent logo from shrinking */
 }
 
 .nav-links {
   display: flex;
-  gap: 0.75rem; /* Reduced from 2rem for more compact breadcrumb */
+  gap: var(--space-3); /* Reduced from 2rem for more compact breadcrumb */
   align-items: center;
 }
 
 .nav-link {
-  color: var(--poster-text-muted);
+  color: var(--text-muted);
   text-decoration: none;
   font-size: 0.9375rem; /* Reduced from 1rem for better fit */
   font-weight: 600;
@@ -158,27 +122,27 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 }
 
 .nav-link:hover {
-  color: var(--poster-text-primary);
+  color: var(--text-primary);
 }
 
 .nav-link.active {
-  color: var(--poster-accent-primary);
+  color: var(--brand-primary);
 }
 
 .nav-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .action-btn {
   display: flex;
   align-items: center;
   gap: 0.375rem; /* Reduced from 0.5rem for tighter button content */
-  padding: 0.625rem 0.875rem; /* Reduced from 0.75rem 1rem for more compact buttons */
-  background: #FFFFFF;
-  border: 1px solid var(--poster-border);
-  color: var(--poster-text-secondary);
-  border-radius: 0.75rem;
+  padding: var(--space-2) var(--space-3); /* Reduced from 0.75rem 1rem for more compact buttons */
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+  border-radius: var(--radius-xl);
   font-size: 0.875rem; /* Reduced from 1rem for better fit */
   font-weight: 600;
   cursor: pointer;
@@ -187,15 +151,15 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 }
 
 .action-btn:hover {
-  background: var(--poster-bg-primary);
-  border-color: var(--poster-border-hover);
-  color: var(--poster-text-primary);
-  box-shadow: var(--poster-shadow-sm);
+  background: var(--bg-secondary);
+  border-color: var(--border-medium);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .action-btn:focus {
   outline: none;
-  box-shadow: var(--poster-shadow-focus);
+  box-shadow: 0 0 0 4px rgba(252, 76, 2, 0.15);
 }
 
 /* Main Layout */
@@ -206,11 +170,11 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   overflow: hidden;
 }
 
-/* Left Sidebar - 32% of content width (440px at 1440px viewport) */
+/* Left Sidebar - Reduced to 360px to accommodate larger canvas preview */
 .poster-sidebar {
-  width: 440px;
-  background: #FFFFFF;
-  border-right: 1px solid var(--poster-border);
+  width: 360px;
+  background: var(--bg-primary);
+  border-right: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -228,7 +192,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   top: 0;
   z-index: 50;
   background: linear-gradient(135deg, #FFFFFF 0%, #F5F6F8 100%);
-  border-bottom: 1px solid var(--poster-border);
+  border-bottom: 1px solid var(--border-light);
   padding: 0.875rem 1.5rem;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
   backdrop-filter: blur(8px);
@@ -243,7 +207,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: var(--space-3);
   flex-wrap: wrap;
 }
 
@@ -253,27 +217,27 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   gap: 0.375rem;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--poster-text-secondary);
+  color: var(--text-secondary);
   line-height: 1.3;
 }
 
 .summary-item svg {
   flex-shrink: 0;
-  color: var(--poster-text-muted);
+  color: var(--text-muted);
 }
 
 .summary-divider {
-  color: var(--poster-border);
+  color: var(--border-light);
   font-size: 0.75rem;
 }
 
 .summary-style span {
-  color: var(--poster-accent-primary);
+  color: var(--brand-primary);
   font-weight: 600;
 }
 
 .summary-size span {
-  color: var(--poster-text-primary);
+  color: var(--text-primary);
 }
 
 .summary-price {
@@ -281,7 +245,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 }
 
 .summary-price span {
-  color: var(--poster-accent-primary);
+  color: var(--brand-primary);
   font-weight: 700;
   font-size: 0.9375rem;
 }
@@ -289,11 +253,11 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 /* Responsive adjustments for summary bar */
 @media (max-width: 768px) {
   .selection-summary-bar {
-    padding: 0.75rem 1rem;
+    padding: var(--space-3) var(--space-4);
   }
 
   .summary-content {
-    gap: 0.5rem;
+    gap: var(--space-2);
   }
 
   .summary-item {
@@ -326,7 +290,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
     width: 100%;
     justify-content: flex-end;
     padding-top: 0.25rem;
-    border-top: 1px solid var(--poster-border);
+    border-top: 1px solid var(--border-light);
   }
 }
 
@@ -338,8 +302,8 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   position: sticky;
   top: 0;
   z-index: 50;
-  background: #FFFFFF;
-  border-bottom: 1px solid var(--poster-border);
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-light);
   padding: 0.875rem 1.25rem; /* Reduced from 1rem 1.5rem for more compact header */
   display: flex;
   flex-direction: column;
@@ -352,8 +316,8 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   align-items: center;
   gap: 0.375rem; /* Reduced from 0.5rem for tighter spacing */
   padding: 0.5rem 0.625rem; /* Reduced horizontal padding from 0.75rem */
-  background: var(--poster-bg-primary);
-  border: 1px solid var(--poster-border);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
   border-radius: 0.5rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -362,8 +326,8 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 }
 
 .route-badge-toggle:hover {
-  background: var(--poster-accent-light);
-  border-color: var(--poster-accent-primary);
+  background: rgba(252, 76, 2, 0.1);
+  border-color: var(--brand-primary);
 }
 
 .route-badge-toggle[aria-expanded="true"] .chevron-icon {
@@ -372,7 +336,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 .route-icon {
   flex-shrink: 0;
-  color: var(--poster-accent-primary);
+  color: var(--brand-primary);
   width: 14px; /* Explicitly set icon size */
   height: 14px;
 }
@@ -381,7 +345,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   flex: 1;
   font-size: 0.8125rem; /* Reduced from 0.875rem for better fit */
   font-weight: 600;
-  color: var(--poster-text-primary);
+  color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -389,7 +353,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 .chevron-icon {
   flex-shrink: 0;
-  color: var(--poster-text-muted);
+  color: var(--text-muted);
   transition: transform 0.2s ease;
   width: 12px; /* Explicitly set chevron size */
   height: 12px;
@@ -398,7 +362,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 /* Expandable Route Details */
 .route-details-expandable {
   padding: 0.75rem;
-  background: var(--poster-bg-primary);
+  background: var(--bg-secondary);
   border-radius: 0.5rem;
   overflow: hidden;
   transition: max-height 0.3s ease, opacity 0.2s ease;
@@ -421,21 +385,21 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   align-items: center;
   gap: 0.375rem; /* Reduced from 0.5rem for tighter spacing */
   font-size: 0.75rem; /* Reduced from 0.8125rem for better fit */
-  color: var(--poster-text-muted);
+  color: var(--text-muted);
 }
 
 .summary-selection {
-  color: var(--poster-accent-primary);
+  color: var(--brand-primary);
   font-weight: 600;
 }
 
 .summary-divider {
-  color: var(--poster-text-muted); /* Make divider visible */
+  color: var(--text-muted); /* Make divider visible */
   font-weight: 400;
 }
 
 .summary-size {
-  color: var(--poster-text-secondary);
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
@@ -444,8 +408,8 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
    ========================================================================== */
 
 .step-tabs-container {
-  background: #FFFFFF;
-  border-bottom: 1px solid var(--poster-border);
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-light);
   position: sticky;
   top: 90px; /* Below header */
   z-index: 45;
@@ -461,13 +425,13 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.375rem; /* Compact spacing for 4 tabs */
-  padding: 0.75rem 0.625rem; /* More compact for 4-tab layout */
+  gap: var(--space-2); /* More generous spacing for 3 tabs */
+  padding: 1rem 1rem; /* More padding with fewer tabs */
   background: transparent;
   border: none;
   border-bottom: 3px solid transparent;
-  color: var(--poster-text-muted);
-  font-size: 0.8125rem; /* Slightly smaller for 4 tabs */
+  color: var(--text-muted);
+  font-size: 0.9375rem; /* Slightly larger with more space */
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -475,24 +439,24 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 }
 
 .step-tab:hover {
-  background: var(--poster-bg-primary);
-  color: var(--poster-text-primary);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .step-tab.active {
-  color: var(--poster-accent-primary);
+  color: var(--brand-primary);
   font-weight: 600;
-  border-bottom-color: var(--poster-accent-primary);
-  background: var(--poster-accent-light);
+  border-bottom-color: var(--brand-primary);
+  background: rgba(252, 76, 2, 0.1);
 }
 
 .step-tab.completed {
-  color: var(--poster-text-primary);
+  color: var(--text-primary);
 }
 
 .step-tab.completed .tab-checkmark {
   display: block !important;
-  color: var(--poster-success);
+  color: var(--color-success);
 }
 
 .tab-icon {
@@ -502,7 +466,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 }
 
 .step-tab.active .tab-icon {
-  color: var(--poster-accent-primary);
+  color: var(--brand-primary);
 }
 
 .step-tab.completed .tab-icon {
@@ -553,8 +517,8 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 /* Selected Route Card - Clean Premium Design */
 .selected-route-card {
   padding: 2rem;
-  border-bottom: 1px solid var(--poster-border);
-  background: var(--poster-card-bg);
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-card);
   margin: 1.5rem;
   margin-bottom: 0;
 }
@@ -562,11 +526,11 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .route-indicator {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  color: var(--poster-accent-primary);
+  gap: var(--space-2);
+  color: var(--brand-primary);
   font-size: 0.875rem;
   font-weight: 600;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -575,7 +539,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1.2;
-  color: var(--poster-text-primary);
+  color: var(--text-primary);
   margin-bottom: 0.5rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -587,8 +551,8 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.5;
-  color: var(--poster-text-muted);
-  margin-bottom: 1rem;
+  color: var(--text-muted);
+  margin-bottom: var(--space-4);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -598,31 +562,31 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .route-stats {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   font-size: 0.875rem;
-  color: var(--poster-text-muted);
+  color: var(--text-muted);
 }
 
 .route-stat {
   font-weight: 500;
-  color: var(--poster-text-secondary);
+  color: var(--text-secondary);
 }
 
 .stat-separator {
-  color: var(--poster-text-muted);
+  color: var(--text-muted);
 }
 
 /* Step Progress Section */
 .step-progress-section {
   padding: 2rem;
-  border-bottom: 1px solid var(--poster-border);
+  border-bottom: 1px solid var(--border-light);
 }
 
 .section-title {
   font-size: 1.25rem;
   font-weight: 700;
   line-height: 1.4;
-  color: var(--poster-text-primary);
+  color: var(--text-primary);
   margin-bottom: 1.5rem;
 }
 
@@ -636,28 +600,28 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   display: flex;
   align-items: center;
   padding: 1rem 1.25rem;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-xl);
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid var(--poster-border);
-  background: #FFFFFF;
+  border: 1px solid var(--border-light);
+  background: var(--bg-primary);
 }
 
 .step-item.active {
-  background: var(--poster-accent-light);
-  border-color: var(--poster-accent-primary);
-  box-shadow: var(--poster-shadow-sm);
+  background: rgba(252, 76, 2, 0.1);
+  border-color: var(--brand-primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .step-item.completed {
-  background: #FFFFFF;
-  border-color: var(--poster-success);
+  background: var(--bg-primary);
+  border-color: var(--color-success);
 }
 
 .step-item:not(.active):hover {
-  background: var(--poster-bg-primary);
-  border-color: var(--poster-border-hover);
-  box-shadow: var(--poster-shadow-sm);
+  background: var(--bg-secondary);
+  border-color: var(--border-medium);
+  box-shadow: var(--shadow-sm);
 }
 
 .step-icon {
@@ -673,19 +637,19 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 }
 
 .step-item.active .step-icon {
-  background: var(--poster-accent-primary);
+  background: var(--brand-primary);
   color: white;
 }
 
 .step-item.completed .step-icon {
-  background: var(--poster-success);
+  background: var(--color-success);
   color: white;
 }
 
 .step-item:not(.active):not(.completed) .step-icon {
-  background: var(--poster-bg-primary);
-  color: var(--poster-text-muted);
-  border: 1px solid var(--poster-border);
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  border: 1px solid var(--border-light);
 }
 
 .step-content {
@@ -696,19 +660,19 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   font-weight: 600;
   font-size: 1rem;
   line-height: 1.5;
-  color: var(--poster-text-primary);
+  color: var(--text-primary);
   margin-bottom: 0.125rem;
 }
 
 .step-item.active .step-label {
-  color: var(--poster-accent-primary);
+  color: var(--brand-primary);
   font-weight: 700;
 }
 
 .step-description {
   font-size: 0.875rem;
   line-height: 1.4;
-  color: var(--poster-text-muted);
+  color: var(--text-muted);
 }
 
 /* Step Content Area */
@@ -731,11 +695,26 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   display: none;
 }
 
+/* Section Headings for organized content within tabs */
+.section-heading {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 2.5rem 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--border-light);
+  line-height: 1.4;
+}
+
+.section-heading:first-child {
+  margin-top: 0;
+}
+
 /* Color Schemes Grid */
 .color-schemes-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  gap: var(--space-4);
   margin-bottom: 2rem;
   width: 100%; /* Ensure full container width */
   min-width: 0; /* Prevent overflow */
@@ -747,23 +726,23 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   flex-direction: column;
   align-items: center;
   padding: 1.25rem;
-  border: 1px solid var(--poster-border);
-  border-radius: 0.75rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
   cursor: pointer;
   transition: all 0.2s ease;
-  background: #FFFFFF;
+  background: var(--bg-primary);
 }
 
 .color-scheme:hover {
-  border-color: var(--poster-border-hover);
-  background: var(--poster-bg-primary);
-  box-shadow: var(--poster-shadow-sm);
+  border-color: var(--border-medium);
+  background: var(--bg-secondary);
+  box-shadow: var(--shadow-sm);
 }
 
 .color-scheme.active {
-  border-color: var(--poster-accent-primary);
-  background: var(--poster-accent-light);
-  box-shadow: var(--poster-shadow);
+  border-color: var(--brand-primary);
+  background: rgba(252, 76, 2, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
 .scheme-preview {
@@ -786,7 +765,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 }
 
 .retro-gradient {
-  background: #f59e0b;
+  background: var(--color-warning);
 }
 
 .midnight-gradient {
@@ -800,7 +779,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .scheme-name {
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--poster-text-secondary);
+  color: var(--text-secondary);
   text-align: center;
 }
 
@@ -813,7 +792,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   font-size: 1rem;
   font-weight: 600;
   line-height: 1.75;
-  color: var(--poster-text-primary);
+  color: var(--text-primary);
   margin-bottom: 0.75rem;
 }
 
@@ -825,10 +804,10 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   width: 100%;
   height: 4px;
   border-radius: 2px;
-  background: var(--poster-border);
+  background: var(--border-light);
   outline: none;
   -webkit-appearance: none;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
 }
 
 .thickness-slider::-webkit-slider-thumb {
@@ -837,19 +816,19 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--poster-accent-primary);
+  background: var(--brand-primary);
   cursor: pointer;
-  box-shadow: var(--poster-shadow-sm);
+  box-shadow: var(--shadow-sm);
 }
 
 .thickness-slider::-moz-range-thumb {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--poster-accent-primary);
+  background: var(--brand-primary);
   cursor: pointer;
   border: none;
-  box-shadow: var(--poster-shadow-sm);
+  box-shadow: var(--shadow-sm);
 }
 
 .thickness-slider:focus {
@@ -857,18 +836,18 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 }
 
 .thickness-slider:focus::-webkit-slider-thumb {
-  box-shadow: var(--poster-shadow-focus);
+  box-shadow: 0 0 0 4px rgba(252, 76, 2, 0.15);
 }
 
 .thickness-slider:focus::-moz-range-thumb {
-  box-shadow: var(--poster-shadow-focus);
+  box-shadow: 0 0 0 4px rgba(252, 76, 2, 0.15);
 }
 
 .thickness-labels {
   display: flex;
   justify-content: space-between;
   font-size: 0.75rem;
-  color: var(--poster-text-muted);
+  color: var(--text-muted);
 }
 
 /* Style Presets */
@@ -879,22 +858,22 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .preset-options {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .preset-option {
   width: 100%;
-  padding: 1rem;
+  padding: var(--space-4);
   background: rgba(15, 23, 42, 0.6);
   border: 2px solid rgba(100, 116, 139, 0.5);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-xl);
   text-align: left;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .preset-option:hover {
-  border-color: var(--poster-accent-cyan);
+  border-color: var(--color-info);
   background: rgba(30, 41, 59, 0.7);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(34, 211, 238, 0.2);
@@ -902,14 +881,14 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 .preset-name {
   font-weight: 600;
-  color: var(--poster-text-primary);
+  color: var(--text-primary);
   font-size: 1rem;
   margin-bottom: 0.125rem;
 }
 
 .preset-description {
   font-size: 0.75rem;
-  color: var(--poster-text-muted);
+  color: var(--text-muted);
 }
 
 /* Text Inputs */
@@ -920,24 +899,24 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 }
 
 .input-group {
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
 }
 
 .input-label {
   display: block;
   font-size: 1rem;
   font-weight: 500;
-  color: var(--poster-text-secondary);
+  color: var(--text-secondary);
   margin-bottom: 0.5rem;
 }
 
 .text-input {
   width: 100%;
-  padding: 0.75rem 1rem;
-  background: var(--poster-input-bg);
-  border: 1px solid var(--poster-border);
-  border-radius: 0.75rem;
-  color: var(--poster-text-primary);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  color: var(--text-primary);
   font-size: 1rem;
   line-height: 1.5;
   font-weight: 400;
@@ -947,22 +926,22 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 }
 
 .text-input:hover {
-  border-color: var(--poster-border-hover);
+  border-color: var(--border-medium);
 }
 
 .text-input:focus {
   outline: none;
-  border-color: var(--poster-accent-primary);
-  box-shadow: var(--poster-shadow-focus);
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 4px rgba(252, 76, 2, 0.15);
 }
 
 .text-input::placeholder {
-  color: var(--poster-text-muted);
+  color: var(--text-muted);
 }
 
 .input-help {
   font-size: 0.875rem;
-  color: var(--poster-text-muted);
+  color: var(--text-muted);
   margin-top: 0.5rem;
 }
 
@@ -974,7 +953,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .suggestion-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .suggestion-item {
@@ -982,7 +961,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   padding: 0.5rem;
   background: transparent;
   border: none;
-  color: var(--poster-text-secondary);
+  color: var(--text-secondary);
   font-size: 0.875rem;
   text-align: left;
   cursor: pointer;
@@ -992,15 +971,15 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 .suggestion-item:hover {
   background: rgba(30, 41, 59, 0.5);
-  color: var(--poster-accent-cyan);
+  color: var(--color-info);
 }
 
 /* Stats Preview */
 .stats-preview {
   background: rgba(15, 23, 42, 0.8);
   backdrop-filter: blur(10px);
-  padding: 1rem;
-  border: 1px solid var(--poster-border);
+  padding: var(--space-4);
+  border: 1px solid var(--border-light);
   border-radius: 0.5rem;
 }
 
@@ -1011,12 +990,12 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   border-radius: 0.375rem;
   margin-bottom: 0.5rem;
   font-family: 'SF Mono', Consolas, monospace;
-  color: var(--poster-text-primary);
+  color: var(--text-primary);
 }
 
 .stats-help {
   font-size: 0.75rem;
-  color: var(--poster-text-secondary);
+  color: var(--text-secondary);
   text-align: center;
 }
 
@@ -1030,7 +1009,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .layout-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
+  gap: var(--space-3);
   width: 100%;
   min-width: 0;
 }
@@ -1040,23 +1019,23 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   flex-direction: column;
   align-items: center;
   padding: 1.25rem;
-  border: 1px solid var(--poster-border);
-  border-radius: 0.75rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
   cursor: pointer;
   transition: all 0.2s ease;
-  background: #FFFFFF;
+  background: var(--bg-primary);
 }
 
 .layout-option:hover {
-  border-color: var(--poster-border-hover);
-  background: var(--poster-bg-primary);
-  box-shadow: var(--poster-shadow-sm);
+  border-color: var(--border-medium);
+  background: var(--bg-secondary);
+  box-shadow: var(--shadow-sm);
 }
 
 .layout-option.active {
-  border-color: var(--poster-accent-primary);
-  background: var(--poster-accent-light);
-  box-shadow: var(--poster-shadow);
+  border-color: var(--brand-primary);
+  background: rgba(252, 76, 2, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
 .layout-preview {
@@ -1082,13 +1061,13 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .layout-name {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--poster-text-secondary);
+  color: var(--text-secondary);
   margin-bottom: 0.125rem;
 }
 
 .layout-description {
   font-size: 0.75rem;
-  color: var(--poster-text-muted);
+  color: var(--text-muted);
 }
 
 /* Print Sizes */
@@ -1099,7 +1078,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .size-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
+  gap: var(--space-3);
   width: 100%; /* Ensure full container width */
   min-width: 0; /* Prevent overflow */
 }
@@ -1107,24 +1086,24 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .size-option {
   position: relative;
   padding: 1.25rem 1rem;
-  border: 1px solid var(--poster-border);
-  border-radius: 0.75rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: center;
-  background: #FFFFFF;
+  background: var(--bg-primary);
 }
 
 .size-option:hover {
-  border-color: var(--poster-border-hover);
-  background: var(--poster-bg-primary);
-  box-shadow: var(--poster-shadow-sm);
+  border-color: var(--border-medium);
+  background: var(--bg-secondary);
+  box-shadow: var(--shadow-sm);
 }
 
 .size-option.active {
-  border-color: var(--poster-accent-primary);
-  background: var(--poster-accent-light);
-  box-shadow: var(--poster-shadow);
+  border-color: var(--brand-primary);
+  background: rgba(252, 76, 2, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
 .size-option.popular {
@@ -1135,7 +1114,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   position: absolute;
   top: -0.5rem;
   right: -0.5rem;
-  background: var(--poster-accent-primary);
+  background: var(--brand-primary);
   color: white;
   font-size: 0.625rem;
   padding: 0.25rem 0.5rem;
@@ -1143,36 +1122,36 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  box-shadow: var(--poster-shadow-sm);
+  box-shadow: var(--shadow-sm);
 }
 
 .size-name {
   font-weight: bold;
   font-size: 1rem;
   text-transform: uppercase;
-  color: var(--poster-text-primary);
+  color: var(--text-primary);
   margin-bottom: 0.25rem;
 }
 
 .size-dimensions {
   font-size: 0.75rem;
-  color: var(--poster-text-muted);
+  color: var(--text-muted);
   margin-bottom: 0.25rem;
 }
 
 .size-price {
   font-size: 1rem;
   font-weight: 700;
-  color: var(--poster-accent-primary);
+  color: var(--brand-primary);
   margin-top: 0.25rem;
 }
 
 /* What's Included */
 .whats-included {
-  background: var(--poster-bg-primary);
-  border-radius: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-xl);
   padding: 1.25rem;
-  border: 1px solid var(--poster-border);
+  border: 1px solid var(--border-light);
 }
 
 .included-list {
@@ -1180,7 +1159,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   padding: 0;
   margin: 0;
   font-size: 0.75rem;
-  color: var(--poster-text-secondary);
+  color: var(--text-secondary);
 }
 
 .included-list li {
@@ -1195,10 +1174,10 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--space-4);
   padding: 1rem 1.5rem;
-  border-top: 1px solid var(--poster-border);
-  background: #FFFFFF;
+  border-top: 1px solid var(--border-light);
+  background: var(--bg-primary);
 }
 
 .nav-back-btn {
@@ -1208,18 +1187,18 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   width: 2.5rem;
   height: 2.5rem;
   background: transparent;
-  border: 1px solid var(--poster-border);
+  border: 1px solid var(--border-light);
   border-radius: 0.5rem;
-  color: var(--poster-text-secondary);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
 }
 
 .nav-back-btn:hover:not(:disabled) {
-  background: var(--poster-bg-primary);
-  border-color: var(--poster-border-hover);
-  color: var(--poster-text-primary);
+  background: var(--bg-secondary);
+  border-color: var(--border-medium);
+  color: var(--text-primary);
 }
 
 .nav-back-btn:disabled {
@@ -1238,13 +1217,13 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .footer-price {
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--poster-accent-primary);
+  color: var(--brand-primary);
   line-height: 1;
 }
 
 .footer-step-count {
   font-size: 0.75rem;
-  color: var(--poster-text-muted);
+  color: var(--text-muted);
   font-weight: 500;
 }
 
@@ -1252,11 +1231,11 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   padding: 0.75rem 1.5rem;
-  background: var(--poster-accent-primary);
+  background: var(--brand-primary);
   border: none;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-xl);
   color: white;
   font-size: 0.9375rem;
   font-weight: 600;
@@ -1266,8 +1245,8 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 }
 
 .nav-next-btn:hover:not(:disabled) {
-  background: var(--poster-accent-hover);
-  box-shadow: var(--poster-shadow);
+  background: var(--brand-primary-dark);
+  box-shadow: var(--shadow-md);
 }
 
 .nav-next-btn:disabled {
@@ -1294,9 +1273,9 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 /* Main Preview Area - Premium Clean Background */
 .poster-preview-area {
   flex: 1;
-  background: var(--poster-bg-gradient);
-  padding: 3rem;
-  overflow: hidden;
+  background: linear-gradient(180deg, var(--neutral-100) 0%, var(--neutral-200) 100%);
+  padding: 2rem; /* Reduced from 3rem */
+  overflow: hidden; /* Responsive scaling enabled, no scrolling needed */
   position: relative;
   display: flex;
   align-items: center;
@@ -1305,14 +1284,14 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 }
 
 .map-display-wrapper {
-  /* FIXED DIMENSIONS: Optimized scale (0.14) of print dimensions for compact viewing */
-  /* 44% reduction from quarter-scale (56% of quarter-scale) for comfortable viewing */
+  /* FIXED DIMENSIONS: 0.24 scale (24% of print size) - optimized for screen fit */
+  /* 5% smaller than 0.25 to prevent cutoff, still 33% larger than original 0.18 */
   /* Default to A3 portrait (most popular) */
-  width: 491px;  /* 3508 × 0.14 = 491px */
-  height: 694px; /* 4961 × 0.14 = 694px */
+  width: 842px;   /* 3508 × 0.24 = 842px */
+  height: 1191px; /* 4961 × 0.24 = 1191px */
   margin: 0 auto;
   position: relative;
-  background: #ffffff; /* Clean white poster background */
+  background: var(--bg-primary); /* Clean white poster background */
   padding: 0; /* Slightly smaller padding for more map space */
   border-radius: 12px; /* More modern radius */
   border: 1px solid rgba(0, 0, 0, 0.08);
@@ -1322,34 +1301,46 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   flex-shrink: 0;
 }
 
-/* Format-specific dimensions (0.14 scale of 300 DPI print dimensions) */
+/* Format-specific dimensions (0.24 scale of 300 DPI print dimensions) */
 
-/* A4 Portrait: 2480 × 3508 → 347 × 491 px */
+/* A4 Portrait: 2480 × 3508 → 595 × 842 px */
+/* Visual zoom: 120% to match A3 visual size (~714 × 1010 px apparent) */
 .map-display-wrapper[data-format="A4"][data-orientation="portrait"],
 .map-display-wrapper.format-a4.orientation-portrait {
-  width: 347px;
-  height: 491px;
+  width: 595px;
+  height: 842px;
+  transform: scale(1.2);
+  transform-origin: center center;
 }
 
-/* A4 Landscape: 3508 × 2480 → 491 × 347 px */
+/* A4 Landscape: 3508 × 2480 → 842 × 595 px */
+/* Visual zoom: 120% to match A3 visual size (~1010 × 714 px apparent) */
 .map-display-wrapper[data-format="A4"][data-orientation="landscape"],
 .map-display-wrapper.format-a4.orientation-landscape {
-  width: 491px;
-  height: 347px;
+  width: 842px;
+  height: 595px;
+  transform: scale(1.2);
+  transform-origin: center center;
 }
 
-/* A3 Portrait: 3508 × 4961 → 491 × 694 px */
+/* A3 Portrait: 3508 × 4961 → 842 × 1191 px */
+/* Visual zoom: 85% to match A4 visual size (~716 × 1012 px apparent) */
 .map-display-wrapper[data-format="A3"][data-orientation="portrait"],
 .map-display-wrapper.format-a3.orientation-portrait {
-  width: 491px;
-  height: 694px;
+  width: 842px;
+  height: 1191px;
+  transform: scale(0.85);
+  transform-origin: center center;
 }
 
-/* A3 Landscape: 4961 × 3508 → 694 × 491 px */
+/* A3 Landscape: 4961 × 3508 → 1191 × 842 px */
+/* Visual zoom: 85% to match A4 visual size (~1012 × 716 px apparent) */
 .map-display-wrapper[data-format="A3"][data-orientation="landscape"],
 .map-display-wrapper.format-a3.orientation-landscape {
-  width: 694px;
-  height: 491px;
+  width: 1191px;
+  height: 842px;
+  transform: scale(0.85);
+  transform-origin: center center;
 }
 
 .mapbox-map-container {
@@ -1358,7 +1349,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   border-radius: 8px; /* Slightly more rounded for modern look */
   overflow: hidden;
   position: relative;
-  background: #f8fafc; /* Light fallback background for poster aesthetic */
+  background: var(--neutral-50); /* Light fallback background for poster aesthetic */
   border: 1px solid rgba(0, 0, 0, 0.05); /* Even more subtle border */
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); /* Subtle inset shadow */
 }
@@ -1390,7 +1381,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   font-size: 1.75rem;
   font-weight: bold;
   letter-spacing: 0.1em;
-  color: #1a202c; /* Dark text for poster aesthetic */
+  color: var(--neutral-900); /* Dark text for poster aesthetic */
   text-shadow: none;
   padding: 0.5rem;
   text-transform: uppercase;
@@ -1406,7 +1397,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   font-size: 0.875rem;
   font-weight: 400;
   letter-spacing: 0.05em;
-  color: #4a5568; /* Muted text for poster aesthetic */
+  color: var(--neutral-600); /* Muted text for poster aesthetic */
   text-shadow: none;
   padding: 0.25rem 1rem;
   font-family: 'Helvetica Neue', Arial, sans-serif;
@@ -1428,20 +1419,20 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-xl);
   z-index: 50;
 }
 
 .loading-content {
   text-align: center;
-  color: var(--poster-text-primary);
+  color: var(--text-primary);
 }
 
 .loading-spinner {
   margin: 0 auto 1rem;
   width: 40px;
   height: 40px;
-  color: var(--poster-accent-primary);
+  color: var(--brand-primary);
 }
 
 .error-overlay {
@@ -1462,24 +1453,24 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   text-align: center;
   max-width: 28rem;
   padding: 2.5rem;
-  background: #FFFFFF;
-  border: 1px solid var(--poster-border);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
   border-radius: 1rem;
-  box-shadow: var(--poster-shadow-lg);
+  box-shadow: var(--shadow-xl);
 }
 
 .error-icon {
   margin: 0 auto 1.5rem;
-  color: var(--poster-error);
+  color: var(--color-error-dark);
 }
 
 .error-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: var(--space-3);
   margin-top: 1.5rem;
 }
 
-/* Responsive Design */
+/* Responsive Design - RE-ENABLED for 0.30 scale preview */
 @media (max-width: 1400px) {
   .map-display-wrapper {
     transform: scale(0.85);
@@ -1487,7 +1478,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   }
 
   .poster-sidebar {
-    width: 380px;
+    width: 360px;
   }
 
   .poster-preview-area {
@@ -1502,14 +1493,15 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   }
 
   .poster-sidebar {
-    width: 340px;
+    width: 320px;
   }
 
   .poster-preview-area {
-    padding: 1.5rem;
+    padding: var(--space-6);
   }
 }
 
+/* Keep mobile layout adjustments with responsive scaling */
 @media (max-width: 768px) {
   .poster-designer-layout {
     flex-direction: column;
@@ -1523,14 +1515,13 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   .poster-preview-area {
     flex: 1;
     min-height: 60vh;
-    padding: 1rem;
+    padding: var(--space-4);
   }
 
-  /* Mobile: scale to fit while maintaining exact aspect ratios */
+  /* Mobile: Adjusted scaling for 0.30 base scale */
   .map-display-wrapper {
-    transform: scale(0.45);
+    transform: scale(0.55);
     transform-origin: center center;
-    padding: 1rem; /* Smaller padding on mobile */
   }
   
   .title-overlay {
@@ -1555,16 +1546,16 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   }
   
   .nav-brand {
-    gap: 1rem;
+    gap: var(--space-4);
   }
   
   .nav-links {
-    gap: 1rem;
+    gap: var(--space-4);
   }
   
   .nav-actions {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--space-2);
   }
   
   .color-schemes-grid,
@@ -1585,12 +1576,12 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 }
 
 .step-content-area::-webkit-scrollbar-thumb {
-  background: var(--poster-border);
+  background: var(--border-light);
   border-radius: 3px;
 }
 
 .step-content-area::-webkit-scrollbar-thumb:hover {
-  background: var(--poster-border-hover);
+  background: var(--border-medium);
 }
 
 /* Animation Classes */
@@ -1632,18 +1623,18 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .map-type-option:focus,
 .style-option:focus {
   outline: none;
-  box-shadow: var(--poster-shadow-focus);
+  box-shadow: 0 0 0 4px rgba(252, 76, 2, 0.15);
 }
 
 .text-input:focus-visible,
 .thickness-slider:focus-visible {
   outline: none;
-  box-shadow: var(--poster-shadow-focus);
+  box-shadow: 0 0 0 4px rgba(252, 76, 2, 0.15);
 }
 
 /* Ensure keyboard navigation is visible */
 *:focus-visible {
-  outline: 2px solid var(--poster-accent-primary);
+  outline: 2px solid var(--brand-primary);
   outline-offset: 2px;
 }
 
@@ -1683,14 +1674,14 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   width: 100%;
   padding: 0.875rem 1rem;
   margin-top: 1.5rem;
-  border: 2px dashed var(--poster-border);
-  border-radius: 0.75rem;
+  border: 2px dashed var(--border-light);
+  border-radius: var(--radius-xl);
   background: transparent;
-  color: var(--poster-text-secondary);
+  color: var(--text-secondary);
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
@@ -1698,9 +1689,9 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 }
 
 .browse-styles-btn:hover {
-  border-color: var(--poster-accent-primary);
-  background: var(--poster-accent-light);
-  color: var(--poster-accent-primary);
+  border-color: var(--brand-primary);
+  background: rgba(252, 76, 2, 0.1);
+  color: var(--brand-primary);
 }
 
 .browse-styles-btn svg {
@@ -1710,7 +1701,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .selector-label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--poster-text-muted);
+  color: var(--text-muted);
   margin: 0 0 1rem 0;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -1722,7 +1713,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .map-type-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr); /* 3 equal columns */
-  gap: 0.75rem; /* Compact gap between items */
+  gap: var(--space-3); /* Compact gap between items */
   margin-bottom: 1.5rem;
   width: 100%;
   min-width: 0;
@@ -1734,26 +1725,26 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   align-items: center;
   justify-content: center;
   padding: 0.875rem 0.75rem;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-xl);
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid var(--poster-border);
-  background: #FFFFFF;
+  border: 1px solid var(--border-light);
+  background: var(--bg-primary);
   width: 100%;
   min-width: 0;
   text-align: center;
 }
 
 .map-type-option:hover {
-  background: var(--poster-bg-primary);
-  border-color: var(--poster-border-hover);
-  box-shadow: var(--poster-shadow-sm);
+  background: var(--bg-secondary);
+  border-color: var(--border-medium);
+  box-shadow: var(--shadow-sm);
 }
 
 .map-type-option.active {
-  background: var(--poster-accent-light);
-  border-color: var(--poster-accent-primary);
-  box-shadow: var(--poster-shadow);
+  background: rgba(252, 76, 2, 0.1);
+  border-color: var(--brand-primary);
+  box-shadow: var(--shadow-md);
 }
 
 .type-icon {
@@ -1765,16 +1756,16 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   justify-content: center;
   margin-bottom: 0.5rem;
   transition: all 0.2s ease;
-  background: var(--poster-bg-primary);
-  color: var(--poster-text-muted);
-  border: 1px solid var(--poster-border);
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  border: 1px solid var(--border-light);
   flex-shrink: 0;
 }
 
 .map-type-option.active .type-icon {
-  background: var(--poster-accent-primary);
+  background: var(--brand-primary);
   color: white;
-  border-color: var(--poster-accent-primary);
+  border-color: var(--brand-primary);
 }
 
 .type-info {
@@ -1785,14 +1776,14 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   font-weight: 600;
   font-size: 0.875rem;
   line-height: 1.3;
-  color: var(--poster-text-primary);
+  color: var(--text-primary);
   margin-bottom: 0;
 }
 
 .type-description {
   font-size: 0.75rem;
   line-height: 1.3;
-  color: var(--poster-text-muted);
+  color: var(--text-muted);
   display: none; /* Hidden by default for compact view */
   margin-top: 0.25rem;
 }
@@ -1803,7 +1794,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 }
 
 .map-type-option.active .type-name {
-  color: var(--poster-accent-primary);
+  color: var(--brand-primary);
   font-weight: 700;
 }
 
@@ -1824,23 +1815,23 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .theme-card {
   display: flex;
   flex-direction: column;
-  border: 2px solid var(--poster-border);
-  border-radius: 0.75rem;
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-xl);
   overflow: hidden;
   cursor: pointer;
   transition: all 0.25s ease; /* Smoother transition from 0.2s */
-  background: #FFFFFF;
+  background: var(--bg-primary);
 }
 
 .theme-card:hover {
-  border-color: var(--poster-border-hover);
+  border-color: var(--border-medium);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12); /* Enhanced shadow */
   transform: translateY(-4px); /* Increased lift from -2px */
 }
 
 .theme-card.active {
   border-width: 3px; /* Thicker border for emphasis */
-  border-color: var(--poster-accent-primary);
+  border-color: var(--brand-primary);
   box-shadow: 0 0 0 4px rgba(252, 76, 2, 0.15); /* Enhanced glow from 3px to 4px */
 }
 
@@ -1852,7 +1843,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   justify-content: center;
   position: relative;
   overflow: hidden;
-  background: #f5f5f5; /* Light fallback background */
+  background: var(--neutral-100); /* Light fallback background */
 }
 
 /* NEW: Actual map thumbnail image */
@@ -1895,32 +1886,32 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 .theme-card-info {
   padding: 1.25rem; /* Increased from 1rem for better proportions */
-  background: #FFFFFF;
+  background: var(--bg-primary);
 }
 
 .theme-card-name {
   font-size: 1.125rem; /* Increased from 1rem (18px) */
   font-weight: 700; /* Increased from 600 for emphasis */
-  color: var(--poster-text-primary);
+  color: var(--text-primary);
   margin-bottom: 0.375rem; /* Increased from 0.25rem */
   line-height: 1.3;
 }
 
 .theme-card-description {
   font-size: 1rem; /* Increased from 0.875rem */
-  color: var(--poster-text-muted);
+  color: var(--text-muted);
   line-height: 1.5; /* Increased from 1.4 for readability */
 }
 
 .theme-card.active .theme-card-name {
-  color: var(--poster-accent-primary);
+  color: var(--brand-primary);
 }
 
 /* Mobile responsive for theme cards */
 @media (max-width: 768px) {
   .theme-cards-grid {
     grid-template-columns: 1fr;
-    gap: 1rem; /* Consistent spacing on mobile */
+    gap: var(--space-4); /* Consistent spacing on mobile */
   }
 
   .theme-preview-area {
@@ -1928,7 +1919,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   }
 
   .theme-card-info {
-    padding: 1rem;
+    padding: var(--space-4);
   }
 
   .theme-card-name {
@@ -1937,6 +1928,139 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
   .theme-card-description {
     font-size: 0.875rem;
+  }
+}
+
+/* ==========================================================================
+   COLOR THUMBNAIL CARDS - NEW DESIGN
+   ========================================================================== */
+
+/* Color Thumbnails Grid - 2 column layout like theme cards */
+.color-thumbnails-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+  width: 100%;
+}
+
+.color-thumbnail-card {
+  display: flex;
+  flex-direction: column;
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  background: var(--bg-primary);
+}
+
+.color-thumbnail-card:hover {
+  border-color: var(--border-medium);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-4px);
+}
+
+.color-thumbnail-card.active {
+  border-width: 3px;
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 4px rgba(252, 76, 2, 0.15);
+}
+
+.thumbnail-preview-area {
+  width: 100%;
+  height: 180px; /* Shorter than theme cards for more compact feel */
+  position: relative;
+  overflow: hidden;
+  background: var(--neutral-100);
+}
+
+.thumbnail-preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.thumbnail-preview-image.loading {
+  opacity: 0;
+}
+
+.thumbnail-preview-image:not(.loading) {
+  opacity: 1;
+}
+
+.color-thumbnail-card:hover .thumbnail-preview-image {
+  transform: scale(1.05);
+}
+
+.thumbnail-loading-skeleton {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 0%,
+    #e0e0e0 50%,
+    #f0f0f0 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.thumbnail-preview-image:not(.loading) ~ .thumbnail-loading-skeleton {
+  opacity: 0;
+}
+
+.thumbnail-info {
+  padding: var(--space-4);
+  background: var(--bg-primary);
+}
+
+.thumbnail-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+  line-height: 1.3;
+}
+
+.thumbnail-description {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.color-thumbnail-card.active .thumbnail-name {
+  color: var(--brand-primary);
+}
+
+.thumbnail-fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  margin: auto;
+  max-width: 120px;
+  max-height: 120px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Mobile responsive for color thumbnails */
+@media (max-width: 768px) {
+  .color-thumbnails-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  .thumbnail-preview-area {
+    height: 160px;
   }
 }
 
@@ -1963,7 +2087,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .map-style-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr); /* 2 equal columns */
-  gap: 0.75rem;
+  gap: var(--space-3);
   width: 100%;
   min-width: 0;
 }
@@ -1972,25 +2096,25 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   display: flex;
   align-items: center;
   padding: 0.75rem;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-xl);
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid var(--poster-border);
-  background: #FFFFFF;
+  border: 1px solid var(--border-light);
+  background: var(--bg-primary);
   width: 100%;
   min-width: 0;
 }
 
 .style-option:hover {
-  background: var(--poster-bg-primary);
-  border-color: var(--poster-border-hover);
-  box-shadow: var(--poster-shadow-sm);
+  background: var(--bg-secondary);
+  border-color: var(--border-medium);
+  box-shadow: var(--shadow-sm);
 }
 
 .style-option.active {
-  background: var(--poster-accent-light);
-  border-color: var(--poster-accent-primary);
-  box-shadow: var(--poster-shadow);
+  background: rgba(252, 76, 2, 0.1);
+  border-color: var(--brand-primary);
+  box-shadow: var(--shadow-md);
 }
 
 .style-preview {
@@ -2013,12 +2137,12 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   font-weight: 600;
   font-size: 0.875rem;
   line-height: 1.3;
-  color: var(--poster-text-primary);
+  color: var(--text-primary);
   flex: 1;
 }
 
 .style-option.active .style-name {
-  color: var(--poster-accent-primary);
+  color: var(--brand-primary);
   font-weight: 700;
 }
 
@@ -2030,16 +2154,16 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .color-swatches-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
+  gap: var(--space-3);
   width: 100%;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
   min-width: 0;
 }
 
 .color-swatch {
   position: relative;
   height: 80px;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-xl);
   cursor: pointer;
   transition: all 0.2s ease;
   border: 3px solid transparent;
@@ -2050,18 +2174,18 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 .color-swatch:hover {
   transform: scale(1.05);
-  box-shadow: var(--poster-shadow);
+  box-shadow: var(--shadow-md);
 }
 
 .color-swatch.active {
-  border-color: var(--poster-text-primary);
-  box-shadow: var(--poster-shadow-lg);
+  border-color: var(--text-primary);
+  box-shadow: var(--shadow-xl);
 }
 
 .color-swatch-checkmark {
   width: 32px;
   height: 32px;
-  color: #FFFFFF;
+  color: var(--text-inverse);
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
   display: none;
 }
@@ -2073,20 +2197,20 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .color-selected-text {
   text-align: center;
   font-size: 0.875rem;
-  color: var(--poster-text-secondary);
+  color: var(--text-secondary);
   font-weight: 500;
   margin-top: 0.5rem;
 }
 
 .color-selected-text span {
   font-weight: 600;
-  color: var(--poster-accent-primary);
+  color: var(--brand-primary);
 }
 
 /* Route Color Swatches - Horizontal Layout */
 .route-color-swatches {
   display: flex;
-  gap: 1rem;
+  gap: var(--space-4);
   width: 100%;
   margin: 1.5rem 0;
   justify-content: flex-start;
@@ -2097,7 +2221,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   cursor: pointer;
   background: none;
   border: none;
@@ -2114,18 +2238,18 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   height: 60px;
   border-radius: 0.5rem;
   transition: all 0.2s ease;
-  box-shadow: var(--poster-shadow-sm);
+  box-shadow: var(--shadow-sm);
   position: relative;
 }
 
 .route-color-swatch:hover .color-swatch-inner {
-  box-shadow: var(--poster-shadow);
+  box-shadow: var(--shadow-md);
   transform: scale(1.05);
 }
 
 .route-color-swatch.selected .color-swatch-inner {
-  border: 3px solid var(--poster-accent-primary) !important;
-  box-shadow: var(--poster-shadow-lg);
+  border: 3px solid var(--brand-primary) !important;
+  box-shadow: var(--shadow-xl);
 }
 
 .route-color-swatch.selected .color-swatch-inner::after {
@@ -2142,19 +2266,19 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 /* White swatch checkmark needs dark color */
 .route-color-swatch[data-color="#ffffff"].selected .color-swatch-inner::after {
-  color: #333333;
+  color: var(--text-secondary);
   text-shadow: 0 1px 2px rgba(255,255,255,0.5);
 }
 
 .color-swatch-label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--poster-text-secondary);
+  color: var(--text-secondary);
   transition: color 0.2s ease;
 }
 
 .route-color-swatch.selected .color-swatch-label {
-  color: var(--poster-accent-primary);
+  color: var(--brand-primary);
   font-weight: 600;
 }
 
@@ -2174,18 +2298,128 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   }
 }
 
-/* Route Color Section - Simplified Palette Design */
+/* ==========================================================================
+   ROUTE COLOR MINI PREVIEW - NEW DESIGN
+   ========================================================================== */
+
+/* Route Color Section - Enhanced with Mini Preview */
 .route-color-section {
   margin-top: 2rem;
-  padding: 1.5rem;
-  background: var(--poster-card-bg);
-  border-radius: 0.75rem;
-  border: 1px solid var(--poster-border);
 }
 
+.route-color-selector {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.route-color-option {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.75rem;
+  border: 2px solid transparent;
+  border-radius: var(--radius-xl);
+  background: var(--bg-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.route-color-option:hover {
+  border-color: var(--border-medium);
+  background: var(--bg-secondary);
+  transform: translateY(-2px);
+}
+
+.route-color-option.selected {
+  border-color: var(--brand-primary);
+  background: rgba(252, 76, 2, 0.1);
+  box-shadow: var(--shadow-md);
+}
+
+.route-color-option .color-swatch {
+  width: 50px;
+  height: 50px;
+  border-radius: 0.5rem;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+  display: block;
+}
+
+.route-color-option:hover .color-swatch {
+  box-shadow: var(--shadow-md);
+  transform: scale(1.1);
+}
+
+.route-color-option .color-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.route-color-option.selected .color-label {
+  color: var(--brand-primary);
+}
+
+/* Mini Preview Overlay */
+.route-mini-preview {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  width: 200px;
+  height: 150px;
+  background: var(--bg-primary);
+  border: 2px solid var(--brand-primary);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.route-color-option:hover .route-mini-preview {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: all;
+}
+
+.mini-preview-map {
+  width: 100%;
+  height: 100%;
+}
+
+/* Arrow pointing up to color swatch */
+.route-mini-preview::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid var(--brand-primary);
+}
+
+/* Hide mini preview on touch devices */
+@media (hover: none) {
+  .route-mini-preview {
+    display: none;
+  }
+}
+
+/* Legacy route color palette support */
 .route-color-palette {
   display: flex;
-  gap: 1rem;
+  gap: var(--space-4);
   margin-top: 1rem;
   flex-wrap: wrap;
   min-height: 50px;
@@ -2224,12 +2458,12 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 .route-color-box:hover {
   transform: translateY(-2px);
-  border-color: var(--poster-border-hover);
+  border-color: var(--border-medium);
 }
 
 .route-color-box.selected {
-  border-color: var(--poster-accent-primary);
-  box-shadow: 0 0 0 1px var(--poster-accent-primary);
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 1px var(--brand-primary);
 }
 
 .route-color-box.selected::after {
@@ -2247,7 +2481,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 /* White color box needs dark checkmark */
 .route-color-box[data-color="#ffffff"].selected::after {
-  color: #333333;
+  color: var(--text-secondary);
   text-shadow: 0 1px 2px rgba(255,255,255,0.5);
 }
 
@@ -2289,12 +2523,12 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   /* Maintain grid layout but adjust columns for mobile */
   .map-type-grid {
     grid-template-columns: repeat(2, 1fr); /* 2 columns on tablet */
-    gap: 0.75rem;
+    gap: var(--space-3);
   }
 
   .map-style-grid {
     grid-template-columns: 1fr; /* Single column for color styles on mobile */
-    gap: 0.75rem;
+    gap: var(--space-3);
   }
 
   .map-type-option,
@@ -2350,7 +2584,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   }
 
   .step-content-area {
-    padding: 1rem;
+    padding: var(--space-4);
   }
 }
 
@@ -2390,7 +2624,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   max-width: 1200px;
   max-height: 85vh;
   margin: auto;
-  background: #FFFFFF;
+  background: var(--bg-primary);
   border-radius: 1.5rem;
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.3);
   display: flex;
@@ -2415,14 +2649,14 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   align-items: center;
   justify-content: space-between;
   padding: 1.5rem 2rem;
-  border-bottom: 1px solid var(--poster-border);
+  border-bottom: 1px solid var(--border-light);
   background: linear-gradient(135deg, #FFFFFF 0%, #F5F6F8 100%);
 }
 
 .gallery-title {
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--poster-text-primary);
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -2435,14 +2669,14 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   border: none;
   border-radius: 50%;
   background: transparent;
-  color: var(--poster-text-muted);
+  color: var(--text-muted);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .gallery-close-btn:hover {
-  background: var(--poster-bg-primary);
-  color: var(--poster-text-primary);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .gallery-content {
@@ -2460,16 +2694,16 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .gallery-item {
   display: flex;
   flex-direction: column;
-  border: 2px solid var(--poster-border);
-  border-radius: 0.75rem;
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-xl);
   overflow: hidden;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: #FFFFFF;
+  background: var(--bg-primary);
 }
 
 .gallery-item:hover {
-  border-color: var(--poster-accent-primary);
+  border-color: var(--brand-primary);
   box-shadow: 0 8px 24px rgba(252, 76, 2, 0.15);
   transform: translateY(-2px);
 }
@@ -2477,7 +2711,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .gallery-item-preview {
   width: 100%;
   aspect-ratio: 3/4;
-  background: #F5F6F8;
+  background: var(--neutral-100);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2494,13 +2728,13 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 .gallery-item-info {
   padding: 0.875rem;
-  border-top: 1px solid var(--poster-border);
+  border-top: 1px solid var(--border-light);
 }
 
 .gallery-item-theme {
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--poster-text-muted);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 0.25rem;
@@ -2509,17 +2743,17 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 .gallery-item-name {
   font-size: 0.9375rem;
   font-weight: 600;
-  color: var(--poster-text-primary);
+  color: var(--text-primary);
 }
 
 .gallery-item.selected {
-  border-color: var(--poster-accent-primary);
-  background: var(--poster-accent-light);
+  border-color: var(--brand-primary);
+  background: rgba(252, 76, 2, 0.1);
   box-shadow: 0 0 0 3px rgba(252, 76, 2, 0.15);
 }
 
 .gallery-item.selected .gallery-item-info {
-  background: var(--poster-accent-light);
+  background: rgba(252, 76, 2, 0.1);
 }
 
 /* Responsive adjustments for gallery */
@@ -2539,14 +2773,14 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   }
 
   .gallery-content {
-    padding: 1.5rem;
+    padding: var(--space-6);
   }
 }
 
 @media (max-width: 768px) {
   .gallery-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    gap: var(--space-4);
   }
 
   .gallery-container {
@@ -2591,7 +2825,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   }
 
   .gallery-content {
-    padding: 1rem;
+    padding: var(--space-4);
   }
 }
 
@@ -2635,19 +2869,19 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 /* Style selector spacing */
 .style-selector-wrapper {
-  gap: 1rem; /* Reduced from 1.5rem */
+  gap: var(--space-4); /* Reduced from 1.5rem */
 }
 
 /* Map type grid - 2 columns instead of 3 */
 .map-type-grid {
   grid-template-columns: repeat(2, 1fr); /* Changed from 3 */
-  gap: 0.75rem;
-  margin-bottom: 1rem; /* Reduced from 1.5rem */
+  gap: var(--space-3);
+  margin-bottom: var(--space-4); /* Reduced from 1.5rem */
 }
 
 /* Route thickness section */
 .route-thickness-section {
-  margin-bottom: 1rem; /* Reduced from 2rem */
+  margin-bottom: var(--space-4); /* Reduced from 2rem */
 }
 
 /* Browse styles button */
@@ -2657,7 +2891,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 /* Text step optimizations */
 .text-inputs {
-  margin-bottom: 1rem; /* Reduced from 1.5rem */
+  margin-bottom: var(--space-4); /* Reduced from 1.5rem */
 }
 
 .input-group {
@@ -2676,11 +2910,11 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 /* Layout step optimizations */
 .layout-options {
-  margin-bottom: 1rem; /* Reduced from 1.5rem */
+  margin-bottom: var(--space-4); /* Reduced from 1.5rem */
 }
 
 .print-sizes {
-  margin-bottom: 1rem; /* Reduced from 1.5rem */
+  margin-bottom: var(--space-4); /* Reduced from 1.5rem */
 }
 
 /* Print styles for when users want to print the page */
@@ -2702,6 +2936,6 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
     border: none;
     box-shadow: none;
     background: white;
-    padding: 1rem;
+    padding: var(--space-4);
   }
 }

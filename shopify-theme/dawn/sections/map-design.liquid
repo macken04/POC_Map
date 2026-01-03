@@ -107,32 +107,15 @@
             class="step-tab"
             role="tab"
             aria-selected="false"
-            aria-controls="colors-step"
-            data-step="colors"
-            id="colors-tab">
+            aria-controls="styling-step"
+            data-step="styling"
+            id="styling-tab">
             <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M12 2a10 10 0 0 1 10 10h-10V2z" fill="currentColor" opacity="0.3"/>
+              <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/>
+              <line x1="16" y1="8" x2="2" y2="22"/>
+              <line x1="17.5" y1="15" x2="9" y2="15"/>
             </svg>
-            <span class="tab-label">Colors</span>
-            <svg class="tab-checkmark hidden" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-              <polyline points="20,6 9,17 4,12"/>
-            </svg>
-          </button>
-
-          <button
-            class="step-tab"
-            role="tab"
-            aria-selected="false"
-            aria-controls="text-step"
-            data-step="text"
-            id="text-tab">
-            <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="4,7 4,4 20,4 20,7"/>
-              <line x1="9" y1="20" x2="15" y2="20"/>
-              <line x1="12" y1="4" x2="12" y2="20"/>
-            </svg>
-            <span class="tab-label">Text</span>
+            <span class="tab-label">Styling</span>
             <svg class="tab-checkmark hidden" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
               <polyline points="20,6 9,17 4,12"/>
             </svg>
@@ -187,44 +170,19 @@
           </button>
         </div>
 
-        <!-- Colors Step Panel - Tab 2: Color Selection (Large Swatches) -->
-        <div class="step-panel" id="colors-step">
-          <h3 class="panel-title">Pick Your Route Color</h3>
-
-          <!-- Color Selection - Large Color Swatches -->
-          <div class="map-style-section visible">
-            <div class="color-swatches-grid" id="map-style-options">
-              <!-- JavaScript will populate this with large color swatches -->
-              <div class="text-center" style="padding: 2rem; color: var(--poster-text-muted); grid-column: 1 / -1;">
-                <p style="font-size: 0.875rem;">Select a map theme first to see available colors</p>
-              </div>
-            </div>
-            <p class="color-selected-text" id="color-selected-text">
-              Selected: <span>None</span>
-            </p>
-          </div>
-
-          <!-- Social Proof (optional) -->
-          <div class="whats-included" style="margin-top: 2rem;">
-            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: var(--poster-bg-primary); border-radius: 0.75rem;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--poster-accent-primary)" stroke-width="2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-              <div>
-                <div style="font-weight: 600; color: var(--poster-text-primary);">Join 12,000+ athletes worldwide</div>
-                <div style="font-size: 0.875rem; color: var(--poster-text-muted);">4.9 average rating</div>
-              </div>
+        <!-- Styling Step Panel - Tab 2: Colors + Text + Route Controls (Merged) -->
+        <div class="step-panel" id="styling-step">
+          <!-- Section 1: Color Selection with Map Thumbnails -->
+          <h3 class="section-heading">Choose Your Color Variant</h3>
+          <div class="color-thumbnails-grid" id="color-thumbnails-grid">
+            <!-- Will be populated by JavaScript with map thumbnail cards -->
+            <div class="text-center" style="padding: 2rem; color: var(--poster-text-muted); grid-column: 1 / -1;">
+              <p style="font-size: 0.875rem;">Select a map theme first to see available colors</p>
             </div>
           </div>
-        </div>
 
-        <!-- Text Step Panel - Tab 3: Text Customizations and Route Options -->
-        <div class="step-panel" id="text-step">
-          <h3 class="panel-title">Customize Your Text</h3>
-
+          <!-- Section 2: Text Customization -->
+          <h3 class="section-heading">Customize Your Text</h3>
           <div class="text-inputs">
             <div class="input-group">
               <label class="input-label" for="main-title-input">Map Title</label>
@@ -239,6 +197,9 @@
             </div>
           </div>
 
+          <!-- Section 3: Route Appearance Controls -->
+          <h3 class="section-heading">Route Appearance</h3>
+
           <!-- Route Line Width Control -->
           <div class="route-thickness-section">
             <h4 class="control-title">Route Line Width</h4>
@@ -251,34 +212,43 @@
             </div>
           </div>
 
-          <!-- Route Line Color Control -->
+          <!-- Route Line Color Control with Mini Preview -->
           <div class="route-color-section">
             <h4 class="control-title">Route Line Color</h4>
-            <div class="route-color-palette">
+            <div class="route-color-selector">
               <!-- Red -->
-              <button class="route-color-box selected" data-color="#ff4444" aria-label="Red route color">
-                <span class="color-box-fill color-fill-red"></span>
+              <button class="route-color-option selected" data-color="#ff4444" aria-label="Red route color">
+                <span class="color-swatch" style="background: #ff4444;"></span>
+                <span class="color-label">Red</span>
+                <div class="route-mini-preview">
+                  <div class="mini-preview-map" id="mini-preview-red"></div>
+                </div>
               </button>
               <!-- Black -->
-              <button class="route-color-box" data-color="#000000" aria-label="Black route color">
-                <span class="color-box-fill color-fill-black"></span>
+              <button class="route-color-option" data-color="#000000" aria-label="Black route color">
+                <span class="color-swatch" style="background: #000000;"></span>
+                <span class="color-label">Black</span>
+                <div class="route-mini-preview">
+                  <div class="mini-preview-map" id="mini-preview-black"></div>
+                </div>
               </button>
               <!-- White -->
-              <button class="route-color-box" data-color="#ffffff" aria-label="White route color">
-                <span class="color-box-fill color-fill-white"></span>
+              <button class="route-color-option" data-color="#ffffff" aria-label="White route color">
+                <span class="color-swatch" style="background: #ffffff; border: 1px solid #e0e0e0;"></span>
+                <span class="color-label">White</span>
+                <div class="route-mini-preview">
+                  <div class="mini-preview-map" id="mini-preview-white"></div>
+                </div>
               </button>
               <!-- Blue -->
-              <button class="route-color-box" data-color="#0066ff" aria-label="Blue route color">
-                <span class="color-box-fill color-fill-blue"></span>
+              <button class="route-color-option" data-color="#0066ff" aria-label="Blue route color">
+                <span class="color-swatch" style="background: #0066ff;"></span>
+                <span class="color-label">Blue</span>
+                <div class="route-mini-preview">
+                  <div class="mini-preview-map" id="mini-preview-blue"></div>
+                </div>
               </button>
             </div>
-          </div>
-
-          <!-- Stats Preview (kept for reference) -->
-          <div class="stats-preview">
-            <h4 class="control-title">Route Stats</h4>
-            <div class="stats-badge" id="overlay-distance">53.3km — 743m</div>
-            <div class="stats-help">Distance and elevation will be automatically added</div>
           </div>
         </div>
 

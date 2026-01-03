@@ -19,11 +19,11 @@ class CanvasSizeManager {
       memoryThreshold: options.memoryThreshold || 500, // MB
       
       // Quality settings
-      // Use 0.14 scale (56% of quarter-scale) for compact viewing
-      // This provides 44% size reduction for comfortable viewing on smaller screens
-      // Preview dimensions are 0.14× of print dimensions (e.g., A4: 347×491px from 2480×3508px)
-      viewportScaleFactor: options.viewportScaleFactor || 0.14,
-      previewQuality: options.previewQuality || 150, // DPI for preview
+      // Use 0.24 scale (24% of print size) - optimized for screen fit
+      // 5% smaller than 0.25 to prevent cutoff, still 33% larger than original 0.18
+      // Preview dimensions are 0.24× of print dimensions (e.g., A4: 595×842px from 2480×3508px)
+      viewportScaleFactor: options.viewportScaleFactor || 0.24,
+      previewQuality: options.viewportScaleFactor || 150, // DPI for preview
       
       ...options
     };
@@ -79,7 +79,7 @@ class CanvasSizeManager {
 
   /**
    * Calculate optimal viewport dimensions for a given print format
-   * Uses fixed 0.14 scale (56% of quarter-scale) for compact viewing
+   * Uses fixed 0.18 scale (18% of print size) for compact, clean presentation
    *
    * @param {string} format - Print format (A4, A3)
    * @param {string} orientation - Orientation (portrait, landscape)
@@ -95,20 +95,20 @@ class CanvasSizeManager {
     const printDimensions = printSpec[orientation];
     const aspectRatio = printSpec.aspectRatio[orientation];
 
-    // CRITICAL: Use 0.14 scale for compact preview while maintaining aspect ratios
-    // This provides 44% size reduction from quarter-scale for comfortable viewing
-    // The map view in the editor exactly matches what gets exported (just at smaller scale)
-    const scaleFactor = this.options.viewportScaleFactor; // Should be 0.14
+    // CRITICAL: Use 0.24 scale (24% of print size) - optimized for screen fit
+    // 5% smaller than 0.25 to prevent cutoff, still 33% larger than original 0.18
+    // The map view in the editor exactly matches what gets exported (just at 24% scale)
+    const scaleFactor = this.options.viewportScaleFactor; // Should be 0.24
 
     // Calculate viewport as exact scaled-down version of print dimensions
     const viewportWidth = Math.round(printDimensions.width * scaleFactor);
     const viewportHeight = Math.round(printDimensions.height * scaleFactor);
 
-    // Resulting dimensions (44% smaller than quarter-scale, 56% of quarter-scale):
-    // A4 portrait: 2480 × 3508 → 347 × 491 pixels
-    // A4 landscape: 3508 × 2480 → 491 × 347 pixels
-    // A3 portrait: 3508 × 4961 → 491 × 694 pixels
-    // A3 landscape: 4961 × 3508 → 694 × 491 pixels
+    // Resulting dimensions (24% of print size, optimized for screen fit):
+    // A4 portrait: 2480 × 3508 → 595 × 842 pixels
+    // A4 landscape: 3508 × 2480 → 842 × 595 pixels
+    // A3 portrait: 3508 × 4961 → 842 × 1191 pixels
+    // A3 landscape: 4961 × 3508 → 1191 × 842 pixels
 
     return {
       viewport: {
@@ -124,7 +124,7 @@ class CanvasSizeManager {
         x: scaleFactor,
         y: scaleFactor,
         // Export must multiply by this to get print dimensions
-        exportMultiplier: 1 / scaleFactor // Should be ~7.14 (1 / 0.14)
+        exportMultiplier: 1 / scaleFactor // Should be 4.17 (1 / 0.24)
       },
       aspectRatio,
       memoryEstimate: this.calculateMemoryRequirements(

@@ -131,6 +131,12 @@
   --z-popover: 1060;
   --z-tooltip: 1070;
   --z-toast: 1080;
+
+  /* Responsive Breakpoints */
+  --breakpoint-sm: 480px;   /* Mobile landscape */
+  --breakpoint-md: 768px;   /* Tablet */
+  --breakpoint-lg: 1024px;  /* Desktop */
+  --breakpoint-xl: 1200px;  /* Large desktop */
 }
 
 /* ==========================================================================
@@ -561,6 +567,17 @@
 /* ==========================================================================
    RESPONSIVE BREAKPOINTS
    ========================================================================== */
+
+/*
+ * Standard Breakpoints (use these values in @media queries):
+ * - Mobile landscape: 480px  (--breakpoint-sm)
+ * - Tablet:          768px  (--breakpoint-md)
+ * - Desktop:         1024px (--breakpoint-lg)
+ * - Large desktop:   1200px (--breakpoint-xl)
+ *
+ * Note: CSS custom properties cannot be used in @media queries,
+ * so use the pixel values directly in your media queries.
+ */
 
 /* Mobile First Approach */
 @media (min-width: 640px) {

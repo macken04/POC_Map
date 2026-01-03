@@ -39,10 +39,10 @@ class MapDesign {
     this.canvasSizeManager = null;
     if (typeof CanvasSizeManager !== 'undefined') {
       this.canvasSizeManager = new CanvasSizeManager({
-        viewportScaleFactor: 0.14,  // 0.14 scale (44% reduction) for compact viewing
+        viewportScaleFactor: 0.18,  // 0.18 scale (18% of print) - matches reference image
         enableTransitions: true
       });
-      console.log('CanvasSizeManager initialized with 0.14 scale');
+      console.log('CanvasSizeManager initialized with 0.18 scale');
     } else {
       console.warn('CanvasSizeManager not available');
     }
@@ -120,7 +120,10 @@ class MapDesign {
       galleryModal: document.getElementById('styles-gallery-modal'),
       galleryOverlay: document.getElementById('gallery-overlay'),
       galleryCloseBtn: document.getElementById('gallery-close-btn'),
-      galleryGrid: document.getElementById('gallery-grid')
+      galleryGrid: document.getElementById('gallery-grid'),
+
+      // Route color options
+      colorOptions: document.querySelectorAll('.route-color-option')
     };
 
     this.extractSessionToken();
@@ -651,12 +654,12 @@ class MapDesign {
    */
   
   /**
-   * Navigate to a specific step (updated for 4-tab horizontal layout)
+   * Navigate to a specific step (updated for 3-tab horizontal layout)
    */
   navigateToStep(stepName) {
     console.log(`Navigating to step: ${stepName}`);
 
-    const steps = ['style', 'colors', 'text', 'size'];
+    const steps = ['style', 'styling', 'size'];
     const stepIndex = steps.indexOf(stepName);
 
     if (stepIndex === -1) {
@@ -691,9 +694,9 @@ class MapDesign {
       panel.classList.toggle('active', panelStep === stepName);
     });
 
-    // Update footer step count for 4 tabs
+    // Update footer step count for 3 tabs
     if (this.elements.footerStepCount) {
-      this.elements.footerStepCount.textContent = `${stepIndex + 1}/4`;
+      this.elements.footerStepCount.textContent = `${stepIndex + 1}/3`;
     }
 
     // Update navigation buttons
@@ -809,10 +812,10 @@ class MapDesign {
   }
   
   /**
-   * Navigate to next step (updated for 4-tab layout)
+   * Navigate to next step (updated for 3-tab layout)
    */
   nextStep() {
-    const steps = ['style', 'colors', 'text', 'size'];
+    const steps = ['style', 'styling', 'size'];
     const currentIndex = steps.indexOf(this.currentStep);
 
     if (currentIndex < steps.length - 1) {
@@ -825,10 +828,10 @@ class MapDesign {
   }
 
   /**
-   * Navigate to previous step (updated for 4-tab layout)
+   * Navigate to previous step (updated for 3-tab layout)
    */
   prevStep() {
-    const steps = ['style', 'colors', 'text', 'size'];
+    const steps = ['style', 'styling', 'size'];
     const currentIndex = steps.indexOf(this.currentStep);
 
     if (currentIndex > 0) {
@@ -2605,6 +2608,9 @@ class MapDesign {
     // Action button events
     this.bindActionEvents();
 
+    // Route color selection events
+    this.bindRouteColorEvents();
+
     // Retry button
     if (this.elements.retryButton) {
       this.elements.retryButton.addEventListener('click', () => {
@@ -3007,6 +3013,239 @@ class MapDesign {
     
     // Re-bind events for new style options
     this.bindMapStyleEvents();
+  }
+
+  /**
+   * Generate color thumbnail cards with map preview images
+   * @param {string} mapType - The selected map type (e.g., 'classic')
+   */
+  generateColorThumbnails(mapType) {
+    const container = document.getElementById('color-thumbnails-grid');
+    if (!container) return;
+
+    // Use external system for consistency
+    if (!window.mapboxCustomization) {
+      console.warn('MapboxCustomization not available');
+      return;
+    }
+
+    const themeStyles = window.mapboxCustomization.getThemeStyles();
+    const colors = themeStyles[mapType]?.colors || {};
+
+    container.innerHTML = ''; // Clear existing
+
+    Object.entries(colors).forEach(([colorKey, colorData]) => {
+      const card = document.createElement('div');
+      card.className = 'color-thumbnail-card';
+      card.dataset.colorVariant = colorKey;  // Store just "blue" not "classic-blue"
+      card.dataset.theme = mapType;  // Also store the theme
+
+      // Check if currently selected
+      if (colorKey === this.currentSettings.mapColor) {
+        card.classList.add('active');
+      }
+
+      card.innerHTML = `
+        <div class="thumbnail-preview-area">
+          <img src="/assets/previews/preview-${mapType}-${colorKey}.jpg"
+               alt="${colorData.name} Preview"
+               class="thumbnail-preview-image loading"
+               loading="lazy">
+          <div class="thumbnail-loading-skeleton"></div>
+        </div>
+        <div class="thumbnail-info">
+          <h4 class="thumbnail-name">${colorData.name}</h4>
+          <p class="thumbnail-description">${this.getColorDescription(colorKey)}</p>
+        </div>
+      `;
+
+      // Add click handler - pass both theme and color
+      card.addEventListener('click', () => this.selectColorVariant(mapType, colorKey));
+
+      // Handle image loading
+      const img = card.querySelector('.thumbnail-preview-image');
+      img.addEventListener('load', () => {
+        img.classList.remove('loading');
+      });
+
+      img.addEventListener('error', () => {
+        // Fallback: show color preview circle instead
+        img.style.display = 'none';
+        const fallback = document.createElement('div');
+        fallback.className = 'thumbnail-fallback';
+        fallback.style.background = colorData.previewColor;
+        card.querySelector('.thumbnail-preview-area').appendChild(fallback);
+      });
+
+      container.appendChild(card);
+    });
+  }
+
+  /**
+   * Get descriptive text for color variant
+   * @param {string} styleKey - Style key
+   * @returns {string} Description text
+   */
+  getColorDescription(styleKey) {
+    const descriptions = {
+      'classic-blue': 'Ocean-inspired blue tones',
+      'classic-grey': 'Subtle monochrome palette',
+      'classic-dark': 'Bold dark aesthetic',
+      'classic-orange': 'Warm sunset vibes',
+      'classic-pink': 'Soft romantic hues',
+      'classic': 'Timeless classic style',
+      'minimal-dark': 'Clean dark minimalism',
+      'minimal-pink': 'Gentle pastel pink',
+      'minimal-grey': 'Neutral elegance',
+      'minimal-sand': 'Warm earth tones',
+      'minimal-sage': 'Calming green hues',
+      'bubble': 'Playful and vibrant',
+      'streets': 'Clear street details',
+      'light': 'Bright and airy',
+      'grey': 'Minimalist grayscale',
+      'satellite': 'Real aerial imagery',
+      'satellite-streets': 'Hybrid satellite view',
+      'outdoors': 'Outdoor adventure',
+      'terrain': 'Topographic detail'
+    };
+    return descriptions[styleKey] || 'Beautiful color scheme';
+  }
+
+  /**
+   * Handle color variant selection
+   * @param {string} themeKey - Theme key (e.g., 'classic')
+   * @param {string} colorKey - Color key within theme (e.g., 'blue')
+   */
+  async selectColorVariant(themeKey, colorKey) {
+    console.log('Color variant selected:', themeKey, colorKey);
+
+    // Update state with both theme and color
+    this.currentSettings.mapType = themeKey;
+    this.currentSettings.mapColor = colorKey;
+
+    // Update UI
+    document.querySelectorAll('.color-thumbnail-card').forEach(card => {
+      const isActive = card.dataset.theme === themeKey &&
+                       card.dataset.colorVariant === colorKey;
+      card.classList.toggle('active', isActive);
+    });
+
+    // Update summary
+    this.updateSelectionSummary();
+
+    // Apply to map using setThemeColor() which expects theme + color
+    if (typeof this.setThemeColor === 'function') {
+      await this.setThemeColor(themeKey, colorKey);
+    } else {
+      console.warn('setThemeColor method not available');
+    }
+  }
+
+  /**
+   * Initialize route color mini previews
+   * Creates small Mapbox instances for each color option on hover
+   */
+  initializeRouteMiniPreviews() {
+    const colorOptions = document.querySelectorAll('.route-color-option');
+
+    colorOptions.forEach(option => {
+      const color = option.dataset.color;
+      const previewContainer = option.querySelector('.mini-preview-map');
+
+      if (!previewContainer) return;
+
+      // Create mini map instance on hover (lazy initialization)
+      option.addEventListener('mouseenter', () => {
+        if (previewContainer.dataset.initialized === 'true') return;
+
+        this.createMiniPreview(previewContainer, color);
+        previewContainer.dataset.initialized = 'true';
+      });
+    });
+  }
+
+  /**
+   * Create a mini preview map with specified route color
+   * @param {HTMLElement} container - Container element for the mini map
+   * @param {string} routeColor - Hex color for the route
+   */
+  createMiniPreview(container, routeColor) {
+    if (!this.activityData || !container || typeof mapboxgl === 'undefined') return;
+
+    try {
+      // Create mini mapbox instance
+      const miniMap = new mapboxgl.Map({
+        container: container,
+        style: this.resolveStyleKeyToURL(this.currentSettings.mapStyle),
+        interactive: false,
+        attributionControl: false,
+        zoom: 12,
+        center: this.activityData.coordinates[0] // Use first coordinate
+      });
+
+      miniMap.on('load', () => {
+        // Add route with specified color
+        miniMap.addSource('route-preview', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            geometry: {
+              type: 'LineString',
+              coordinates: this.activityData.coordinates
+            }
+          }
+        });
+
+        miniMap.addLayer({
+          id: 'route-preview-layer',
+          type: 'line',
+          source: 'route-preview',
+          paint: {
+            'line-color': routeColor,
+            'line-width': 3,
+            'line-opacity': 0.9
+          }
+        });
+
+        // Fit bounds to route
+        const bounds = new mapboxgl.LngLatBounds();
+        this.activityData.coordinates.forEach(coord => bounds.extend(coord));
+        miniMap.fitBounds(bounds, { padding: 20, animate: false });
+      });
+
+      miniMap.on('error', (e) => {
+        console.warn('Mini preview map error:', e);
+      });
+    } catch (error) {
+      console.warn('Failed to create mini preview:', error);
+    }
+  }
+
+  /**
+   * Bind click events to route color options
+   */
+  bindRouteColorEvents() {
+    const colorOptions = document.querySelectorAll('.route-color-option');
+
+    colorOptions.forEach(option => {
+      option.addEventListener('click', () => {
+        const color = option.dataset.color;
+
+        // Update visual selection
+        colorOptions.forEach(opt => opt.classList.remove('selected'));
+        option.classList.add('selected');
+
+        // Update settings
+        this.currentSettings.routeColor = color;
+
+        // Update map route color
+        if (this.mapboxIntegration && this.mapboxIntegration.updateRouteStyle) {
+          this.mapboxIntegration.updateRouteStyle({ routeColor: color });
+        }
+
+        console.log('Route color changed to:', color);
+      });
+    });
   }
 
   /**
@@ -4060,6 +4299,9 @@ class MapDesign {
 
     // Update color options for new theme
     this.renderColorSelector(themeKey);
+
+    // Generate color thumbnails for Styling tab
+    this.generateColorThumbnails(themeKey);
 
     // Set the first color of the new theme
     if (window.mapboxCustomization) {
