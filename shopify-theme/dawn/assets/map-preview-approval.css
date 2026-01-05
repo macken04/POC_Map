@@ -26,11 +26,11 @@
 
 .map-preview-container {
   background: var(--poster-bg-gradient);
-  min-height: 100vh;
+  min-height: calc(100vh - var(--header-height, 0)); /* Adjusted for global header */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   color: var(--poster-text-primary);
   position: fixed;
-  top: 0;
+  top: var(--header-height, 0); /* Offset for global header */
   left: 0;
   right: 0;
   bottom: 0;
@@ -184,59 +184,7 @@
   line-height: 1.4;
 }
 
-/* ==========================================================================
-   NAVIGATION HEADER
-   ========================================================================== */
-
-.preview-header {
-  background: var(--poster-bg-primary);
-  border-bottom: 1px solid var(--poster-border);
-  padding: 1rem 0;
-  margin-bottom: 2rem;
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  box-shadow: var(--poster-shadow);
-}
-
-.header-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-}
-
-.header-inner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.nav-breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.95rem;
-}
-
-.breadcrumb-link {
-  color: var(--poster-text-secondary);
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s ease;
-}
-
-.breadcrumb-link:hover {
-  color: var(--poster-text-primary);
-}
-
-.breadcrumb-separator {
-  color: var(--poster-text-muted);
-}
-
-.breadcrumb-current {
-  color: var(--poster-accent-primary);
-  font-weight: 500;
-}
+/* Custom preview header and breadcrumb CSS removed - now using global Shopify header with breadcrumbs */
 
 /* ==========================================================================
    MAIN CONTENT LAYOUT
@@ -771,9 +719,7 @@
     align-items: flex-start;
   }
 
-  .nav-breadcrumb {
-    font-size: 0.875rem;
-  }
+  /* Removed .nav-breadcrumb styles - custom nav removed */
 
   .preview-action-buttons {
     flex-direction: column;
@@ -810,11 +756,10 @@
    ========================================================================== */
 
 @media print {
-  .preview-header,
-  .btn,
-  .nav-breadcrumb {
+  .btn {
     display: none;
   }
+  /* Removed .preview-header, .nav-breadcrumb - custom nav removed */
 
   .map-preview-container {
     background: white;

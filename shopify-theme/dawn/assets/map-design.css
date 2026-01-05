@@ -33,19 +33,18 @@ body:has(.poster-designer-container) .section:has(.main-page-title) {
   box-sizing: border-box;
 }
 
-/* Hide Shopify theme elements that might interfere */
-body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-container)) {
-  display: none !important;
-}
+/* Hide Shopify theme elements that might interfere - UPDATED to allow global header */
+/* Removed: body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-container)) { display: none !important; } */
+/* Global header is now visible on map design page */
 
-/* Base Container - Full viewport height with no gaps */
+/* Base Container - Full viewport height accounting for global header */
 .poster-designer-container {
   position: fixed;
-  top: 0;
+  top: var(--header-height, 0); /* Offset for global header */
   left: 0;
   right: 0;
   bottom: 0;
-  height: 100vh;
+  height: calc(100vh - var(--header-height, 0)); /* Adjust height for header */
   background: linear-gradient(180deg, var(--neutral-100) 0%, var(--neutral-200) 100%);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   color: var(--text-primary);
@@ -53,114 +52,7 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
   z-index: 1;
 }
 
-/* Navigation Bar - Premium Clean Design */
-.poster-nav-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-4) var(--space-8); /* Reduced from 1.5rem 5rem for more space */
-  background: var(--bg-primary);
-  border-bottom: 1px solid var(--border-light);
-  position: relative;
-  z-index: 100;
-  box-shadow: var(--shadow-sm);
-}
-
-@media (max-width: 1439px) {
-  .poster-nav-bar {
-    padding: 1rem 1.5rem; /* Reduced from 1.5rem 3rem */
-  }
-}
-
-@media (max-width: 1023px) {
-  .poster-nav-bar {
-    padding: 0.875rem 1.25rem; /* Reduced from 1rem 2rem */
-  }
-}
-
-@media (max-width: 767px) {
-  .poster-nav-bar {
-    padding: var(--space-3) var(--space-4); /* Reduced from 1rem */
-  }
-}
-
-.nav-brand {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4); /* Reduced from 2rem for tighter spacing */
-}
-
-.brand-logo {
-  width: 36px; /* Reduced from 40px for more compact nav */
-  height: 36px; /* Reduced from 40px for more compact nav */
-  background: var(--brand-primary);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 1rem; /* Reduced from 1.125rem to match logo size */
-  color: white;
-  box-shadow: var(--shadow-sm);
-  flex-shrink: 0; /* Prevent logo from shrinking */
-}
-
-.nav-links {
-  display: flex;
-  gap: var(--space-3); /* Reduced from 2rem for more compact breadcrumb */
-  align-items: center;
-}
-
-.nav-link {
-  color: var(--text-muted);
-  text-decoration: none;
-  font-size: 0.9375rem; /* Reduced from 1rem for better fit */
-  font-weight: 600;
-  line-height: 1.5;
-  transition: color 0.2s ease;
-  white-space: nowrap; /* Prevent text wrapping */
-}
-
-.nav-link:hover {
-  color: var(--text-primary);
-}
-
-.nav-link.active {
-  color: var(--brand-primary);
-}
-
-.nav-actions {
-  display: flex;
-  gap: var(--space-3);
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem; /* Reduced from 0.5rem for tighter button content */
-  padding: var(--space-2) var(--space-3); /* Reduced from 0.75rem 1rem for more compact buttons */
-  background: var(--bg-primary);
-  border: 1px solid var(--border-light);
-  color: var(--text-secondary);
-  border-radius: var(--radius-xl);
-  font-size: 0.875rem; /* Reduced from 1rem for better fit */
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap; /* Prevent text wrapping */
-}
-
-.action-btn:hover {
-  background: var(--bg-secondary);
-  border-color: var(--border-medium);
-  color: var(--text-primary);
-  box-shadow: var(--shadow-sm);
-}
-
-.action-btn:focus {
-  outline: none;
-  box-shadow: 0 0 0 4px rgba(252, 76, 2, 0.15);
-}
+/* Custom navigation bar CSS removed - now using global Shopify header with breadcrumbs */
 
 /* Main Layout */
 .poster-designer-layout {
@@ -1544,20 +1436,9 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
     left: 0.5rem;
     right: 0.5rem;
   }
-  
-  .nav-brand {
-    gap: var(--space-4);
-  }
-  
-  .nav-links {
-    gap: var(--space-4);
-  }
-  
-  .nav-actions {
-    flex-direction: column;
-    gap: var(--space-2);
-  }
-  
+
+  /* Removed nav-brand, nav-links, nav-actions styles - custom nav removed */
+
   .color-schemes-grid,
   .layout-options,
   .size-grid {
@@ -2919,11 +2800,11 @@ body:has(.poster-designer-container) .shopify-section:not(:has(.poster-designer-
 
 /* Print styles for when users want to print the page */
 @media print {
-  .poster-nav-bar,
   .poster-sidebar,
   .navigation-footer {
     display: none;
   }
+  /* Removed .poster-nav-bar - custom nav removed */
 
   .poster-preview-area {
     width: 100%;

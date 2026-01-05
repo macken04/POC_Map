@@ -14,37 +14,8 @@
 <!-- mapbox-integration.js already loaded in theme.liquid layout -->
 
 <!-- Modern Full-Page Poster Designer Container -->
+<!-- Custom navigation bar removed - now using global Shopify header with breadcrumbs -->
 <div class="poster-designer-container">
-  <!-- Navigation Bar -->
-  <div class="poster-nav-bar">
-    <div class="nav-brand">
-      <div class="brand-logo">S</div>
-      <div class="nav-links">
-        <a href="/pages/strava-activities" class="nav-link">My Activities</a>
-        <span class="nav-link active">›</span>
-        <span class="nav-link active">Design Your Map</span>
-      </div>
-    </div>
-    <div class="nav-actions">
-      <button class="action-btn" id="save-button">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-          <polyline points="17,21 17,13 7,13 7,21"/>
-          <polyline points="7,3 7,8 15,8"/>
-        </svg>
-        Save
-      </button>
-      <button class="action-btn" id="share-button">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-          <polyline points="16,6 12,2 8,6"/>
-          <line x1="12" y1="2" x2="12" y2="15"/>
-        </svg>
-        Share
-      </button>
-    </div>
-  </div>
-
   <!-- Main Layout -->
   <div class="poster-designer-layout">
     <!-- Left Sidebar -->
@@ -151,7 +122,7 @@
           <div class="map-type-section">
             <div class="theme-cards-grid" id="theme-color-selector">
               <!-- JavaScript will populate this with large theme preview cards -->
-              <div class="text-center" style="padding: 2rem; color: var(--poster-text-muted); grid-column: 1 / -1;">
+              <div class="text-center" style="padding: 2rem; color: var(--text-muted); grid-column: 1 / -1;">
                 <div class="loading-spinner" style="margin: 0 auto 0.5rem;"></div>
                 <p style="font-size: 0.875rem;">Loading themes...</p>
               </div>
@@ -176,7 +147,7 @@
           <h3 class="section-heading">Choose Your Color Variant</h3>
           <div class="color-thumbnails-grid" id="color-thumbnails-grid">
             <!-- Will be populated by JavaScript with map thumbnail cards -->
-            <div class="text-center" style="padding: 2rem; color: var(--poster-text-muted); grid-column: 1 / -1;">
+            <div class="text-center" style="padding: 2rem; color: var(--text-muted); grid-column: 1 / -1;">
               <p style="font-size: 0.875rem;">Select a map theme first to see available colors</p>
             </div>
           </div>
@@ -358,7 +329,7 @@
           <div class="loading-content">
             <div class="loading-spinner"></div>
             <h4 style="margin-bottom: 0.5rem;">Loading your custom map...</h4>
-            <p style="color: var(--poster-text-muted);">Please wait while we prepare your route visualization.</p>
+            <p style="color: var(--text-muted);">Please wait while we prepare your route visualization.</p>
           </div>
         </div>
       </div>
@@ -377,7 +348,7 @@
       </svg>
     </div>
     <h4 id="error-title" style="margin-bottom: 0.5rem;">Unable to Load Map</h4>
-    <p id="error-message" style="margin-bottom: 1.5rem; color: var(--poster-text-muted);">There was an issue loading your activity data.</p>
+    <p id="error-message" style="margin-bottom: 1.5rem; color: var(--text-muted);">There was an issue loading your activity data.</p>
     <div class="error-actions">
       <button type="button" class="nav-btn nav-btn--secondary" id="retry-map-button">
         Try Again
