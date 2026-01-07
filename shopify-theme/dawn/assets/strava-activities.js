@@ -27,6 +27,7 @@ class StravaActivities {
 
     // Activity comparison
     this.selectedActivities = new Set();
+    this.selectionModeActive = false;
 
     // Simple session token
     this.sessionToken = null;
@@ -57,14 +58,21 @@ class StravaActivities {
       // Search elements
       searchInput: document.getElementById('activity-search'),
       searchClearBtn: document.getElementById('search-clear'),
+      searchResultsSummary: document.getElementById('search-results-summary'),
+      resultsCountText: document.getElementById('results-count-text'),
       // Filter elements
       filterActivityTypeBtn: document.getElementById('filter-activity-type'),
       activityTypeFilter: document.getElementById('activity-type-filter'),
       dateRangeBtn: document.getElementById('date-range-button'),
       sortButton: document.getElementById('sort-button'),
       sortSelect: document.getElementById('sort-select'),
-      compareButton: document.getElementById('compare-button'),
-      compareCount: document.getElementById('compare-count'),
+      // Selection mode
+      selectionModeToggle: document.getElementById('selection-mode-toggle'),
+      selectionCount: document.getElementById('selection-count'),
+      // Active filter badges
+      activeFiltersContainer: document.getElementById('active-filters-container'),
+      activeFilterBadges: document.getElementById('active-filter-badges'),
+      clearAllFiltersBtn: document.getElementById('clear-all-filters-btn'),
       // Bulk actions elements
       bulkActionsToolbar: document.getElementById('bulk-actions-toolbar'),
       bulkSelectedCount: document.getElementById('bulk-selected-count'),
@@ -111,6 +119,9 @@ class StravaActivities {
 
     // Setup infinite scroll
     this.setupInfiniteScroll();
+
+    // Initialize keyboard shortcut hint
+    this.initializeKeyboardHint();
   }
 
   /**
@@ -462,19 +473,13 @@ class StravaActivities {
   showSkeletonCards(count = 6) {
     const skeletonHtml = Array.from({ length: count }, () => `
       <div class="skeleton-card" role="status" aria-label="Loading activity">
-        <div class="skeleton-preview"></div>
+        <div class="skeleton-preview">
+          <div class="skeleton-type-badge"></div>
+        </div>
         <div class="skeleton-details">
           <div class="skeleton-line title"></div>
           <div class="skeleton-line subtitle"></div>
           <div class="skeleton-stats">
-            <div class="skeleton-stat">
-              <div class="skeleton-line"></div>
-              <div class="skeleton-line"></div>
-            </div>
-            <div class="skeleton-stat">
-              <div class="skeleton-line"></div>
-              <div class="skeleton-line"></div>
-            </div>
             <div class="skeleton-stat">
               <div class="skeleton-line"></div>
               <div class="skeleton-line"></div>
@@ -552,6 +557,56 @@ class StravaActivities {
 
     // Update statistics dashboard
     this.updateStatistics();
+
+    // Update search results summary
+    this.updateSearchResultsSummary();
+
+    // Remove searching state indicator
+    const searchContainer = this.elements.searchInput?.closest('.strava-activities-search');
+    if (searchContainer) {
+      searchContainer.classList.remove('searching');
+    }
+  }
+
+  /**
+   * Update search results summary
+   */
+  updateSearchResultsSummary() {
+    const { searchResultsSummary, resultsCountText } = this.elements;
+
+    if (!searchResultsSummary || !resultsCountText) return;
+
+    const hasSearch = this.searchTerm && this.searchTerm.trim().length > 0;
+    const hasFilters = this.currentFilters.type || this.currentFilters.dateRange;
+    const count = this.filteredActivities.length;
+
+    // Show summary if there's an active search or filters
+    if (hasSearch || hasFilters) {
+      searchResultsSummary.classList.remove('hidden');
+
+      // Build result text
+      let resultText = '';
+      if (count === 0) {
+        resultText = 'No activities found';
+      } else if (count === 1) {
+        resultText = '1 activity found';
+      } else {
+        resultText = `${count.toLocaleString()} activities found`;
+      }
+
+      // Add context based on search/filters
+      if (hasSearch && hasFilters) {
+        resultText += ' matching your search and filters';
+      } else if (hasSearch) {
+        resultText += ` for "${this.searchTerm}"`;
+      } else if (hasFilters) {
+        resultText += ' matching your filters';
+      }
+
+      resultsCountText.textContent = resultText;
+    } else {
+      searchResultsSummary.classList.add('hidden');
+    }
   }
 
   /**
@@ -574,7 +629,10 @@ class StravaActivities {
     const routeColor = this.getRouteColor(activity.id);
 
     return `
-      <div class="activity-card ${isSelected ? 'selected' : ''}" data-activity-id="${activity.id}" role="listitem">
+      <div class="activity-card ${isSelected ? 'selected' : ''}"
+           data-activity-id="${activity.id}"
+           data-activity-type="${activity.type || activity.sport_type || 'Unknown'}"
+           role="listitem">
         <!-- Activity Preview -->
         <div class="activity-card-preview">
           <!-- Selection Checkbox -->
@@ -1174,23 +1232,23 @@ class StravaActivities {
       }
     }
 
-    // Update title and description based on context
+    // Update title and description based on context - Enhanced messaging
     if (hasSearch && !hasActiveFilters) {
       // Search only - no results
-      this.elements.emptyTitle.textContent = `No activities found for "${this.searchTerm}"`;
-      this.elements.emptyDescription.innerHTML = 'Try a different search term or <button type="button" class="text-link" onclick="document.getElementById(\'empty-clear-filters\').click()">clear your search</button> to see all activities.';
+      this.elements.emptyTitle.textContent = `No matches for "${this.searchTerm}"`;
+      this.elements.emptyDescription.innerHTML = 'We couldn\'t find any activities matching your search. Try a different term or <button type="button" class="text-link" onclick="document.getElementById(\'empty-clear-filters\').click()">clear your search</button> to browse all activities.';
     } else if (hasActiveFilters && !hasSearch) {
       // Filters only - no results
       this.elements.emptyTitle.textContent = 'No activities match your filters';
-      this.elements.emptyDescription.innerHTML = 'Try adjusting your filters or <button type="button" class="text-link" onclick="document.getElementById(\'empty-clear-filters\').click()">clear all filters</button> to see more activities.';
+      this.elements.emptyDescription.innerHTML = 'Your current filters didn\'t return any results. Try broadening your criteria or <button type="button" class="text-link" onclick="document.getElementById(\'empty-clear-filters\').click()">remove filters</button> to see all activities.';
     } else if (hasSearch && hasActiveFilters) {
       // Both search and filters - no results
-      this.elements.emptyTitle.textContent = 'No activities found';
-      this.elements.emptyDescription.innerHTML = `No activities match your search "${this.searchTerm}" with the current filters. Try <button type="button" class="text-link" onclick="document.getElementById(\'empty-clear-filters\').click()">clearing your filters</button>.`;
+      this.elements.emptyTitle.textContent = 'Nothing matches yet';
+      this.elements.emptyDescription.innerHTML = `No activities found for "${this.searchTerm}" with your current filters. Try <button type="button" class="text-link" onclick="document.getElementById(\'empty-clear-filters\').click()">removing some filters</button> or adjusting your search.`;
     } else {
       // No filters or search - truly empty
-      this.elements.emptyTitle.textContent = 'No activities found';
-      this.elements.emptyDescription.innerHTML = 'Looks like you haven\'t recorded any activities yet. <a href="https://www.strava.com" target="_blank" rel="noopener">Upload some activities to Strava</a> to get started!';
+      this.elements.emptyTitle.textContent = 'Ready to create your first map?';
+      this.elements.emptyDescription.innerHTML = 'Start by recording your rides and runs on Strava. Once you have activities, you can turn them into beautiful custom maps! <a href="https://www.strava.com" target="_blank" rel="noopener">Get started with Strava</a>';
     }
 
     // Show/hide active filters section
@@ -1321,6 +1379,7 @@ class StravaActivities {
         console.log('🔍 [Search] Searching for:', this.searchTerm);
         this.resetPagination();
         this.loadActivities();
+        this.renderActiveFilterBadges();
       }, 300);
 
       // Input event listener
@@ -1336,6 +1395,12 @@ class StravaActivities {
           }
         }
 
+        // Add searching state indicator
+        const searchContainer = this.elements.searchInput.closest('.strava-activities-search');
+        if (searchContainer && value.length > 0) {
+          searchContainer.classList.add('searching');
+        }
+
         handleSearch();
       });
 
@@ -1347,6 +1412,7 @@ class StravaActivities {
           this.searchTerm = '';
           this.resetPagination();
           this.loadActivities();
+          this.renderActiveFilterBadges();
         });
       }
     }
@@ -1381,6 +1447,7 @@ class StravaActivities {
 
         this.resetPagination();
         this.loadActivities();
+        this.renderActiveFilterBadges();
       });
     }
 
@@ -1432,13 +1499,10 @@ class StravaActivities {
       });
     }
 
-    // Compare button functionality
-    if (this.elements.compareButton) {
-      this.elements.compareButton.addEventListener('click', () => {
-        console.log('📊 [Compare] Compare button clicked, selected activities:', this.selectedActivities.size);
-        if (this.selectedActivities.size >= 2) {
-          this.showComparison();
-        }
+    // Selection mode toggle functionality
+    if (this.elements.selectionModeToggle) {
+      this.elements.selectionModeToggle.addEventListener('click', () => {
+        this.toggleSelectionMode();
       });
     }
 
@@ -1542,6 +1606,252 @@ class StravaActivities {
         this.clearAllFilters();
       });
     }
+
+    // Clear all filters button in active filters container
+    if (this.elements.clearAllFiltersBtn) {
+      this.elements.clearAllFiltersBtn.addEventListener('click', () => {
+        console.log('🧹 [Active Filters] Clearing all filters');
+        this.clearAllFilters();
+      });
+    }
+
+    // Global keyboard shortcuts
+    this.setupKeyboardShortcuts();
+  }
+
+  /**
+   * Setup keyboard shortcuts for better UX
+   */
+  setupKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+      // Cmd/Ctrl + K - Focus search
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        this.focusSearch();
+        return;
+      }
+
+      // Forward slash (/) - Focus search (like GitHub)
+      // Only if not already in an input
+      if (e.key === '/' && !this.isInputFocused()) {
+        e.preventDefault();
+        this.focusSearch();
+        return;
+      }
+
+      // Escape key handling
+      if (e.key === 'Escape') {
+        // If search is focused and has value, clear it
+        if (document.activeElement === this.elements.searchInput) {
+          if (this.elements.searchInput.value) {
+            e.preventDefault();
+            this.clearSearch();
+          } else {
+            // Empty search, blur it
+            this.elements.searchInput.blur();
+          }
+          return;
+        }
+
+        // Close any open dropdowns
+        this.closeAllDropdowns();
+      }
+
+      // Ctrl/Cmd + / - Show keyboard shortcuts help
+      if ((e.metaKey || e.ctrlKey) && e.key === '/') {
+        e.preventDefault();
+        this.showKeyboardShortcutsHelp();
+        return;
+      }
+    });
+
+    console.log('⌨️ [Keyboard] Keyboard shortcuts initialized');
+  }
+
+  /**
+   * Focus the search input
+   */
+  focusSearch() {
+    if (this.elements.searchInput) {
+      this.elements.searchInput.focus();
+      this.elements.searchInput.select(); // Select existing text if any
+      console.log('⌨️ [Keyboard] Search focused');
+    }
+  }
+
+  /**
+   * Clear search input
+   */
+  clearSearch() {
+    if (this.elements.searchInput) {
+      this.elements.searchInput.value = '';
+      if (this.elements.searchClearBtn) {
+        this.elements.searchClearBtn.classList.add('hidden');
+      }
+      this.searchTerm = '';
+      this.resetPagination();
+      this.loadActivities();
+      this.renderActiveFilterBadges();
+      console.log('⌨️ [Keyboard] Search cleared');
+    }
+  }
+
+  /**
+   * Check if any input element is currently focused
+   */
+  isInputFocused() {
+    const activeElement = document.activeElement;
+    return activeElement && (
+      activeElement.tagName === 'INPUT' ||
+      activeElement.tagName === 'TEXTAREA' ||
+      activeElement.tagName === 'SELECT' ||
+      activeElement.isContentEditable
+    );
+  }
+
+  /**
+   * Close all open dropdowns
+   */
+  closeAllDropdowns() {
+    if (this.elements.activityTypeFilter) {
+      this.elements.activityTypeFilter.classList.add('hidden');
+    }
+    if (this.elements.sortSelect) {
+      this.elements.sortSelect.classList.add('hidden');
+    }
+    console.log('⌨️ [Keyboard] Closed all dropdowns');
+  }
+
+  /**
+   * Show keyboard shortcuts help modal
+   */
+  showKeyboardShortcutsHelp() {
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const modKey = isMac ? '⌘' : 'Ctrl';
+
+    const helpContent = `
+      <div class="keyboard-shortcuts-modal" role="dialog" aria-labelledby="shortcuts-title" aria-modal="true">
+        <div class="shortcuts-overlay" onclick="this.closest('.keyboard-shortcuts-modal').remove()"></div>
+        <div class="shortcuts-content">
+          <div class="shortcuts-header">
+            <h3 id="shortcuts-title">Keyboard Shortcuts</h3>
+            <button type="button" class="shortcuts-close" onclick="this.closest('.keyboard-shortcuts-modal').remove()" aria-label="Close">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="shortcuts-body">
+            <div class="shortcut-section">
+              <h4>Search & Navigation</h4>
+              <div class="shortcut-item">
+                <div class="shortcut-keys">
+                  <kbd>${modKey}</kbd> + <kbd>K</kbd>
+                </div>
+                <div class="shortcut-description">Focus search</div>
+              </div>
+              <div class="shortcut-item">
+                <div class="shortcut-keys">
+                  <kbd>/</kbd>
+                </div>
+                <div class="shortcut-description">Focus search (alternative)</div>
+              </div>
+              <div class="shortcut-item">
+                <div class="shortcut-keys">
+                  <kbd>Esc</kbd>
+                </div>
+                <div class="shortcut-description">Clear search / Close dropdowns</div>
+              </div>
+            </div>
+            <div class="shortcut-section">
+              <h4>Help</h4>
+              <div class="shortcut-item">
+                <div class="shortcut-keys">
+                  <kbd>${modKey}</kbd> + <kbd>/</kbd>
+                </div>
+                <div class="shortcut-description">Show this help</div>
+              </div>
+            </div>
+          </div>
+          <div class="shortcuts-footer">
+            <p class="shortcuts-hint">Press <kbd>Esc</kbd> to close</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Remove any existing modal
+    const existingModal = document.querySelector('.keyboard-shortcuts-modal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', helpContent);
+
+    // Close on Escape
+    const modal = document.querySelector('.keyboard-shortcuts-modal');
+    const closeOnEscape = (e) => {
+      if (e.key === 'Escape') {
+        modal.remove();
+        document.removeEventListener('keydown', closeOnEscape);
+      }
+    };
+    document.addEventListener('keydown', closeOnEscape);
+
+    // Focus trap
+    modal.querySelector('.shortcuts-close').focus();
+
+    console.log('⌨️ [Keyboard] Showing shortcuts help');
+  }
+
+  /**
+   * Initialize keyboard shortcut hint in search bar
+   */
+  initializeKeyboardHint() {
+    const shortcutKeyElement = document.getElementById('shortcut-key');
+    if (shortcutKeyElement) {
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const modKey = isMac ? '⌘' : 'Ctrl';
+      shortcutKeyElement.textContent = `${modKey}K`;
+      console.log('⌨️ [Keyboard] Initialized keyboard hint:', `${modKey}K`);
+    }
+  }
+
+  /**
+   * Toggle selection mode on/off
+   */
+  toggleSelectionMode() {
+    this.selectionModeActive = !this.selectionModeActive;
+
+    console.log('✅ [Selection Mode]', this.selectionModeActive ? 'Activated' : 'Deactivated');
+
+    // Update body class
+    if (this.selectionModeActive) {
+      document.body.classList.add('selection-mode-active');
+    } else {
+      document.body.classList.remove('selection-mode-active');
+      // Deselect all when exiting selection mode
+      this.deselectAllActivities();
+    }
+
+    // Update button state
+    if (this.elements.selectionModeToggle) {
+      this.elements.selectionModeToggle.setAttribute('aria-pressed', this.selectionModeActive);
+    }
+
+    // Update selection count
+    this.updateSelectionCount();
+  }
+
+  /**
+   * Update selection count display
+   */
+  updateSelectionCount() {
+    if (this.elements.selectionCount) {
+      this.elements.selectionCount.textContent = this.selectedActivities.size;
+    }
   }
 
   /**
@@ -1639,6 +1949,135 @@ class StravaActivities {
     // Reload activities
     this.resetPagination();
     this.loadActivities();
+
+    // Update active filter badges
+    this.renderActiveFilterBadges();
+  }
+
+  /**
+   * Render active filter badges/chips
+   */
+  renderActiveFilterBadges() {
+    const { activeFiltersContainer, activeFilterBadges, clearAllFiltersBtn, activityTypeFilter } = this.elements;
+
+    if (!activeFiltersContainer || !activeFilterBadges) return;
+
+    // Collect active filters
+    const activeBadges = [];
+
+    // Activity Type filter
+    if (this.currentFilters.type) {
+      const typeLabel = activityTypeFilter?.querySelector(`option[value="${this.currentFilters.type}"]`)?.textContent || this.currentFilters.type;
+      activeBadges.push({
+        type: 'activity-type',
+        label: 'Type:',
+        value: typeLabel,
+        filterKey: 'type'
+      });
+    }
+
+    // Date Range filter
+    if (this.currentFilters.dateRange) {
+      const dateRangeOptions = {
+        '7': 'Last Week',
+        '30': 'Last Month',
+        '90': 'Last 3 Months',
+        '365': 'Last Year'
+      };
+      const dateLabel = dateRangeOptions[this.currentFilters.dateRange] || `Last ${this.currentFilters.dateRange} days`;
+      activeBadges.push({
+        type: 'date-range',
+        label: 'Date:',
+        value: dateLabel,
+        filterKey: 'dateRange'
+      });
+    }
+
+    // Search term
+    if (this.searchTerm && this.searchTerm.trim()) {
+      activeBadges.push({
+        type: 'search',
+        label: 'Search:',
+        value: `"${this.searchTerm}"`,
+        filterKey: 'search'
+      });
+    }
+
+    // Show/hide container based on active filters
+    if (activeBadges.length > 0) {
+      activeFiltersContainer.classList.remove('hidden');
+
+      // Render badges
+      activeFilterBadges.innerHTML = activeBadges.map(badge => `
+        <div class="filter-badge" data-filter-type="${badge.type}">
+          <span class="filter-badge-label">${badge.label}</span>
+          <span class="filter-badge-value">${this.escapeHtml(badge.value)}</span>
+          <button type="button"
+                  class="filter-badge-remove"
+                  data-filter-key="${badge.filterKey}"
+                  aria-label="Remove ${badge.label} filter"
+                  title="Remove filter">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      `).join('');
+
+      // Add event listeners to remove buttons
+      activeFilterBadges.querySelectorAll('.filter-badge-remove').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const filterKey = btn.dataset.filterKey;
+          this.removeFilter(filterKey);
+        });
+      });
+    } else {
+      activeFiltersContainer.classList.add('hidden');
+    }
+  }
+
+  /**
+   * Remove a specific filter
+   */
+  removeFilter(filterKey) {
+    console.log('🗑️ [Filter] Removing filter:', filterKey);
+
+    switch (filterKey) {
+      case 'type':
+        this.currentFilters.type = '';
+        if (this.elements.activityTypeFilter) {
+          this.elements.activityTypeFilter.value = '';
+        }
+        if (this.elements.filterActivityTypeBtn) {
+          this.updateFilterButton(this.elements.filterActivityTypeBtn, '');
+        }
+        break;
+
+      case 'dateRange':
+        this.currentFilters.dateRange = null;
+        if (this.elements.dateRangeBtn) {
+          this.updateFilterButton(this.elements.dateRangeBtn, '');
+        }
+        break;
+
+      case 'search':
+        this.searchTerm = '';
+        if (this.elements.searchInput) {
+          this.elements.searchInput.value = '';
+          if (this.elements.searchClearBtn) {
+            this.elements.searchClearBtn.classList.add('hidden');
+          }
+        }
+        break;
+    }
+
+    // Reload activities and update badges
+    this.resetPagination();
+    this.loadActivities();
+    this.renderActiveFilterBadges();
   }
 
   /**
@@ -1723,6 +2162,7 @@ class StravaActivities {
       modal.remove();
       this.resetPagination();
       this.loadActivities();
+      this.renderActiveFilterBadges();
     });
 
     // Close on outside click
@@ -1889,18 +2329,14 @@ class StravaActivities {
       this.selectedActivities.delete(activityId);
       console.log('☑️ [Selection] Deselected activity:', activityId);
     } else {
-      // Limit to 4 activities for comparison
-      if (this.selectedActivities.size >= 4) {
-        alert('You can compare up to 4 activities at a time.');
-        return;
-      }
       this.selectedActivities.add(activityId);
       console.log('☑️ [Selection] Selected activity:', activityId);
     }
 
     // Update the UI
     this.updateCardSelectionUI(activityId);
-    this.updateCompareButton();
+    this.updateSelectionCount();
+    this.updateBulkActionsToolbar();
   }
 
   /**
@@ -2229,7 +2665,8 @@ class StravaActivities {
     });
 
     // Update buttons and toolbar
-    this.updateCompareButton();
+    this.updateSelectionCount();
+    this.updateBulkActionsToolbar();
   }
 
   /**

@@ -1,3 +1,4 @@
+{{ 'design-system-variables.css' | asset_url | stylesheet_tag }}
 {{ 'design-system.css' | asset_url | stylesheet_tag }}
 {{ 'strava-cards-v3.css' | asset_url | append: '?v=' | append: 'now' | stylesheet_tag }}
 
@@ -93,6 +94,9 @@
               <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
             </svg>
           </button>
+          <span class="search-keyboard-hint" id="search-keyboard-hint" aria-hidden="true">
+            <kbd id="shortcut-key"></kbd>
+          </span>
         </div>
         {%- endif -%}
         
@@ -125,14 +129,15 @@
             </svg>
           </button>
 
-          <button type="button" class="filter-button" id="compare-button" aria-label="Compare selected activities" disabled>
-            <svg class="compare-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+          <button type="button" class="filter-button selection-mode-toggle" id="selection-mode-toggle" aria-label="Enable selection mode to select multiple activities" aria-pressed="false">
+            <svg class="selection-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
             </svg>
-            <span>Compare (<span id="compare-count">0</span>)</span>
+            <span class="selection-mode-text">Select Multiple</span>
+            <span class="selection-mode-count hidden">(<span id="selection-count">0</span> selected)</span>
           </button>
 
-          <select id="activity-type-filter" class="strava-filter-select hidden-filters" aria-label="Select activity type">
+          <select id="activity-type-filter" class="strava-filter-select" aria-label="Select activity type">
             <option value="">All Activities</option>
             <option value="Ride">Cycling</option>
             <option value="Run">Running</option>
@@ -140,7 +145,7 @@
             <option value="Walk">Walking</option>
           </select>
 
-          <select id="sort-select" class="strava-filter-select hidden-filters" aria-label="Sort activities by">
+          <select id="sort-select" class="strava-filter-select" aria-label="Sort activities by">
             <option value="start_date_desc">Newest First</option>
             <option value="start_date_asc">Oldest First</option>
             <option value="distance_desc">Longest Distance</option>
@@ -155,6 +160,29 @@
       </div>
     </div>
     {%- endif -%}
+
+    <!-- Search Results Summary -->
+    <div id="search-results-summary" class="search-results-summary hidden" role="status" aria-live="polite">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <path d="m21 21-4.35-4.35"></path>
+      </svg>
+      <span id="results-count-text">0 activities found</span>
+    </div>
+
+    <!-- Active Filter Badges -->
+    <div id="active-filters-container" class="active-filters-container hidden" role="region" aria-label="Active filters">
+      <div class="active-filters-label">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+        </svg>
+        <span>Active filters:</span>
+      </div>
+      <div id="active-filter-badges" class="active-filter-badges"></div>
+      <button type="button" id="clear-all-filters-btn" class="clear-all-filters-btn" aria-label="Clear all filters">
+        Clear all
+      </button>
+    </div>
 
     <!-- Bulk Actions Toolbar -->
     <div id="bulk-actions-toolbar" class="bulk-actions-toolbar hidden" role="toolbar" aria-label="Bulk actions">
@@ -211,6 +239,14 @@
       </div>
     </div>
 
+    <!-- Skeleton Loading Header -->
+    <div id="skeleton-loading-header" class="skeleton-loading-header hidden" role="status" aria-live="polite">
+      <div class="skeleton-loading-content">
+        <div class="skeleton-loading-spinner"></div>
+        <span class="skeleton-loading-text">Loading your activities...</span>
+      </div>
+    </div>
+
     <!-- Activities Grid -->
     <div class="activities-grid-wrapper">
       <div id="activities-grid" class="activities-grid hidden" role="list" aria-label="Strava activities">
@@ -220,25 +256,39 @@
       <div id="infinite-scroll-trigger" class="infinite-scroll-trigger" aria-hidden="true"></div>
     </div>
 
-    <!-- Empty State -->
+    <!-- Empty State - Enhanced -->
     <div id="activities-empty" class="activities-empty hidden" role="status" aria-live="polite">
-      <div class="empty-icon" aria-hidden="true">
-        <svg id="empty-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path id="empty-icon-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-        </svg>
-      </div>
-      <h3 id="empty-title">No activities found</h3>
-      <p id="empty-description">Try refreshing or <a href="https://www.strava.com" target="_blank" rel="noopener">upload some activities to Strava</a> to get started.</p>
-      <div id="empty-active-filters" class="empty-active-filters hidden">
-        <p class="filter-label">Active filters:</p>
-        <div id="empty-filter-tags" class="empty-filter-tags"></div>
-      </div>
-      <div id="empty-actions" class="empty-actions">
-        <button type="button" id="empty-clear-filters" class="load-more-button hidden" aria-label="Clear all filters">
-          Clear Filters
-        </button>
-        <a href="https://www.strava.com" target="_blank" rel="noopener" class="create-poster-button" aria-label="Go to Strava to upload activities">
-          Go to Strava
+      <div class="empty-state-content">
+        <div class="empty-icon-wrapper" aria-hidden="true">
+          <div class="empty-icon-background"></div>
+          <svg id="empty-icon-svg" class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path id="empty-icon-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+        </div>
+
+        <div class="empty-text-content">
+          <h3 id="empty-title" class="empty-title">No activities found</h3>
+          <p id="empty-description" class="empty-description">Try refreshing or <a href="https://www.strava.com" target="_blank" rel="noopener">upload some activities to Strava</a> to get started.</p>
+        </div>
+
+        <div id="empty-active-filters" class="empty-active-filters hidden">
+          <p class="filter-label">Active filters:</p>
+          <div id="empty-filter-tags" class="empty-filter-tags"></div>
+        </div>
+
+        <div id="empty-actions" class="empty-actions">
+          <button type="button" id="empty-clear-filters" class="strava-btn strava-btn-secondary hidden" aria-label="Clear all filters">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            Clear Filters
+          </button>
+          <a href="https://www.strava.com" target="_blank" rel="noopener" class="strava-btn strava-btn-primary" aria-label="Go to Strava to upload activities">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+              <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"></path>
+            </svg>
+            Go to Strava
         </a>
       </div>
     </div>

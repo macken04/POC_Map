@@ -15,7 +15,7 @@
   /* Shadow Levels */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-md: var(--shadow-md);
   --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.3);
   --shadow-brand: 0 4px 12px rgba(255, 86, 13, 0.3);
@@ -84,7 +84,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(252, 76, 2, 0.2);
+  box-shadow: 0 4px 12px var(--color-brand-20);
   animation: scaleIn 0.5s ease-out 0.2s backwards;
 }
 
@@ -152,8 +152,8 @@
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-5);
-  background: rgba(252, 76, 2, 0.05);
-  border: 1px solid rgba(252, 76, 2, 0.15);
+  background: var(--color-brand-primary-lighter);
+  border: 1px solid var(--color-brand-10);
   border-radius: var(--radius-lg);
   margin-bottom: var(--space-6);
   font-size: var(--font-size-sm);
@@ -222,7 +222,7 @@
 
 .stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-sm);
   border-color: var(--border-medium);
 }
 
@@ -280,7 +280,7 @@
   flex-wrap: wrap;
 }
 
-/* Search Input */
+/* Search Input - Enhanced */
 .strava-activities-search {
   flex: 1;
   position: relative;
@@ -296,32 +296,95 @@
   height: 20px;
   color: var(--text-muted);
   z-index: 1;
-  transition: color var(--transition-fast);
+  pointer-events: none;
+  transition: all var(--transition-fast);
 }
 
 .strava-search-input {
   width: 100%;
   background: var(--bg-primary);
-  border: 1px solid var(--border-medium);
+  border: 2px solid var(--border-medium);
   border-radius: var(--radius-lg);
-  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-12);
+  padding: var(--space-3) var(--space-12) var(--space-3) var(--space-12);
   color: var(--text-primary);
   font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
   transition: all var(--transition-normal);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
+/* Focus state - prominent brand color */
 .strava-search-input:focus {
   outline: none;
   border-color: var(--brand-primary);
-  box-shadow: 0 0 0 3px rgba(252, 76, 2, 0.1);
+  box-shadow: 0 0 0 4px var(--color-brand-10), 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: white;
 }
 
-.strava-search-input:focus + .search-icon {
+/* Active state (has value) */
+.strava-search-input:not(:placeholder-shown) {
+  border-color: #0EA5E9;
+  background: linear-gradient(to bottom, white 0%, #F0F9FF 100%);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Icon color changes */
+.strava-search-input:focus ~ .search-icon {
   color: var(--brand-primary);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.strava-search-input:not(:placeholder-shown) ~ .search-icon {
+  color: #0EA5E9;
 }
 
 .strava-search-input::placeholder {
   color: var(--text-muted);
+  font-weight: var(--font-weight-normal);
+}
+
+/* Search loading indicator */
+.strava-activities-search.searching .search-icon {
+  animation: searchPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes searchPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* Clear button enhancement */
+.search-clear-button {
+  position: absolute;
+  right: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--color-gray-100);
+  border: none;
+  border-radius: var(--radius-full);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: all var(--transition-fast);
+  z-index: 2;
+}
+
+.search-clear-button:hover {
+  opacity: 1;
+  background: var(--color-gray-200);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.search-clear-button.hidden {
+  display: none;
 }
 
 /* Filter Buttons */
@@ -375,6 +438,43 @@
   color: var(--brand-primary);
 }
 
+/* Selection Mode Toggle Button */
+.selection-mode-toggle {
+  position: relative;
+  transition: all var(--transition-normal);
+}
+
+.selection-mode-toggle .selection-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+}
+
+.selection-mode-toggle:hover .selection-icon {
+  color: var(--brand-primary);
+}
+
+/* Active selection mode state */
+.selection-mode-toggle[aria-pressed="true"] {
+  background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%);
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.selection-mode-toggle[aria-pressed="true"] .selection-icon {
+  color: var(--brand-primary);
+}
+
+.selection-mode-toggle[aria-pressed="true"] .selection-mode-text {
+  display: none;
+}
+
+.selection-mode-toggle[aria-pressed="true"] .selection-mode-count {
+  display: inline !important;
+}
+
 /* ============================================
  Activity Cards Grid
  ============================================ */
@@ -399,9 +499,9 @@
 }
 
 .activity-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
-  border-color: var(--border-medium);
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg), 0 4px 12px rgba(252, 76, 2, 0.1);
+  border-color: var(--brand-primary);
 }
 
 .activity-card:hover .activity-quick-actions {
@@ -413,17 +513,22 @@
   opacity: 0.4;
 }
 
-/* Activity Card Preview (Route Visualization) */
+/* Activity Card Preview (Route Visualization) - Enhanced */
 .activity-card-preview {
   position: relative;
-  height: 160px;
-  background: linear-gradient(135deg, var(--neutral-100) 0%, var(--neutral-50) 100%);
+  height: 180px;
+  background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
-  transition: background var(--transition-normal);
+  transition: all var(--transition-normal);
+}
+
+/* Add subtle brand glow on hover */
+.activity-card:hover .activity-card-preview {
+  background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%);
 }
 
 /* Darkening overlay on hover */
@@ -496,19 +601,22 @@
 }
 
 .activity-route-path {
-  stroke-width: 3;
+  stroke-width: 3.5;
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
-  opacity: 0.85;
-  transition: opacity var(--transition-normal);
+  opacity: 0.9;
+  transition: all var(--transition-normal);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .activity-card:hover .activity-route-path {
   opacity: 1;
+  stroke-width: 4;
+  filter: drop-shadow(0 4px 8px rgba(252, 76, 2, 0.3));
 }
 
-/* Activity Type Badge */
+/* Activity Type Badge - Color Coded by Type */
 .activity-type-badge {
   position: absolute;
   top: var(--space-4);
@@ -522,15 +630,78 @@
   justify-content: center;
   backdrop-filter: blur(10px);
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-light);
-  width: 36px;
-  height: 36px;
+  border: 2px solid transparent;
+  width: 40px;
+  height: 40px;
+  transition: all var(--transition-normal);
+}
+
+/* Color coding by activity type */
+.activity-card[data-activity-type="Ride"] .activity-type-badge,
+.activity-card[data-activity-type="VirtualRide"] .activity-type-badge {
+  border-color: var(--brand-primary);
+  background: rgba(252, 76, 2, 0.1);
+}
+
+.activity-card[data-activity-type="Run"] .activity-type-badge,
+.activity-card[data-activity-type="VirtualRun"] .activity-type-badge {
+  border-color: #3B82F6;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.activity-card[data-activity-type="Walk"] .activity-type-badge,
+.activity-card[data-activity-type="Hike"] .activity-type-badge {
+  border-color: #10B981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.activity-card[data-activity-type="Swim"] .activity-type-badge {
+  border-color: #06B6D4;
+  background: rgba(6, 182, 212, 0.1);
+}
+
+.activity-card[data-activity-type="Workout"] .activity-type-badge,
+.activity-card[data-activity-type="WeightTraining"] .activity-type-badge {
+  border-color: #8B5CF6;
+  background: rgba(139, 92, 246, 0.1);
+}
+
+/* Hover effect for type badge */
+.activity-card:hover .activity-type-badge {
+  transform: scale(1.1);
+  box-shadow: var(--shadow-md);
 }
 
 .activity-type-icon {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   color: var(--text-primary);
+  transition: color var(--transition-fast);
+}
+
+/* Icon colors match border colors on hover */
+.activity-card:hover[data-activity-type="Ride"] .activity-type-icon,
+.activity-card:hover[data-activity-type="VirtualRide"] .activity-type-icon {
+  color: var(--brand-primary);
+}
+
+.activity-card:hover[data-activity-type="Run"] .activity-type-icon,
+.activity-card:hover[data-activity-type="VirtualRun"] .activity-type-icon {
+  color: #3B82F6;
+}
+
+.activity-card:hover[data-activity-type="Walk"] .activity-type-icon,
+.activity-card:hover[data-activity-type="Hike"] .activity-type-icon {
+  color: #10B981;
+}
+
+.activity-card:hover[data-activity-type="Swim"] .activity-type-icon {
+  color: #06B6D4;
+}
+
+.activity-card:hover[data-activity-type="Workout"] .activity-type-icon,
+.activity-card:hover[data-activity-type="WeightTraining"] .activity-type-icon {
+  color: #8B5CF6;
 }
 
 /* GPS Indicator */
@@ -592,12 +763,18 @@
 }
 
 .activity-name {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   color: var(--text-primary);
-  margin: 0 0 var(--space-2) 0;
+  margin: 0 0 var(--space-3) 0;
   line-height: var(--line-height-snug);
   transition: color var(--transition-fast);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 2.5rem; /* Ensure consistent height */
 }
 
 .activity-card:hover .activity-name {
@@ -623,26 +800,58 @@
   margin: 0 var(--space-1);
 }
 
-/* Activity Stats Grid */
+/* Activity Stats Grid - Improved Hierarchy */
 .activity-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-4);
+  display: flex;
+  gap: var(--space-6);
   margin-bottom: var(--space-5);
   flex: 1;
+  align-items: flex-start;
 }
 
 .activity-stat {
   text-align: left;
+  flex: 1;
+  min-width: 0; /* Allow text truncation */
+}
+
+/* Primary stats (distance, elevation) - More prominent */
+.activity-stat:nth-child(1),
+.activity-stat:nth-child(2) {
+  flex: 1.2;
+}
+
+/* Hide 3rd and 4th stats by default (time, avg speed) */
+.activity-stat:nth-child(3),
+.activity-stat:nth-child(4) {
+  display: none;
+}
+
+/* Show all 4 stats on hover for detail */
+.activity-card:hover .activity-stat:nth-child(3),
+.activity-card:hover .activity-stat:nth-child(4) {
+  display: block;
+  flex: 0.8;
+}
+
+/* Animate stats appearance on hover */
+.activity-card:hover .activity-stats {
+  gap: var(--space-4);
+  transition: gap var(--transition-normal);
 }
 
 .stat-value {
   display: block;
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
   line-height: var(--line-height-tight);
   margin-bottom: var(--space-1);
+  transition: color var(--transition-fast);
+}
+
+.activity-card:hover .stat-value {
+  color: var(--brand-primary);
 }
 
 .stat-label {
@@ -673,7 +882,7 @@
   gap: var(--space-3);
   text-transform: uppercase;
   margin-top: auto;
-  box-shadow: 0 1px 3px rgba(252, 76, 2, 0.2);
+  box-shadow: var(--shadow-brand);
   position: relative;
   overflow: hidden;
 }
@@ -697,18 +906,18 @@
 }
 
 .create-poster-button:hover {
-  background: #e44502;
+  background: var(--color-brand-primary-dark);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(252, 76, 2, 0.3);
+  box-shadow: var(--shadow-brand-lg);
 }
 
 .create-poster-button:active {
   transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(252, 76, 2, 0.2);
+  box-shadow: var(--shadow-brand);
 }
 
 .create-poster-button:focus {
-  outline: 3px solid rgba(252, 76, 2, 0.3);
+  outline: 3px solid var(--color-brand-20);
   outline-offset: 2px;
 }
 
@@ -759,16 +968,64 @@
 }
 
 /* ============================================
- Skeleton Loading States
+ Skeleton Loading States - Enhanced
  ============================================ */
 
-/* Shimmer animation */
+/* Skeleton Loading Header */
+.skeleton-loading-header {
+  text-align: center;
+  padding: var(--space-6) 0;
+  margin-bottom: var(--space-4);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.skeleton-loading-header.hidden {
+  display: none;
+}
+
+.skeleton-loading-content {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-6);
+  background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+  border: 1px solid #BAE6FD;
+  border-radius: var(--radius-full);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.skeleton-loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #E0F2FE;
+  border-top-color: #0EA5E9;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.skeleton-loading-text {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: #0C4A6E;
+}
+
+/* Shimmer animation - Smooth left to right */
 @keyframes shimmer {
   0% {
     background-position: -1000px 0;
   }
   100% {
     background-position: 1000px 0;
+  }
+}
+
+/* Pulse animation for skeleton cards */
+@keyframes skeletonPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
   }
 }
 
@@ -785,19 +1042,42 @@
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  animation: skeletonPulse 2s ease-in-out infinite, fadeIn 0.4s ease-out;
 }
 
+/* Staggered animation delays for natural loading feel */
+.skeleton-card:nth-child(1) { animation-delay: 0s, 0s; }
+.skeleton-card:nth-child(2) { animation-delay: 0.1s, 0.05s; }
+.skeleton-card:nth-child(3) { animation-delay: 0.2s, 0.1s; }
+.skeleton-card:nth-child(4) { animation-delay: 0.3s, 0.15s; }
+.skeleton-card:nth-child(5) { animation-delay: 0.4s, 0.2s; }
+.skeleton-card:nth-child(6) { animation-delay: 0.5s, 0.25s; }
+
+/* Skeleton Preview - matches new 180px height */
 .skeleton-preview {
+  position: relative;
   width: 100%;
-  height: 160px;
+  height: 180px;
   background: linear-gradient(
     90deg,
-    var(--neutral-100) 0%,
-    var(--neutral-200) 50%,
-    var(--neutral-100) 100%
+    #F8FAFC 0%,
+    #E2E8F0 50%,
+    #F8FAFC 100%
   );
   background-size: 1000px 100%;
   animation: shimmer 2s infinite linear;
+}
+
+/* Type badge placeholder in preview */
+.skeleton-type-badge {
+  position: absolute;
+  top: var(--space-4);
+  left: var(--space-4);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-sm);
 }
 
 .skeleton-details {
@@ -808,9 +1088,9 @@
   height: 16px;
   background: linear-gradient(
     90deg,
-    var(--neutral-100) 0%,
-    var(--neutral-200) 50%,
-    var(--neutral-100) 100%
+    #F1F5F9 0%,
+    #E2E8F0 50%,
+    #F1F5F9 100%
   );
   background-size: 1000px 100%;
   animation: shimmer 2s infinite linear;
@@ -819,28 +1099,29 @@
 }
 
 .skeleton-line.title {
-  width: 70%;
-  height: 20px;
-  margin-bottom: var(--space-4);
+  width: 75%;
+  height: 24px;
+  margin-bottom: var(--space-3);
 }
 
 .skeleton-line.subtitle {
-  width: 50%;
+  width: 55%;
   height: 14px;
   margin-bottom: var(--space-5);
 }
 
+/* Skeleton Stats - Only 2 stats to match new design */
 .skeleton-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-4);
+  display: flex;
+  gap: var(--space-6);
   margin-bottom: var(--space-5);
 }
 
 .skeleton-stat {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-1);
+  flex: 1;
 }
 
 .skeleton-stat .skeleton-line {
@@ -848,22 +1129,22 @@
 }
 
 .skeleton-stat .skeleton-line:first-child {
-  width: 60%;
-  height: 18px;
+  width: 70%;
+  height: 20px;
 }
 
 .skeleton-stat .skeleton-line:last-child {
-  width: 80%;
+  width: 50%;
   height: 12px;
 }
 
 .skeleton-button {
-  height: 44px;
+  height: 48px;
   background: linear-gradient(
     90deg,
-    var(--neutral-100) 0%,
-    var(--neutral-200) 50%,
-    var(--neutral-100) 100%
+    #F1F5F9 0%,
+    #E2E8F0 50%,
+    #F1F5F9 100%
   );
   background-size: 1000px 100%;
   animation: shimmer 2s infinite linear;
@@ -881,10 +1162,14 @@
   .skeleton-grid {
     grid-template-columns: 1fr;
   }
+
+  .skeleton-preview {
+    height: 200px;
+  }
 }
 
 /* ============================================
- Loading, Error, and Empty States
+ Loading, Error, and Empty States - Enhanced
  ============================================ */
 .activities-loading,
 .activities-error,
@@ -895,25 +1180,91 @@
   animation: fadeIn 0.6s ease-out;
 }
 
-.activities-loading h3,
-.activities-error h3,
-.activities-empty h3 {
-  color: var(--text-primary);
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
-  margin-bottom: var(--space-3);
+/* Empty State Content Wrapper */
+.empty-state-content {
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
 }
 
-.activities-loading p,
-.activities-error p,
-.activities-empty p {
-  font-size: var(--font-size-base);
+/* Icon Wrapper with Background */
+.empty-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+}
+
+.empty-icon-background {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%);
+  border-radius: 50%;
+  opacity: 0.5;
+  animation: emptyPulse 3s ease-in-out infinite;
+}
+
+@keyframes emptyPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.3;
+  }
+}
+
+.empty-icon {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  color: var(--brand-primary);
+  stroke-width: 2;
+  z-index: 1;
+}
+
+/* Empty Text Content */
+.empty-text-content {
+  text-align: center;
+}
+
+.empty-title {
+  color: var(--text-primary);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-4);
+  letter-spacing: -0.5px;
+}
+
+.empty-description {
+  font-size: var(--font-size-lg);
   line-height: var(--line-height-relaxed);
   color: var(--text-secondary);
-  max-width: 500px;
-  margin: 0 auto;
+  margin: 0;
 }
 
+.empty-description a {
+  color: var(--brand-primary);
+  text-decoration: underline;
+  text-decoration-color: var(--color-brand-20);
+  text-underline-offset: 2px;
+  font-weight: var(--font-weight-semibold);
+  transition: all var(--transition-fast);
+}
+
+.empty-description a:hover {
+  color: var(--color-brand-primary-dark);
+  text-decoration-color: var(--brand-primary);
+}
+
+/* Loading Spinner */
 .loading-spinner {
   width: 64px;
   height: 64px;
@@ -924,25 +1275,71 @@
   animation: spin 1s linear infinite;
 }
 
-.error-icon,
-.empty-icon {
+.error-icon {
   width: 64px;
   height: 64px;
-  color: var(--text-muted);
+  color: #EF4444;
   margin: 0 auto var(--space-6);
-  opacity: 0.7;
 }
 
-/* Enhanced Empty State */
+.activities-loading h3,
+.activities-error h3 {
+  color: var(--text-primary);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-3);
+}
+
+.activities-loading p,
+.activities-error p {
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-relaxed);
+  color: var(--text-secondary);
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* Enhanced Empty Actions */
 .empty-actions {
   display: flex;
   gap: var(--space-4);
   justify-content: center;
   align-items: center;
-  margin-top: var(--space-8);
+  margin-top: var(--space-2);
   flex-wrap: wrap;
 }
 
+.empty-actions .strava-btn {
+  min-width: 160px;
+  font-size: var(--font-size-base);
+  padding: var(--space-3) var(--space-6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.empty-actions .strava-btn svg {
+  flex-shrink: 0;
+}
+
+.empty-actions .strava-btn-primary {
+  box-shadow: var(--shadow-brand-lg);
+}
+
+.empty-actions .strava-btn-secondary {
+  background: white;
+  color: var(--text-primary);
+  border: 2px solid var(--border-medium);
+}
+
+.empty-actions .strava-btn-secondary:hover {
+  background: var(--color-gray-50);
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+/* Active Filters in Empty State */
 .empty-active-filters {
   margin-top: var(--space-6);
   padding: var(--space-4);
@@ -1000,56 +1397,8 @@
 }
 
 .text-link:hover {
-  color: #e44502;
+  color: var(--color-brand-primary-dark);
   text-decoration: none;
-}
-
-/* Skeleton Loading States */
-.skeleton-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.skeleton-preview {
-  height: 160px;
-  background: linear-gradient(
-    90deg,
-    var(--neutral-200) 25%,
-    var(--neutral-100) 50%,
-    var(--neutral-200) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-.skeleton-details {
-  padding: var(--space-5);
-}
-
-.skeleton-line {
-  height: 16px;
-  background: var(--neutral-200);
-  border-radius: var(--radius-sm);
-  margin-bottom: var(--space-3);
-  animation: shimmer 1.5s infinite;
-}
-
-.skeleton-line:last-child {
-  width: 60%;
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
 }
 
 /* ============================================
@@ -1243,7 +1592,35 @@
   }
 
   .activity-card-preview {
-    height: 140px;
+    height: 200px; /* Larger on mobile for better route visibility */
+  }
+
+  .activity-card-details {
+    padding: var(--space-4);
+  }
+
+  .activity-name {
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--space-2);
+  }
+
+  .activity-stats {
+    gap: var(--space-4);
+    flex-wrap: wrap;
+  }
+
+  .stat-value {
+    font-size: var(--font-size-lg);
+  }
+
+  /* Always show all stats on mobile */
+  .activity-stat:nth-child(3),
+  .activity-stat:nth-child(4) {
+    display: block;
+  }
+
+  .activity-stat {
+    flex: 1 1 45%;
   }
 
   .controls-body {
@@ -1258,6 +1635,51 @@
   .strava-activities-filters {
     justify-content: center;
     flex-wrap: wrap;
+  }
+
+  /* Empty State Mobile */
+  .empty-icon-wrapper {
+    width: 100px;
+    height: 100px;
+  }
+
+  .empty-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .empty-title {
+    font-size: var(--font-size-2xl);
+  }
+
+  .empty-description {
+    font-size: var(--font-size-base);
+  }
+
+  .empty-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .empty-actions .strava-btn {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+/* Tablet: 769px to 1024px - 2 column grid */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .activities-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-5);
+  }
+
+  .activity-card-preview {
+    height: 160px;
+  }
+
+  .activity-card-details {
+    padding: var(--space-4);
   }
 }
 
@@ -1521,6 +1943,23 @@
   color: var(--color-success);
 }
 
+/* Extra Small Mobile: 375px and below */
+@media (max-width: 375px) {
+  .statistics-dashboard {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .stat-card {
+    padding: var(--space-2) var(--space-3);
+    min-height: 80px;
+  }
+
+  .activities-grid {
+    gap: var(--space-3);
+  }
+}
+
 /* ============================================
  Accessibility Enhancements
  ============================================ */
@@ -1579,30 +2018,47 @@
 
 /* Active Filter State */
 .filter-button.filter-active {
-  background: rgba(252, 76, 2, 0.1);
+  background: var(--color-brand-10);
   border-color: var(--brand-primary);
   color: var(--brand-primary);
 }
 
 .filter-button.filter-active:hover {
-  background: rgba(252, 76, 2, 0.15);
+  background: var(--color-brand-15);
 }
 
 /* Activity Type Filter Dropdown */
 .strava-filter-select {
-  position: absolute;
-  top: calc(100% + var(--space-1));
-  left: auto;
-  right: 0;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
   background: var(--bg-primary);
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-lg);
-  padding: var(--space-4);
-  min-width: 220px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  z-index: 1000;
-  transition: all var(--transition-fast);
-  transform-origin: top right;
+  padding: var(--space-3) var(--space-4);
+  min-width: 180px;
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' fill='none' stroke='%236B7280' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-2) center;
+  background-size: 16px 16px;
+  padding-right: var(--space-10);
+}
+
+.strava-filter-select:hover {
+  background-color: var(--bg-secondary);
+  border-color: var(--brand-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.strava-filter-select:focus {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
 }
 
 .strava-filter-select.hidden {
@@ -1661,7 +2117,7 @@
 .date-range-select:focus {
   outline: none;
   border-color: var(--brand-primary);
-  box-shadow: 0 0 0 3px rgba(252, 76, 2, 0.1);
+  box-shadow: 0 0 0 3px var(--color-brand-10);
 }
 
 .date-range-actions {
@@ -1697,7 +2153,7 @@
 }
 
 .date-range-actions .btn-primary:hover {
-  background: #e44502;
+  background: var(--color-brand-primary-dark);
   box-shadow: var(--shadow-md);
 }
 
@@ -1911,7 +2367,7 @@
 }
 
 .activity-details-actions .btn-primary:hover {
-  background: #e44502;
+  background: var(--color-brand-primary-dark);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(255, 86, 13, 0.3);
 }
@@ -1989,7 +2445,7 @@
    Activity Selection & Comparison
    ======================================== */
 
-/* Selection Checkbox */
+/* Selection Checkbox - Hidden by default, only show in selection mode */
 .activity-selection-checkbox {
   position: absolute;
   top: var(--space-3);
@@ -1997,6 +2453,22 @@
   z-index: 5;
   cursor: pointer;
   user-select: none;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.8);
+  transition: all var(--transition-normal);
+}
+
+/* Show checkboxes when selection mode is active */
+body.selection-mode-active .activity-selection-checkbox {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+
+/* Subtle hint on hover when NOT in selection mode */
+.activity-card:hover .activity-selection-checkbox {
+  opacity: 0.3;
 }
 
 .activity-select-input {
@@ -2041,11 +2513,16 @@
   transform: scale(1);
 }
 
-/* Selected Card State */
+/* Selected Card State - Enhanced */
 .activity-card.selected {
   border-color: var(--brand-primary);
-  box-shadow: 0 0 0 2px var(--brand-primary);
-  transform: translateY(-2px);
+  box-shadow: 0 0 0 3px var(--brand-primary), var(--shadow-brand-lg);
+  transform: translateY(-4px);
+  background: linear-gradient(to bottom, var(--bg-card) 0%, #FFF7ED 100%);
+}
+
+.activity-card.selected .activity-name {
+  color: var(--brand-primary);
 }
 
 .activity-card.selected .activity-card-preview::after {
@@ -2077,7 +2554,7 @@
 }
 
 .filter-button#compare-button.filter-active:hover {
-  background: #e44502;
+  background: var(--color-brand-primary-dark);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(255, 86, 13, 0.3);
 }
@@ -2198,7 +2675,7 @@
 
 .comparison-card:hover {
   border-color: var(--border-medium);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
 
@@ -2296,6 +2773,209 @@
 }
 
 /* ========================================
+   Search Results Summary
+   ======================================== */
+
+.search-results-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+  border: 1px solid #BAE6FD;
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  transition: all var(--transition-normal);
+  animation: slideDown 0.3s ease-out;
+}
+
+.search-results-summary.hidden {
+  display: none;
+}
+
+.search-results-summary svg {
+  color: #0EA5E9;
+  flex-shrink: 0;
+}
+
+#results-count-text {
+  font-weight: var(--font-weight-medium);
+  color: #0C4A6E;
+}
+
+/* Highlight search term in results */
+.search-highlight {
+  background: linear-gradient(to bottom, transparent 50%, #FEF08A 50%);
+  font-weight: var(--font-weight-semibold);
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+/* Slide down animation */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   Active Filter Badges
+   ======================================== */
+
+.active-filters-container {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%);
+  border: 1px solid var(--color-brand-15);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+  transition: all var(--transition-normal);
+}
+
+.active-filters-container.hidden {
+  display: none;
+}
+
+.active-filters-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--brand-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+
+.active-filters-label svg {
+  color: var(--brand-primary);
+}
+
+.active-filter-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 0;
+}
+
+/* Individual Filter Badge/Chip */
+.filter-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: white;
+  border: 1px solid var(--brand-primary);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+  cursor: default;
+  user-select: none;
+}
+
+.filter-badge-label {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  margin-right: var(--space-1);
+}
+
+.filter-badge-value {
+  color: var(--brand-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.filter-badge-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin-left: var(--space-1);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+  border-radius: var(--radius-full);
+  width: 16px;
+  height: 16px;
+}
+
+.filter-badge-remove:hover {
+  color: var(--brand-primary);
+  background: var(--color-brand-10);
+}
+
+.filter-badge-remove svg {
+  width: 14px;
+  height: 14px;
+}
+
+.filter-badge:hover {
+  background: var(--color-brand-10);
+  border-color: var(--color-brand-primary-dark);
+  box-shadow: 0 2px 4px rgba(252, 76, 2, 0.1);
+}
+
+/* Clear All Filters Button */
+.clear-all-filters-btn {
+  padding: var(--space-2) var(--space-4);
+  background: var(--brand-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.clear-all-filters-btn:hover {
+  background: var(--color-brand-primary-dark);
+  box-shadow: var(--shadow-brand);
+  transform: translateY(-1px);
+}
+
+.clear-all-filters-btn:active {
+  transform: translateY(0);
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .active-filters-container {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .active-filters-label {
+    width: 100%;
+    margin-bottom: var(--space-2);
+  }
+
+  .active-filter-badges {
+    width: 100%;
+  }
+
+  .clear-all-filters-btn {
+    width: 100%;
+    margin-left: 0;
+    margin-top: var(--space-2);
+  }
+}
+
+/* ========================================
    Bulk Actions Toolbar
    ======================================== */
 
@@ -2362,7 +3042,7 @@
 }
 
 .bulk-action-btn:hover {
-  background: #e44502;
+  background: var(--color-brand-primary-dark);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(255, 86, 13, 0.3);
 }
@@ -2416,5 +3096,237 @@
 @media (min-width: 481px) and (max-width: 1024px) {
   .bulk-actions-buttons {
     flex-wrap: wrap;
+  }
+}
+
+/* ========================================
+   Keyboard Shortcuts Modal
+   ======================================== */
+
+.keyboard-shortcuts-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.shortcuts-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.shortcuts-content {
+  position: relative;
+  background: white;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease-out;
+}
+
+.shortcuts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-6) var(--space-6) var(--space-4);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.shortcuts-header h3 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.shortcuts-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+  border-radius: var(--radius-md);
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+
+.shortcuts-close:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.shortcuts-close:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-brand-10);
+}
+
+.shortcuts-body {
+  padding: var(--space-6);
+}
+
+.shortcut-section {
+  margin-bottom: var(--space-6);
+}
+
+.shortcut-section:last-child {
+  margin-bottom: 0;
+}
+
+.shortcut-section h4 {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 var(--space-4) 0;
+}
+
+.shortcut-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.shortcut-item:last-child {
+  border-bottom: none;
+}
+
+.shortcut-keys {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.shortcut-description {
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  margin-left: var(--space-4);
+}
+
+.shortcuts-footer {
+  padding: var(--space-4) var(--space-6) var(--space-6);
+  text-align: center;
+}
+
+.shortcuts-hint {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+
+/* kbd element styling */
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  padding: var(--space-1) var(--space-2);
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, 'Cascadia Mono', 'Segoe UI Mono', 'Roboto Mono', 'Oxygen Mono', 'Ubuntu Monospace', 'Source Code Pro', 'Fira Mono', 'Droid Sans Mono', 'Courier New', monospace;
+  font-size: 0.875em;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  color: var(--text-primary);
+  background: linear-gradient(to bottom, white 0%, var(--bg-secondary) 100%);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+}
+
+/* Keyboard shortcuts hint badge near search */
+.search-keyboard-hint {
+  position: absolute;
+  right: var(--space-12);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  pointer-events: none;
+  opacity: 0.7;
+  transition: opacity var(--transition-fast);
+}
+
+.strava-search-input:focus ~ .search-keyboard-hint {
+  opacity: 0;
+}
+
+.search-keyboard-hint kbd {
+  font-size: 0.75em;
+  padding: 2px 4px;
+  min-width: 16px;
+}
+
+/* Animations */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile Keyboard Shortcuts Modal */
+@media (max-width: 480px) {
+  .shortcuts-content {
+    max-width: 95%;
+    max-height: 90vh;
+  }
+
+  .shortcuts-header {
+    padding: var(--space-4);
+  }
+
+  .shortcuts-header h3 {
+    font-size: var(--font-size-xl);
+  }
+
+  .shortcuts-body {
+    padding: var(--space-4);
+  }
+
+  .shortcut-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .shortcut-description {
+    margin-left: 0;
+  }
+
+  .search-keyboard-hint {
+    display: none; /* Hide on mobile to avoid clutter */
   }
 }
