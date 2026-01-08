@@ -14,6 +14,11 @@
 
 
 <style>
+  /* Reduce whitespace above navigation bar */
+  body {
+    padding-top: 20px !important;
+  }
+
   /* Force sticky header regardless of theme setting */
   .section-header {
     position: sticky !important;
@@ -336,18 +341,6 @@
       </a>
     </div>
   </header>
-
-{%- comment -%} NEW: Breadcrumb Navigation {%- endcomment -%}
-{% if template.name == 'page' %}
-  {% if page.handle == 'map-design' %}
-    {% render 'breadcrumb-navigation', breadcrumb_type: 'map-design' %}
-  {% elsif page.handle == 'map-preview' %}
-    {% render 'breadcrumb-navigation', breadcrumb_type: 'map-preview' %}
-  {% elsif page.handle == 'strava-activities' %}
-    {% render 'breadcrumb-navigation', breadcrumb_type: 'activities' %}
-  {% endif %}
-{% endif %}
-{%- comment -%} End Breadcrumb Navigation {%- endcomment -%}
 
 </{{ header_tag }}>
 

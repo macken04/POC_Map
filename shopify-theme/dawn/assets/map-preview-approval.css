@@ -184,8 +184,6 @@
   line-height: 1.4;
 }
 
-/* Custom preview header and breadcrumb CSS removed - now using global Shopify header with breadcrumbs */
-
 /* ==========================================================================
    MAIN CONTENT LAYOUT
    ========================================================================== */
@@ -719,8 +717,6 @@
     align-items: flex-start;
   }
 
-  /* Removed .nav-breadcrumb styles - custom nav removed */
-
   .preview-action-buttons {
     flex-direction: column;
     gap: 0.75rem;
@@ -759,8 +755,6 @@
   .btn {
     display: none;
   }
-  /* Removed .preview-header, .nav-breadcrumb - custom nav removed */
-
   .map-preview-container {
     background: white;
     position: static;

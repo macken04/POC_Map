@@ -659,21 +659,6 @@ class StravaActivities {
             />
           </svg>
 
-          <!-- Activity type badge -->
-          <div class="activity-type-badge" aria-label="${activity.type || activity.sport_type || 'Activity'} activity">
-            ${this.getActivityIcon(activity.type || activity.sport_type || 'Activity')}
-          </div>
-
-          <!-- GPS indicator -->
-          ${activity.map && activity.map.summary_polyline ? `
-            <div class="activity-gps-indicator" aria-label="GPS route data available">
-              <svg class="activity-gps-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                <circle cx="12" cy="10" r="3"/>
-              </svg>
-            </div>
-          ` : ''}
-
           <!-- Quick Actions Overlay -->
           <div class="activity-quick-actions">
             <button
@@ -1436,6 +1421,11 @@ class StravaActivities {
         }
       });
 
+      // Prevent clicks on select from closing the dropdown
+      this.elements.activityTypeFilter.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+
       // Handle filter selection
       this.elements.activityTypeFilter.addEventListener('change', (e) => {
         const selectedType = e.target.value;
@@ -1477,6 +1467,11 @@ class StravaActivities {
             document.addEventListener('click', this.closeSortDropdown.bind(this), { once: true });
           }, 0);
         }
+      });
+
+      // Prevent clicks on select from closing the dropdown
+      this.elements.sortSelect.addEventListener('click', (e) => {
+        e.stopPropagation();
       });
 
       // Handle sort selection

@@ -52,8 +52,6 @@ body:has(.poster-designer-container) .section:has(.main-page-title) {
   z-index: 1;
 }
 
-/* Custom navigation bar CSS removed - now using global Shopify header with breadcrumbs */
-
 /* Main Layout */
 .poster-designer-layout {
   display: flex;

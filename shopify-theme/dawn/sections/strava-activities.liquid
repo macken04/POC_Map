@@ -102,15 +102,26 @@
         
         {%- if section.settings.show_filters -%}
         <div class="strava-activities-filters" role="group" aria-label="Activity filters">
-          <button type="button" class="filter-button" id="filter-activity-type" aria-label="Filter by activity type" aria-haspopup="true" aria-expanded="false">
-            <svg class="filter-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
-            </svg>
-            <span>Filter</span>
-            <svg class="chevron-icon" width="16" height="16" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-            </svg>
-          </button>
+          <!-- Filter Button + Dropdown Wrapper -->
+          <div class="filter-dropdown-wrapper">
+            <button type="button" class="filter-button" id="filter-activity-type" aria-label="Filter by activity type" aria-haspopup="true" aria-expanded="false">
+              <svg class="filter-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+              </svg>
+              <span>Filter</span>
+              <svg class="chevron-icon" width="16" height="16" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+              </svg>
+            </button>
+
+            <select id="activity-type-filter" class="strava-filter-select hidden" aria-label="Select activity type">
+              <option value="">All Activities</option>
+              <option value="Ride">Cycling</option>
+              <option value="Run">Running</option>
+              <option value="Hike">Hiking</option>
+              <option value="Walk">Walking</option>
+            </select>
+          </div>
 
           <button type="button" class="filter-button" id="date-range-button" aria-label="Filter by date range">
             <svg class="calendar-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -119,15 +130,29 @@
             <span>Date Range</span>
           </button>
 
-          <button type="button" class="filter-button" id="sort-button" aria-label="Sort activities" aria-haspopup="true" aria-expanded="false">
-            <svg class="sort-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"></path>
-            </svg>
-            <span>Sort</span>
-            <svg class="chevron-icon" width="16" height="16" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-            </svg>
-          </button>
+          <!-- Sort Button + Dropdown Wrapper -->
+          <div class="filter-dropdown-wrapper">
+            <button type="button" class="filter-button" id="sort-button" aria-label="Sort activities" aria-haspopup="true" aria-expanded="false">
+              <svg class="sort-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"></path>
+              </svg>
+              <span>Sort</span>
+              <svg class="chevron-icon" width="16" height="16" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+              </svg>
+            </button>
+
+            <select id="sort-select" class="strava-filter-select hidden" aria-label="Sort activities by">
+              <option value="start_date_desc">Newest First</option>
+              <option value="start_date_asc">Oldest First</option>
+              <option value="distance_desc">Longest Distance</option>
+              <option value="distance_asc">Shortest Distance</option>
+              <option value="moving_time_desc">Longest Duration</option>
+              <option value="moving_time_asc">Shortest Duration</option>
+              <option value="total_elevation_gain_desc">Most Elevation</option>
+              <option value="total_elevation_gain_asc">Least Elevation</option>
+            </select>
+          </div>
 
           <button type="button" class="filter-button selection-mode-toggle" id="selection-mode-toggle" aria-label="Enable selection mode to select multiple activities" aria-pressed="false">
             <svg class="selection-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -136,25 +161,6 @@
             <span class="selection-mode-text">Select Multiple</span>
             <span class="selection-mode-count hidden">(<span id="selection-count">0</span> selected)</span>
           </button>
-
-          <select id="activity-type-filter" class="strava-filter-select" aria-label="Select activity type">
-            <option value="">All Activities</option>
-            <option value="Ride">Cycling</option>
-            <option value="Run">Running</option>
-            <option value="Hike">Hiking</option>
-            <option value="Walk">Walking</option>
-          </select>
-
-          <select id="sort-select" class="strava-filter-select" aria-label="Sort activities by">
-            <option value="start_date_desc">Newest First</option>
-            <option value="start_date_asc">Oldest First</option>
-            <option value="distance_desc">Longest Distance</option>
-            <option value="distance_asc">Shortest Distance</option>
-            <option value="moving_time_desc">Longest Duration</option>
-            <option value="moving_time_asc">Shortest Duration</option>
-            <option value="total_elevation_gain_desc">Most Elevation</option>
-            <option value="total_elevation_gain_asc">Least Elevation</option>
-          </select>
         </div>
         {%- endif -%}
       </div>

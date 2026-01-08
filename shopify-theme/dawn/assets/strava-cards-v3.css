@@ -396,6 +396,13 @@
   flex-wrap: wrap;
 }
 
+/* Filter Dropdown Wrapper - Enables absolute positioning for dropdowns */
+.filter-dropdown-wrapper {
+  position: relative;              /* Positioning context for dropdown */
+  display: inline-flex;            /* Inline with other buttons */
+  align-items: center;
+}
+
 .filter-button {
   display: flex;
   align-items: center;
@@ -617,6 +624,7 @@
 }
 
 /* Activity Type Badge - Color Coded by Type */
+/* REMOVED: Activity type badge - icons removed per user request
 .activity-type-badge {
   position: absolute;
   top: var(--space-4);
@@ -635,8 +643,9 @@
   height: 40px;
   transition: all var(--transition-normal);
 }
+*/
 
-/* Color coding by activity type */
+/* REMOVED: Color coding by activity type - icons removed per user request
 .activity-card[data-activity-type="Ride"] .activity-type-badge,
 .activity-card[data-activity-type="VirtualRide"] .activity-type-badge {
   border-color: var(--brand-primary);
@@ -666,7 +675,6 @@
   background: rgba(139, 92, 246, 0.1);
 }
 
-/* Hover effect for type badge */
 .activity-card:hover .activity-type-badge {
   transform: scale(1.1);
   box-shadow: var(--shadow-md);
@@ -679,7 +687,6 @@
   transition: color var(--transition-fast);
 }
 
-/* Icon colors match border colors on hover */
 .activity-card:hover[data-activity-type="Ride"] .activity-type-icon,
 .activity-card:hover[data-activity-type="VirtualRide"] .activity-type-icon {
   color: var(--brand-primary);
@@ -703,8 +710,9 @@
 .activity-card:hover[data-activity-type="WeightTraining"] .activity-type-icon {
   color: #8B5CF6;
 }
+*/
 
-/* GPS Indicator */
+/* REMOVED: GPS Indicator - icons removed per user request
 .activity-gps-indicator {
   position: absolute;
   top: var(--space-4);
@@ -725,7 +733,6 @@
   transform: scale(1.1);
 }
 
-/* Tooltip for GPS indicator */
 .activity-gps-indicator::after {
   content: attr(aria-label);
   position: absolute;
@@ -753,6 +760,7 @@
   width: 16px;
   height: 16px;
 }
+*/
 
 /* Activity Card Details */
 .activity-card-details {
@@ -2029,9 +2037,12 @@
 
 /* Activity Type Filter Dropdown */
 .strava-filter-select {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
+  position: absolute;              /* Remove from normal flow */
+  top: calc(100% + 4px);          /* Position below button with 4px gap */
+  left: 0;                         /* Align with left edge of wrapper */
+  z-index: 100;                    /* Above other content */
+
+  /* Keep native select behavior - removed display: inline-flex and align-items: center */
   background: var(--bg-primary);
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-lg);
@@ -2041,7 +2052,9 @@
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all var(--transition-normal);
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-md);    /* Add shadow for dropdown effect */
+  pointer-events: auto;            /* Ensure click interaction works */
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' fill='none' stroke='%236B7280' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -2053,7 +2066,7 @@
 .strava-filter-select:hover {
   background-color: var(--bg-secondary);
   border-color: var(--brand-primary);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-lg);    /* Enhanced shadow on hover */
 }
 
 .strava-filter-select:focus {
@@ -2068,6 +2081,15 @@
 .strava-filter-select option {
   padding: var(--space-2);
   cursor: pointer;
+}
+
+/* Responsive adjustments for dropdowns */
+@media screen and (max-width: 749px) {
+  .strava-filter-select {
+    left: auto;                    /* Reset left */
+    right: 0;                      /* Align to right edge */
+    min-width: 160px;              /* Slightly narrower */
+  }
 }
 
 /* Date Range Modal */
